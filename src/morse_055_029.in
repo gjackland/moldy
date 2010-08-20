@@ -1,0 +1,7 @@
+# Morse Potential V(r) = eps * (1 - exp( -alpha(a-r)))
+55  #  Atomic Number, type A  Must be specified, determines atomic mass
+29  #  Atomic Number, type B  Must be specified, determines atomic mass
+4.0 #  epsilon - energy scale
+3.0 #  a - length scale
+0.5 #  alpha - potential width
+6.0 #  rmax - cutoff for  energy

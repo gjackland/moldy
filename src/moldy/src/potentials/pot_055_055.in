@@ -1,0 +1,26 @@
+# AVTF format coefficients for cubic spline material potential #
+55        # Principal Atomic number
+55        # Second Atomic number (used only for cross potential)
+6         # Number of coefficients (vee)
+2         # Number of coefficients (phi)
+0.0       # Minimum potential radius
+7.9833    # Maximum potential radius
+-0.009431656943982658 0.04233340098191192 -0.0364660886311526 -0.00867551567647859 0.03569626795745912 0.013295972606643666  # a_k coefficients (vee)
+7.9833 7.49202 7.06215 6.50946 5.83395 5.318259525        # r_k coefficients (vee)
+0.014747194383152912 -0.02101391257788582                                        # a_k coefficients (phi)
+7.9833 7.3692                                             # r_k coefficients (phi)
+# END OF INPUT #
+#
+# Comments:
+#
+# 1. Note this is a fixed format file.
+#
+# 2. These potential files must follow the naming convention: pot_XX_YY.in
+# where XX and YY are the atomic numbers of the relevant species. In the
+# case of a single species, use YY=XX
+  !! Cs
+  real(kind_wp), parameter :: a_Cs=6.141000
+  real(kind_wp), target :: ak_v_Cs(6)=(/-2.184268,9.803950,-8.445145,-2.009154,8.266863,3.079201/)
+  real(kind_wp), target :: rk_v_Cs(6)=a_Cs*(/1.300000,1.220000,1.150000,1.060000,0.950000,0.866025/)
+  real(kind_wp), target :: ak_p_Cs(2)=(/3.415288,-4.866591/)
+  real(kind_wp), target :: rk_p_Cs(2)=a_Cs*(/1.300000,1.200000/)

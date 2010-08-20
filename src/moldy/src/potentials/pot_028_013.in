@@ -1,0 +1,27 @@
+# AVTF format Ni/Al fitted to apb001 and elastic constants #
+28        # Principal Atomic number
+13        # Second Atomic number (used only for cross potential)
+4         # Number of coefficients (vee)
+1         # Number of coefficients (phi)
+0.0       # Minimum potential radius
+4.35174   # Maximum potential radius
+-0.6469208776  1.1392692848  -0.6655106072  1.4680219296 # a_k coefficients (vee)
+4.35174 4.24473 3.88803 2.96061                          # r_k coefficients (vee)
+0.0            # a_k coefficients (phi)
+1.0            # r_k coefficients (phi)
+# END OF INPUT #
+#
+# Comments:
+#
+# 1. Note this is a fixed format file.
+#
+# 2. These potential files must follow the naming convention: pot_XX_YY.in
+# where XX and YY are the atomic numbers of the relevant species. In the
+# case of a single species, use YY=XX
+#
+# !! VNiAl ( VITEK, V; ACKLAND, GJ; CSERTI, J MRS Symp Proc 186   237-251  1991  
+#   real(kind_wp), parameter :: a_NiAl=1.0000
+#   real(kind_wp), target :: ak_v_NiAl(4)=(/-0.6469208776  ,  1.1392692848 ,  -0.6655106072 ,  1.4680219296/)
+#   real(kind_wp), target :: rk_v_NiAl(4)=a_NiAl*(/4.35174, 4.24473, 3.88803, 2.96061/)
+#   real(kind_wp), target :: ak_p_NiAl(1)=(/0.0/)
+#   real(kind_wp), target :: rk_p_NiAl(1)=a_NiAl*(/1.0/)
