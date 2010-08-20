@@ -1,0 +1,28 @@
+# AVTF format Nickel potential L. Low stacking fault #
+28        # Principal Atomic number
+28        # Second Atomic number (used only for cross potential)
+6         # Number of coefficients (vee)
+2         # Number of coefficients (phi)
+0.0       # Minimum potential radius
+4.3171695 # Maximum potential radius
+0.7518624760973516 -1.1730902669100531 0.8957445860643847 -2.0153423361883243 2.996033930909066 0.0       # a_k coefficients (vee)
+4.3171695 4.23611244 3.876642 3.1717980 2.8898604 2.4919999  # r_k coefficients (vee)
+0.6573188367720402 -2.148231832273659           # a_k coefficients (phi)
+4.3171695 3.2775246        # r_k coefficients (phi)
+# END OF INPUT #
+#
+# Comments:
+#
+# 1. Note this is a fixed format file.
+#
+# 2. These potential files must follow the naming convention: pot_XX_YY.in
+# where XX and YY are the atomic numbers of the relevant species. In the
+# case of a single species, use YY=XX
+"Atomistic Modeling of extended defects in metallic alloys: Dislocations and grain boundaries in L12 compounds" V.Vitek, G.J.Ackland and J.Cserti, MRS.Symp.Proc., 186, 237. (1991) 
+
+  !! Ni (Nickel potential L. Low stacking fault)
+  real(kind_wp), parameter :: a_Ni=3.52422
+  real(kind_wp), target :: ak_v_Ni(6)=(/32.909998,-51.347686,39.207905,-88.214154,131.1403,0.0/)
+  real(kind_wp), target :: rk_v_Ni(6)=a_Ni*(/1.2250000,1.2020000,1.10000,0.900000,0.820000,0.7071068/)
+  real(kind_wp), target :: ak_p_Ni(2)=(/28.7717,-94.0309/)
+  real(kind_wp), target :: rk_p_Ni(2)=a_Ni*(/1.2250000,0.9300000/)

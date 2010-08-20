@@ -1,0 +1,26 @@
+# AVTF format coefficients for cubic spline material potential #
+47        # Principal Atomic number
+47        # Second Atomic number (used only for cross potential)
+6         # Number of coefficients (vee)
+2         # Number of coefficients (phi)
+0.0       # Minimum potential radius
+5.0043076 # Maximum potential radius
+0.29858077264744776 -1.5005079349256933 1.382532462392293 -0.0911798309522204 0.45561513631419553 2.573543846584596            # a_k coefficients (vee)
+5.0043076614 4.7181262644 4.568174559 4.086 3.5385797844 2.8892383848 # r_k coefficients (vee)
+0.02138400173562757 0.629554263281802                                                    # a_k coefficients (phi)
+5.0043076614 4.086                                                    # r_k coefficients (phi)
+# END OF INPUT #
+#
+# Comments:
+#
+# 1. Note this is a fixed format file.
+#
+# 2. These potential files must follow the naming convention: pot_XX_YY.in
+# where XX and YY are the atomic numbers of the relevant species. In the
+# case of a single species, use YY=XX
+  !! Ag (FS potential in silver)
+  real(kind_wp), parameter :: a_Ag=4.086
+  real(kind_wp), target :: ak_v_Ag(6)=(/20.368404,-102.36075,94.31277,-6.220051,31.08088,175.56047/)
+  real(kind_wp), target :: rk_v_Ag(6)=a_Ag*(/1.2247449,1.1547054,1.1180065,1.000000,0.8660254,0.7071068/)
+  real(kind_wp), target :: ak_p_Ag(2)=(/1.458761,42.946555/)
+  real(kind_wp), target :: rk_p_Ag(2)=a_Ag*(/1.2247449,1.0000000/)

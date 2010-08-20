@@ -1,0 +1,28 @@
+# AVTF format coefficients ALUMINIUM POTENTIAL D. LOW STACKING FAULT. #
+13        # Principal Atomic number
+13        # Second Atomic number (same unless for cross potential)
+6         # Number of coefficients (vee)
+2         # Number of coefficients (phi)
+0.0       # Minimum potential radius
+4.9616175 # Maximum potential radius
+0.48549700578975963 -1.1221478247389942 2.1071970911236226 -1.6190693341400166 0.4431446205803606 0.0        # a_k coefficients (vee)
+4.9616175 4.779354 4.414827 4.252815 3.64527 2.8639946 # r_k coefficients (vee)
+0.2892982575035857 0.07464139107741903                                # a_k coefficients (phi)
+4.86036 3.766779                                       # r_k coefficients (phi)
+# END OF INPUT #
+#
+# Comments:
+#
+# 1. Note this is a fixed format file.
+#
+# 2. These potential files must follow the naming convention: pot_XX_YY.in
+# where XX and YY are the atomic numbers of the relevant species. In the
+# case of a single species, use YY=XX
+#
+# pot_013_013.in ALUMINIUM POTENTIAL D. LOW STACKING FAULT.
+#32.2588  -74.561 140.0125 -107.5789 29.4447 0.0
+# 1.225  1.18   1.09  1.050   0.9   0.70710678
+#19.22239379 4.959539766
+# 1.200  0.93
+# parameter= 4.0503
+#4.50566e-26 
