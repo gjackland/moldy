@@ -100,7 +100,7 @@ module generic_atvf
   real(kind_wp), allocatable :: bier_v2(:,:)
   real(kind_wp), allocatable :: bier_dv1(:,:)
   real(kind_wp), allocatable :: bier_dv2(:,:)
-  real(kind_wp), bier_cut1, bier_cut2
+  real(kind_wp) :: bier_cut1, bier_cut2
 contains
 
 

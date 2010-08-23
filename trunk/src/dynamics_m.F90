@@ -196,8 +196,12 @@ contains
        end do
     end do
 
-!$OMP PARALLEL PRIVATE(tp,pe,neighlc,i,j,fxi,fyi,fzi,nlist_ji,dx,dy,dz,r,pp,fpp,fcp,fp,rxij,ryij,rzij,ddfx,ddfy,ddfz), &
-!$OMP DEFAULT(SHARED), &
+! (27/04/2010) Martin Uhrin: I think the OpenMP spec says that you can't have a variable in both PRIVATE and in REDUCTION
+! even though these are PRIVATE variables during the loop this is a special case handled by the REDUCTION keyword
+! I've also changed the default to none to help track down bugs.
+!$OMP PARALLEL PRIVATE(neighlc,i,j,fxi,fyi,fzi,nlist_ji,dx,dy,dz,r,pp,fpp,fcp,fp,rxij,ryij,rzij,ddfx,ddfy,ddfz), &
+!$OMP DEFAULT(NONE), &
+!$OMP SHARED( simparam, numn, nlist, x0, y0, z0, atomic_number, dafrho, b0, ic, lc_lock, fx, fy, fz ), &
 !$OMP REDUCTION(+:pe,tp)
 !$ neighlc=0 !!(null value = neighbour link-cell is not set)
 

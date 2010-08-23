@@ -571,8 +571,8 @@ contains
   !< read the checkpoint file
   subroutine read_checkpoint_file
     integer :: unit_checkpoint
-    integer :: _nlcx, _nlcy, _nlcz
-    integer :: _prevsteps, _currentstep, _laststep, _lastprint, _lastchkpt, _ntc
+    integer :: local_nlcx, local_nlcy, local_nlcz
+    integer :: local_prevsteps, local_currentstep, local_laststep, local_lastprint, local_lastchkpt, local_ntc
     real(kind_wp) :: olddeltat
 
     write(unit_stdout,*)"Reading checkpoint file...  restart=",simparam%restart
@@ -594,15 +594,15 @@ contains
 
     !!re-read the parameter file, to cope with any intended changes to params oupone restart - but DO NOT overwrite the nlcx/y/z values - this MUST be as checkpointed.
     write(0,*)"SIMPARAMS:",simparam%nlcx, simparam%nlcy, simparam%nlcz
-    _nlcx=simparam%nlcx
-    _nlcy=simparam%nlcy
-    _nlcz=simparam%nlcz
-    _prevsteps=simparam%prevsteps
-    _currentstep=simparam%currentstep
-    _laststep=simparam%laststep
-    _lastprint=simparam%lastprint
-    _lastchkpt=simparam%lastchkpt
-    _ntc=simparam%ntc
+    local_nlcx=simparam%nlcx
+    local_nlcy=simparam%nlcy
+    local_nlcz=simparam%nlcz
+    local_prevsteps=simparam%prevsteps
+    local_currentstep=simparam%currentstep
+    local_laststep=simparam%laststep
+    local_lastprint=simparam%lastprint
+    local_lastchkpt=simparam%lastchkpt
+    local_ntc=simparam%ntc
     olddeltat =simparam%deltat 
     call set_params(simparam)
     !KDM TEMP DEBUGGING
@@ -611,15 +611,15 @@ contains
     !    close(22)
     call read_params
     simparam=get_params()
-    simparam%nlcx=_nlcx
-    simparam%nlcy=_nlcy
-    simparam%nlcz=_nlcz
-    simparam%prevsteps=_prevsteps
-    simparam%currentstep=_currentstep
-    simparam%laststep=_laststep
-    simparam%lastprint=_lastprint
-    simparam%lastchkpt=_lastchkpt
-    simparam%ntc=_ntc
+    simparam%nlcx=local_nlcx
+    simparam%nlcy=local_nlcy
+    simparam%nlcz=local_nlcz
+    simparam%prevsteps=local_prevsteps
+    simparam%currentstep=local_currentstep
+    simparam%laststep=local_laststep
+    simparam%lastprint=local_lastprint
+    simparam%lastchkpt=local_lastchkpt
+    simparam%ntc=local_ntc
     call set_params(simparam)
     if(simparam%deltat.ne.olddeltat) then
     write(unit_stdout,*)"Timestep changed on restart", simparam%deltat, " was ",olddeltat
