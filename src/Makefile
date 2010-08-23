@@ -30,16 +30,15 @@
 #
 ######################################################
 # Material Choice and Location of Executable
-MATERIAL= -DIRON_CARBON
+#MATERIAL= -DIRON_CARBON
 #MATERIAL= -DIRON
-#MATERIAL= -DZIRCONIUM
+MATERIAL= -DZIRCONIUM
 #MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
- EXE=    ../bin/moldyFeC.x
-# EXE=    ../bin/moldyATVF.x
+ EXE=    ../bin/moldy.zircon
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -76,7 +75,8 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OpenMP flags
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
-OMPFLAGS= -mp
+#OMPFLAGS= -mp
+OMPFLAGS = -fopenmp # For gfortran
 
 #Debugging
 #DEBUGGING= -g -C
