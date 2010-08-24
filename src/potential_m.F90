@@ -102,7 +102,6 @@ module potential_m
   public :: get_available_potential_range !< returns range supported by the materials
   public :: check_available_atomic_numbers !< checks a given set of atomic numbers
 
-
   !! Private data
   type(simparameters), save :: simparam
 

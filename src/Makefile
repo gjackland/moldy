@@ -20,6 +20,13 @@
 #
 ######################################################
 
+######################################################
+#
+# Build directory where compilation output files will
+# be stored
+#
+######################################################
+BUILD_DIR=../build
 
 
 ######################################################
@@ -30,15 +37,15 @@
 #
 ######################################################
 # Material Choice and Location of Executable
-#MATERIAL= -DIRON_CARBON
-#MATERIAL= -DIRON
-MATERIAL= -DZIRCONIUM
+MATERIAL= -DIRON_CARBON
+#MATERIAL= -DZIRCONIUM
 #MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
- EXE=    ../bin/moldy.zircon
+# Name of the final executable
+ EXE=    moldy.exe
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -67,7 +74,6 @@ MATERIAL= -DZIRCONIUM
 #FC=     f95 -O2
 #FC=     gfortran -fbounds-check
 FC=     gfortran -O4
-
 
 # C Preprocessing Directives 
 CPPFLAGS= $(MATERIAL) $(DEBUG)

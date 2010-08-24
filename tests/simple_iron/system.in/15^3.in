@@ -1,0 +1,7 @@
+2		# Number of particles included in this file
+15 15 15	# Number of replications of the system in x,y,z
+2.870 0.0 0.0 # Size of the system volume (3x3)
+0.0 2.870 0.0 #
+0.0 0.0 2.870 #
+0.0 0.0 0.0 26 55.847
+0.5 0.5 0.5 26 55.847

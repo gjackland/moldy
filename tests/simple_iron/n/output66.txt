@@ -1,0 +1,1 @@
+  STRUCTURE READ IN            2  BASIS ATOMS;         125  CELLS;         250   ATOMS.
