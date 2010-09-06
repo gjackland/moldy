@@ -144,13 +144,13 @@ class FixParams
 
 							// Have to use the \Q (start) and \E (end) special characters as
 							// split matches as a regex and therefore if the token
-							// has any metacharacters this will cause havok!							
+							// has any metacharacters this will cause havok!						
 							// Split the line either side of the old system input file
-							String oldLine[] = line.split( "\\Q" + oldSystemIn + "\\E" );
+							String oldLine[] = line.split( "\\Q" + oldSystemIn + "\\E");
 							
 							final File newSystemIn = getRelativePath( paramsIn, systemIn );
 							
-							line = oldLine[ 0 ] + newSystemIn;
+							line = oldLine[ 0 ] + "\"" + newSystemIn + "\"";
 							// Add the rest of the line back i.e. a comment
 							if( oldLine.length > 1 )
 							{

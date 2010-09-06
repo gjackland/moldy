@@ -5,80 +5,80 @@
 
 # Two title strings - up to 72 characters in length (and use " " marks)
 title1 = "Input to MOLDY as modified for F90 on Martensite (4x QuadCore Xeon)"
-title2 = "fe_bcc_101010"
+title2 = "Zr hcp"
 
 
 ### File names ###
-file_system          = "../system.in/15^3.in"		# File describing atomic positions in system
+file_system          = system.in        # File describing atomic positions in system
 file_textout         = output66.txt     # Standard file for textual output
 file_checkpointread  = chkp_in.dat      # Input checkpoint file
 file_checkpointwrite = chkp_out.dat     # Output checkpoint file
 file_dumpx1          = dumpx1.dat       # large dump datafile (each iteration for movies etc)
 ### Key physical parameters ###
-boxmass = 50.        # Mass of the box in units of A.M.U. per constituent particle
-deltat  = 1.0d0       # Timestep in fS
+boxmass = 50         # Mass of the box in units of A.M.U. per constituent particle
+deltat  =0.5d0       # Timestep in fS
 rpad    = 1.0d0      # Padding thickness over potential cutoff (for link cell)
-temprq  = 600.d0     # Required temperature in the MD in Kelvin
+temprq  = 2200.d0     # Required temperature in the MD in Kelvin
                      #   (note that the program puts all the energy into
                      #   kinetic modes initially. Equipartition with potential
                      #   modes then occurs, so for initialisation TEMPRQ should
                      #   be double what you want)
-press   = 0.1        # Required external pressure in GPa
+press   = 0.0        # Required external pressure in GPa
 ivol    = 0          # Switch between constant pressure(0), constant volume(1),
                      #   free-surface-on-z, constant-volume-on-x&y (2), cluster (3),
-                     #   grain boundary (cp-on-z, cv-on-xy) (4)
+                     #   grain boundary (cp-on-z, cv-on-xy)
 iquen   = 0          # Switch between Molecular Dynamics(0) and Molecular Statics(1)
-nose    = 0			# Softness of damping force in the Nose thermostat
-dsp     = 0.0d0      # Random displacement from input particle positions (in Angstroms)
+nose    = 0          # Softness of damping force in the Nose thermostat
+dsp     = 0.0d0       # Random displacement from input particle positions (in Angstroms)
 
 ### Strain tensor in one unrolled 9 element value
-straintensor      = 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0
+### straintensor      = 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0
 ### - or alternatively - this can be 3 elements each in 3 of rows (as you would write it)
-straintensor_row1 = 1.000 0.0 0.0
-straintensor_row2 = 0.0 1.000 0.0
-straintensor_row3 = 0.00 0.0 1.000
+straintensor_row1 = 1.0 0.0 0
+straintensor_row2 = 0.0 1.0 0.0
+straintensor_row3 = 0.0 0.0 1.0
 
 # Cross-check physical parameters
-nm      = 6750		# Confirm number of particles (needs to be NM * nx * ny * nz )
+nm      = 16000       # Confirm number of particles
 nspec   = 1          # Confirm number of distinct species
 
 ### Key simulation parameters ###
 nsteps    = 1000      # Number of timesteps to be done in this run or
                      #     number of calculations in quench (0 = keep trying)
-nbrupdate = 2000		# Frequency of updating list of neighbours
-nloops    = 1      # Number of iterative loops around the whole program
+nbrupdate = 20     # Frequency of updating list of neighbours
+nloops    = 1       # Number of iterative loops around the whole program
                      #     (useful for random alloys)
 restart   = 0        # Switch defining type of run:
                      #      0 => new coordinates
                      #     -1 => old coordinates, new velocities
                      #      1 => old coordinates, old velocities
-nprint    = 10      # Frequency of printing of thermodynamic averages
-nchkpt    = 1000     # Frequency with which to checkpoint
-nnbrs     = 150      # Maximum number of neighbours a particle may have
-tjob      = 2000      # Amount of CPU time allowed for the job (in seconds)
-tfinalise = 5        # Amount of time needed to write results and run one more
-                     #   timestep before the CPU time is up
+nprint    = 500    # Frequency of printing of thermodynamic averages
+nnbrs     = 200      # Maximum number of neighbours a particle may have
+tjob      = 50000      # Amount of CPU time allowed for the job (in seconds)
+tfinalise = 50        # Amount of time needed to write results and run one more
+                     #   timestep once the CPU time is up (KDM *before* CPU time is up?)
 iverlet   = 1        # Algorithm choice (0=predictor-corrector, 1=verlet)
 nlcx      = 3        # Number of link cells to construct in x direction
 nlcy      = 3        # Number of link cells to construct in y direction
 nlcz      = 3        # Number of link cells to construct in z direction
-
+uselookup = .false.
 
 ### Current state counts - useful for continuing simulations ###
 prevsteps = 0        # Number of timesteps done already (previously)
 lastprint = 0        # Number of timesteps since last printing of run averages
-lastchkpt = 0        # Number of timesteps since last checkpoint
+
 
 # Logical variable determining whether output is written to
 # stream NTAPE: If T, the output file can get very big.
 dumpx1  = .False.
-uselookup = .true.
+
 
 ###END OF INPUT###
 #
 #
 #  Summary of Subroutines
-#  ----------------------#  
+#  ----------------------
+#  
 #        SUBROUTINE FORCE  (called by main)
 #  Runs over all atoms and calculates the force.
 #  

@@ -93,6 +93,7 @@ program moldyv2
   use neighbourlist_m
   use quench_m
   use utilityfns_m
+  use omp_lib
 
   IMPLICIT NONE
 
@@ -105,6 +106,11 @@ program moldyv2
   logical :: showcalculationprogress=.false.!< write calculation progress to stderr
   integer :: istat                          !< memory allocation status
   integer :: ierror                         !< general error return flag
+  
+  logical :: show_timing = .true.          !< Show timing data for the entire simulation run
+  
+  !! Global timing declarations
+  real(kind_wp) :: g_time, g_starttime      !< Global simulation timing variables
 
   !! Timing declarations
   real(kind_wp) ::time,starttime            !< code timing variables
@@ -126,7 +132,6 @@ program moldyv2
 
   !! start timing the code
   starttime=clock()
-
 
   !! Initialise random number algorithm
   call rstart(97,33,21,82)
@@ -375,7 +380,8 @@ program moldyv2
      !! *****     MD-LOOP     ***** !!
      !! *****     =======     ***** !!
         
-
+  ! Use OMP timer as this is actually reliable
+  g_starttime = omp_get_wtime()
 
         !! either quench, or perform MD.
         if (simparam%iquen.eq.1) then
@@ -410,8 +416,8 @@ program moldyv2
               CALL CORREC
            end if
 
-
            call update_therm_avs(s1,s2,s3)
+
            thmsums=get_thermodynamic_sums()
            thmsums%sf2=thmsums%sf2+s1
            
@@ -524,6 +530,11 @@ program moldyv2
      !! end of loop through iterations
   end do simulationloops
 
+
+    if( show_timing .eqv. .true. ) then
+        g_time = omp_get_wtime()
+        write(*,*)"Run time: ",g_time - g_starttime
+    endif
 
   !! if lookup tables have been used, clean them up before exit
   if(simparam%uselookup) call cleanup_potential_lookups

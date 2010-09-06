@@ -9,7 +9,7 @@ title2 = "fe_bcc_101010"
 
 
 ### File names ###
-file_system          = "../system.in/15^3.in"		# File describing atomic positions in system
+file_system          = "25^3.in"		# File describing atomic positions in system
 file_textout         = output66.txt     # Standard file for textual output
 file_checkpointread  = chkp_in.dat      # Input checkpoint file
 file_checkpointwrite = chkp_out.dat     # Output checkpoint file
@@ -39,11 +39,11 @@ straintensor_row2 = 0.0 1.000 0.0
 straintensor_row3 = 0.00 0.0 1.000
 
 # Cross-check physical parameters
-nm      = 6750		# Confirm number of particles (needs to be NM * nx * ny * nz )
+nm      = 31250		# Confirm number of particles (needs to be NM * nx * ny * nz )
 nspec   = 1          # Confirm number of distinct species
 
 ### Key simulation parameters ###
-nsteps    = 1000      # Number of timesteps to be done in this run or
+nsteps    = 10      # Number of timesteps to be done in this run or
                      #     number of calculations in quench (0 = keep trying)
 nbrupdate = 2000		# Frequency of updating list of neighbours
 nloops    = 1      # Number of iterative loops around the whole program
