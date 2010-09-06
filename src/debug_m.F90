@@ -23,6 +23,9 @@
 !!
 !!========================================================================
 
+#include "debug.f90"
+
+
 !-------------------------------------------------------------
 !
 ! debug_m
@@ -37,6 +40,11 @@
 !
 !-------------------------------------------------------------
 module debug_m
+
+! Only allow use of this module if global debugging is turned on
+#if GLOBAL_DEBUG
+
+    use omp_lib
 
   implicit none
 
@@ -116,5 +124,6 @@ contains
     end do
   end function string_from_integer
 
+#endif
 
 end module debug_m

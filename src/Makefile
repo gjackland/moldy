@@ -45,7 +45,7 @@ MATERIAL= -DIRON_CARBON
 #MATERIAL= -DCDAU  
 
 # Name of the final executable
- EXE=    moldy.exe
+ EXE=    ../build/moldy.exe
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -82,7 +82,7 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
 #OMPFLAGS= -mp
-OMPFLAGS = -fopenmp # For gfortran
+#OMPFLAGS = -fopenmp # For gfortran
 
 #Debugging
 #DEBUGGING= -g -C

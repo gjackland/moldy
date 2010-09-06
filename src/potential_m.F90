@@ -138,12 +138,18 @@ contains
 
     !Embedding function
     pe=0.0d0
+!$OMP PARALLEL DO, &
+!$OMP DEFAULT( NONE ), &
+!$OMP SHARED( simparam, rho, afrho, atomic_number, dafrho ), &
+!$OMP PRIVATE( i ), &
+!$OMP REDUCTION( +:pe )
     do i=1,simparam%nm
        if(rho(i).le.1d-40) cycle 
        afrho(i) = emb(rho(i),atomic_number(i))
        pe = pe+afrho(i)
        dafrho(i)= demb(rho(i),atomic_number(i))
     end do
+!$OMP END PARALLEL DO
     return
   end subroutine embed
 

@@ -9,7 +9,7 @@ title2 = "fe_bcc_101010"
 
 
 ### File names ###
-file_system          = "../system.in/15^3.in"		# File describing atomic positions in system
+file_system          = "../system.in/35^3.in"		# File describing atomic positions in system
 file_textout         = output66.txt     # Standard file for textual output
 file_checkpointread  = chkp_in.dat      # Input checkpoint file
 file_checkpointwrite = chkp_out.dat     # Output checkpoint file
@@ -39,7 +39,7 @@ straintensor_row2 = 0.0 1.000 0.0
 straintensor_row3 = 0.00 0.0 1.000
 
 # Cross-check physical parameters
-nm      = 6750		# Confirm number of particles (needs to be NM * nx * ny * nz )
+nm      = 85750		# Confirm number of particles (needs to be NM * nx * ny * nz )
 nspec   = 1          # Confirm number of distinct species
 
 ### Key simulation parameters ###
@@ -55,7 +55,7 @@ restart   = 0        # Switch defining type of run:
 nprint    = 10      # Frequency of printing of thermodynamic averages
 nchkpt    = 1000     # Frequency with which to checkpoint
 nnbrs     = 150      # Maximum number of neighbours a particle may have
-tjob      = 2000      # Amount of CPU time allowed for the job (in seconds)
+tjob      = 200000      # Amount of CPU time allowed for the job (in seconds)
 tfinalise = 5        # Amount of time needed to write results and run one more
                      #   timestep before the CPU time is up
 iverlet   = 1        # Algorithm choice (0=predictor-corrector, 1=verlet)

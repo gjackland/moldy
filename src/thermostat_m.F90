@@ -131,10 +131,8 @@ contains
     end do
     
     !! calculate tgdot
+    tgdot( :, : ) = 0.0d0
     do i=1,nmat
-       do j=1,nmat
-          tgdot(i,j)=0.0d0
-       end do
        do k=1,nmat
           do j=1,nmat
              tgdot(i,j)=tgdot(i,j)+b0(k,i)*b1(k,j)+b1(k,i)*b0(k,j)

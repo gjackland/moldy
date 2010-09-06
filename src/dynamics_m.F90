@@ -23,6 +23,8 @@
 !!
 !!========================================================================
 
+#include "debug.f90"
+
 !---------------------------------------------------------------------
 !
 !  MOLDY Dynamics module (dynamics_m)
@@ -143,15 +145,26 @@ contains
 
 !$  !!OpenMP reqd (local declarations)
 !$  integer :: neighlc             !< link cell index of the current neighbour
+#if DEBUG_OMP_LOCKS
+!$  integer :: num_locks = 0       !< Keep track of number of lock operations
+#endif
+#if DEBUG_OMP_TIMING
+!$  integer     :: thread_num      !< The current thread's id
+!$  real        :: start_time      !< Start times array for threads
+#endif
 
     !! update module copy of simulation parameters
     simparam=get_params()
-    
- 
+
+#if DEBUG_OMP_LOCKS
+!$  num_locks = 0
+#endif    
+
     !! initialise variables
     ke=0.0d0
     bonde=0.0d0
     tp(:,:)=0.0d0
+    tg(:,:)=0.0d0
     
      !! initialise forces
     do i=1,simparam%nm
@@ -162,14 +175,11 @@ contains
     
     !! compute metric tensor
     call pr_get_metric_tensor
-
    
     !! increment neighbour list update counter and update if necessary
     simparam%ntc = simparam%ntc + 1
 
     call set_params(simparam)
-
-
 
     if(simparam%ntc.eq.1) then
        call update_neighbourlist
@@ -181,14 +191,11 @@ contains
     end if
     
     !! set rho(i) and related quantities required for the finnis-sinclair potential
-     call rhoset
+    call rhoset
      
     call embed(pe)    
     
     do i=1,nmat
-       do j=1,nmat
-          tg(i,j)=0.0
-       end do
        do k=1,nmat
           do j=1,nmat
              tg(i,j)=tg(i,j)+b0(k,i)*b0(k,j)
@@ -196,18 +203,25 @@ contains
        end do
     end do
 
-! (27/04/2010) Martin Uhrin: I think the OpenMP spec says that you can't have a variable in both PRIVATE and in REDUCTION
-! even though these are PRIVATE variables during the loop this is a special case handled by the REDUCTION keyword
-! I've also changed the default to none to help track down bugs.
 !$OMP PARALLEL PRIVATE(neighlc,i,j,fxi,fyi,fzi,nlist_ji,dx,dy,dz,r,pp,fpp,fcp,fp,rxij,ryij,rzij,ddfx,ddfy,ddfz), &
+#if DEBUG_OMP_TIMING
+!$OMP PRIVATE( thread_num, start_time ), &
+#endif
 !$OMP DEFAULT(NONE), &
-!$OMP SHARED( simparam, numn, nlist, x0, y0, z0, atomic_number, dafrho, b0, ic, lc_lock, fx, fy, fz ), &
+!$OMP SHARED( simparam, numn, nlist, x0, y0, z0, atomic_number, dafrho, b0, ic, lc_lock, fx, fy, fz, tc ), &
+#if DEBUG_OMP_LOCKS
+!$OMP REDUCTION(+:num_locks), &
+#endif
 !$OMP REDUCTION(+:pe,tp)
+
+#if DEBUG_OMP_TIMING
+!$  thread_num = omp_get_thread_num()
+!$  start_time = omp_get_wtime()
+#endif
+
 !$ neighlc=0 !!(null value = neighbour link-cell is not set)
 
 !$OMP DO
-
-
     !! calculate force on particles and their neighbours
     particleloop: do i=1,simparam%nm
        
@@ -274,6 +288,9 @@ contains
 !$   end if
 !$   neighlc=ic(nlist_ji)  !!set neighlc to the current link-cell
 !$   call omp_set_lock(lc_lock(neighlc))
+#if DEBUG_OMP_LOCKS
+!$   num_locks = num_locks + 1
+#endif
 !$ end if
           
           !! update force of particle's neighbour
@@ -295,6 +312,9 @@ contains
 !$  call omp_unset_lock(lc_lock(neighlc))
 !$  neighlc=ic(i)  !!set neighlc to the current link-cell
 !$  call omp_set_lock(lc_lock(neighlc))
+#if DEBUG_OMP_LOCKS
+!$  num_locks = num_locks + 1
+#endif
 !$ end if
 
 
@@ -308,11 +328,19 @@ contains
 
 !$OMP END DO NOWAIT
 
-
-
 !$  !! release all locks
 !$  call omp_unset_lock(lc_lock(neighlc))
-!$OMP END PARALLEL
+
+#if DEBUG_OMP_TIMING
+!$  write(*,*) "Thread ", thread_num, " time: ", omp_get_wtime() - start_time
+#endif
+
+! The fist thread to finish the loop above can get on with the next task
+!$OMP SINGLE
+
+#if DEBUG_OMP_LOCKS
+    write(*,*)"Num locks: ", num_locks
+#endif
 
     !! calculate tc
     tc(1,1)=b0(2,2)*b0(3,3)-b0(2,3)*b0(3,2)
@@ -328,13 +356,24 @@ contains
     
     call kinten
     
+#if DEBUG_OMP_TIMING
+!$  write(*,*) "Thread ", thread_num, " time: ", omp_get_wtime() - start_time
+#endif
+
+!$OMP END SINGLE
+
+
+!$OMP END PARALLEL
+! Can't include the following in the parallel section as it depends
+! on the completion of the force loop for tp
+   
     !! force on the box from kinetic term, and external pressure
     do i=1,nmat
        do j=1,nmat
           fb(i,j)=tk(i,j)+tp(i,j)-simparam%press*tc(i,j)
        end do
     end do
-    
+
 !!$  !! Optional for debug purposes (efs.out)
 !!$  !! Write out energy, forces and stress to file (sanity check)
 !!$  call write_energy_forces_stress()
@@ -418,6 +457,7 @@ contains
 
     real(kind_wp) :: dt, sxi,syi,szi
     integer :: i
+    
     !! half time step on velocities
     !! v(t+dt/2) = v(t) + a(t) dt/2
     simparam=get_params()
@@ -440,12 +480,12 @@ contains
     if(simparam%ivol.lt.1) then 
       b1 = b1 + b2*0.5d0 
       b0 = b0 + b1
-    endif 
+    endif
 
     !! second half time step on velocities (with updated forces)
     !! v(t+dt) = v(t+dt/2) + a(t+dt) dt/2
       call force
-  
+
      tgid=get_tgid()
 
      if(simparam%ivol.lt.1) then 
@@ -694,18 +734,30 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
     integer ::  nlist_ji              !< scalar neighbour index
     real(kind_wp) :: r                !< real spatial particle separation
     real(kind_wp) :: dx, dy, dz       !< fractional separation components
+    real(kind_wp) :: rho_tmp          !< Temporary accumulator for rho
+    
+!$  !!OpenMP reqd (local declarations)
+!$  integer :: neighlc             !< link cell index of the current neighbour
 
     !get params
     simparam=get_params()
 
     !! set rho to zero
-    rho(:)=0.0
+    rho(:)=0.0d0
 
     !! calculate rho
-    rhocalc: do i=1,simparam%nm
+    
+!$OMP PARALLEL PRIVATE( neighlc, i, j, nlist_ji, r, dx, dy, dz, rho_tmp ), &
+!$OMP DEFAULT(NONE), &
+!$OMP SHARED(nlist, atomic_number, ic, simparam, numn, x0, y0, z0, lc_lock, rho )
 
-       !! cycle if i has no neighbours
-       if(numn(i).eq.0) cycle rhocalc
+!$  neighlc = 0
+
+!$OMP do
+    rhocalc: do i=1,simparam%nm
+       
+       ! Reset my temporary rho accumulator
+       rho_tmp = 0.d0
 
        !!loop through neighbours of i     
        do j=1,numn(i)        
@@ -719,13 +771,39 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
           dz=z0(i)-z0(nlist_ji)
 
           call pr_get_realsep_from_dx(r,dx,dy,dz)
-
-          !! cohesive potential phi at r
-          rho(i) =  rho(i) + phi(r,atomic_number(i),atomic_number(nlist_ji))
+          
+!$ !! set/reset region locks when changing neighbour link cell
+!$ if (ic(nlist_ji).ne.neighlc)then
+!$   if(neighlc.gt.0)then !!unset old neighbour link-cell
+!$     call omp_unset_lock(lc_lock(neighlc))
+!$   end if
+!$   neighlc=ic(nlist_ji)  !!set neighlc to the current link-cell
+!$   call omp_set_lock(lc_lock(neighlc))
+!$ end if
+          
           rho(nlist_ji) =  rho(nlist_ji) + phi(r,atomic_number(nlist_ji),atomic_number(i))
+          
+          ! Update my own temporary accumulator
+          rho_tmp = rho_tmp + phi(r,atomic_number(i),atomic_number(nlist_ji))
+       
        end do
+          
+!$ !! set/reset region locks when updating own particle
+!$ if (ic(i).ne.neighlc)then
+!$  call omp_unset_lock(lc_lock(neighlc))
+!$  neighlc=ic(i)  !!set neighlc to the current link-cell
+!$  call omp_set_lock(lc_lock(neighlc))
+!$ end if
+
+        !! cohesive potential phi at r
+        rho(i) =  rho(i) + rho_tmp
 
     end do rhocalc
+!$OMP END DO NOWAIT
+
+!$  !! release all locks
+!$  call omp_unset_lock(lc_lock(neighlc))
+!$OMP END PARALLEL
 
 
     return
@@ -846,7 +924,16 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
     !! update box volume
     call pr_get_metric_tensor
 
-
+    !! vol*inv(b0)
+    b0_xxdet=(b0(2,2)*b0(3,3)-b0(2,3)*b0(3,2))/vol
+    b0_xydet=(b0(2,3)*b0(3,1)-b0(3,3)*b0(2,1))/vol
+    b0_xzdet=(b0(2,1)*b0(3,2)-b0(3,1)*b0(2,2))/vol
+    b0_yxdet=(b0(3,2)*b0(1,3)-b0(1,2)*b0(3,3))/vol
+    b0_yydet=(b0(1,1)*b0(3,3)-b0(1,3)*b0(3,1))/vol
+    b0_yzdet=(b0(3,1)*b0(1,2)-b0(1,1)*b0(3,2))/vol
+    b0_zxdet=(b0(1,2)*b0(2,3)-b0(2,2)*b0(1,3))/vol
+    b0_zydet=(b0(1,3)*b0(2,1)-b0(1,1)*b0(2,3))/vol
+    b0_zzdet=(b0(1,1)*b0(2,2)-b0(1,2)*b0(2,1))/vol
 
     do i=1,simparam%nm
 
@@ -860,17 +947,6 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
        fxip=2.0d0*x2(i)+sxi
        fyip=2.0d0*y2(i)+syi
        fzip=2.0d0*z2(i)+szi
-
-       !! vol*inv(b0)
-       b0_xxdet=(b0(2,2)*b0(3,3)-b0(2,3)*b0(3,2))/vol
-       b0_xydet=(b0(2,3)*b0(3,1)-b0(3,3)*b0(2,1))/vol
-       b0_xzdet=(b0(2,1)*b0(3,2)-b0(3,1)*b0(2,2))/vol
-       b0_yxdet=(b0(3,2)*b0(1,3)-b0(1,2)*b0(3,3))/vol
-       b0_yydet=(b0(1,1)*b0(3,3)-b0(1,3)*b0(3,1))/vol
-       b0_yzdet=(b0(3,1)*b0(1,2)-b0(1,1)*b0(3,2))/vol
-       b0_zxdet=(b0(1,2)*b0(2,3)-b0(2,2)*b0(1,3))/vol
-       b0_zydet=(b0(1,3)*b0(2,1)-b0(1,1)*b0(2,3))/vol
-       b0_zzdet=(b0(1,1)*b0(2,2)-b0(1,2)*b0(2,1))/vol
 
        !! force components
        fxi=b0_xxdet*fxip+b0_xydet*fyip+b0_xzdet*fzip

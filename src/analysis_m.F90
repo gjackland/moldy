@@ -286,8 +286,8 @@ contains
        end do
        write(unit_stdout,8)i,(tg(j,i),j=1,nmat),(b0(j,i),j=1,nmat)
     end do
-8   format('I=',I3,T7,'MEAN VALUE:',T27,3E17.10,/ &
-         & ' ',T7,'INSTANTANEOUS VALUE:',T27,3E17.10)
+8   format('I=',I3,T7,'MEAN VALUE:',T27,3E18.10,/ &
+         & ' ',T7,'INSTANTANEOUS VALUE:',T27,3E18.10)
 
     write(unit_stdout,9)x0(1),y0(1),z0(1),x1(1),y1(1),z1(1)
 9   format('Atom 1 Trace: ',6E17.8)
