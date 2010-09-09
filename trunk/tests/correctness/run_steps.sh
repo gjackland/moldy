@@ -9,7 +9,7 @@
 ## File/directory settings ##
 
 readonly tools_reldir="../../tools"			# Path to directory where all the tools binaries are stored
-readonly moldy_exe="../../build/moldy.FeC"		# The moldy binary to use for running the sim, must be compiled for right potential
+readonly moldy_exe="../../build/moldy.linkup.FeC"		# The moldy binary to use for running the sim, must be compiled for right potential
 readonly reference_dir="../reference"			# Directory containing directories of reference results
 readonly test_dirs=(`find $reference_dir/* -maxdepth 1 -type d | sed "s_${reference_dir}/__"`)	# Get all the test directories
 readonly system_in_token="file_system"
@@ -30,21 +30,21 @@ else
 fi
 
 ## Run settings ##
-declare -ir sig_digits=11	# Results have to agree to this many significant digits
-readonly num_threads=(8)	# OMP_NUM_THREADS numbers to use
+declare -ir sig_digits=10	# Results have to agree to this many significant digits
+readonly num_threads=(10)	# OMP_NUM_THREADS numbers to use
 
 # The command to comare two files
 readonly compare="java -classpath $tools_dir:$tools_dir/args4j.jar Compare -d $sig_digits"
 
 # Declare variables we will use
 
-echo ${test_dirs[*]}
+echo "Reference tests: ${test_dirs[*]}"
 
 for test_dir in ${test_dirs[@]}
 do
 
 	echo "Processing reference test $test_dir"
-	echo "$reference_dir/${test_dir}${params_file}"
+	echo "$reference_dir/${test_dir}/${params_file}"
 
 	if [ ! -f "${reference_dir}/${test_dir}/${params_file}" ]; then
 		echo "Skipping test $test, $params_file does not exist"

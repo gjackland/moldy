@@ -1,1 +1,2 @@
-  STRUCTURE READ IN        16000  BASIS ATOMS;           1  CELLS;       16000   ATOMS.
+  STRUCTURE READ IN         16000  BASIS ATOMS;            1  CELLS; 
+        16000   ATOMS.

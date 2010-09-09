@@ -97,7 +97,7 @@ module params_m
                              !!  0 => new coordinates
                              !! -1 => old coordinates, new velocities 
                              !!  1 => old coordinates, old velocities
-     real(kind_wp) :: nose=0.!< Softness of damping force in the Nose thermostat 
+     real(kind_wp) :: nose=0.0 !< Softness of damping force in the Nose thermostat 
 
      logical :: alternate_quench_md=.false. !< Alternate Quench and MD on successive loops
 
@@ -110,7 +110,9 @@ module params_m
 
      logical :: dumpx1=.False. !< Logical variable determining whether output is written to stream NTAPE.
                          !! If T (true) the output file can get very big.
-
+                         
+     logical :: write_rdf=.false.    !< Write the rdf function to 'rdf.dat' at the
+                                     !< end of the simulation (time consuming!)
 
      !!timing variables
      real(kind_wp) :: tjob      !< Amount of CPU time allowed for the job
@@ -200,7 +202,7 @@ contains
     integer, intent(in) :: iunit            !< unit input file is open on
     integer, intent(out) :: ierror          !< -2=unrecognised,-1=malformed,1=EOF,0=ok
     !!routine parameters (saved)
-    integer, parameter :: numkeys=45  !< increase numkeys when adding keywords
+    integer, parameter :: numkeys=46  !< increase numkeys when adding keywords
     character(len=50), save  :: key(numkeys)!< array of registered keys (hardcoded)
     integer, save :: keylength(numkeys)     !< array of registered key lengths
     logical, save :: initialised=.false.    !< flag to perform one-off initialisation
@@ -265,6 +267,7 @@ contains
        key(43)='file_dumpx1'
        key(44)='tempsp'
        key(45)='zlayer'
+       key(46)='write_rdf'
 
        !!adjust, set lowercase, and measure the length of registered keys
        do i=1,numkeys
@@ -517,6 +520,10 @@ contains
     case(45) !'zlayer'
        read(inputstring(eqindex+1:),*)  simparam%zlayer
        write(0,*) "zlayer = ", simparam%zlayer
+
+    case(46) !'write_rdf'
+       read(inputstring(eqindex+1:),*) simparam%write_rdf
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%write_rdf
 
     case default
        write(0,*) "NOT RECOGNISED"

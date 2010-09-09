@@ -17,10 +17,10 @@ fi
 
 old_value=`grep -m 1 "$param_token" $params_file | grep -Eo "=[[:blank:]]*[^[:blank:]]+"`
 
-echo "Old value is $old_value"
+echo "Changing $param_token $old_value to $param_value"
 
 if [ -n "$old_value" ]; then
-	sed s/"$old_value"/"= $param_value"/ $params_file > tmpfile && mv tmpfile $params_file
+	sed -e "s/\(nbrupdate[[:blank:]]*=[[:blank:]]*\)[^[:blank:]]*\([[:blank:]]*#*.*\)/\1${param_value}\2/" $params_file > tmpfile && mv tmpfile $params_file
 else
 	# The token wasn't found so just add the parameter at the end of the file
 	echo -e "$param_token\t= $param_value" >> $params_file
