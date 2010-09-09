@@ -138,7 +138,7 @@ contains
 
     !Embedding function
     pe=0.0d0
-!$OMP PARALLEL DO, &
+!$OMP PARALLEL DO &
 !$OMP DEFAULT( NONE ), &
 !$OMP SHARED( simparam, rho, afrho, atomic_number, dafrho ), &
 !$OMP PRIVATE( i ), &

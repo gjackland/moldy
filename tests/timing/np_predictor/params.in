@@ -1,0 +1,167 @@
+#
+# MOLDY key-value pair input file format
+#
+
+
+# Two title strings - up to 72 characters in length (and use " " marks)
+title1 = "Input to MOLDY as modified for F90 on Martensite (4x QuadCore Xeon)"
+title2 = "fe_bcc_101010"
+
+
+### File names ###
+file_system          = "../system.in/25^3.in"		# File describing atomic positions in system
+file_textout         = output66.txt     # Standard file for textual output
+file_checkpointread  = chkp_in.dat      # Input checkpoint file
+file_checkpointwrite = chkp_out.dat     # Output checkpoint file
+file_dumpx1          = dumpx1.dat       # large dump datafile (each iteration for movies etc)
+### Key physical parameters ###
+boxmass = 50.        # Mass of the box in units of A.M.U. per constituent particle
+deltat  = 1.0d0       # Timestep in fS
+rpad    = 1.0d0      # Padding thickness over potential cutoff (for link cell)
+temprq  = 600.d0     # Required temperature in the MD in Kelvin
+                     #   (note that the program puts all the energy into
+                     #   kinetic modes initially. Equipartition with potential
+                     #   modes then occurs, so for initialisation TEMPRQ should
+                     #   be double what you want)
+press   = 0.1        # Required external pressure in GPa
+ivol    = 0          # Switch between constant pressure(0), constant volume(1),
+                     #   free-surface-on-z, constant-volume-on-x&y (2), cluster (3),
+                     #   grain boundary (cp-on-z, cv-on-xy) (4)
+iquen   = 0          # Switch between Molecular Dynamics(0) and Molecular Statics(1)
+nose    = 0			# Softness of damping force in the Nose thermostat
+dsp     = 0.0d0      # Random displacement from input particle positions (in Angstroms)
+
+### Strain tensor in one unrolled 9 element value
+straintensor      = 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0
+### - or alternatively - this can be 3 elements each in 3 of rows (as you would write it)
+straintensor_row1 = 1.000 0.0 0.0
+straintensor_row2 = 0.0 1.000 0.0
+straintensor_row3 = 0.00 0.0 1.000
+
+# Cross-check physical parameters
+nm      = 31250		# Confirm number of particles (needs to be NM * nx * ny * nz )
+nspec   = 1          # Confirm number of distinct species
+
+### Key simulation parameters ###
+nsteps    = 1000      # Number of timesteps to be done in this run or
+                     #     number of calculations in quench (0 = keep trying)
+nbrupdate = 2000		# Frequency of updating list of neighbours
+nloops    = 1      # Number of iterative loops around the whole program
+                     #     (useful for random alloys)
+restart   = 0        # Switch defining type of run:
+                     #      0 => new coordinates
+                     #     -1 => old coordinates, new velocities
+                     #      1 => old coordinates, old velocities
+nprint    = 10      # Frequency of printing of thermodynamic averages
+nchkpt    = 1000     # Frequency with which to checkpoint
+nnbrs     = 150      # Maximum number of neighbours a particle may have
+tjob      = 200000      # Amount of CPU time allowed for the job (in seconds)
+tfinalise = 5        # Amount of time needed to write results and run one more
+                     #   timestep before the CPU time is up
+iverlet   = 0        # Algorithm choice (0=predictor-corrector, 1=verlet)
+nlcx      = 3        # Number of link cells to construct in x direction
+nlcy      = 3        # Number of link cells to construct in y direction
+nlcz      = 3        # Number of link cells to construct in z direction
+
+
+### Current state counts - useful for continuing simulations ###
+prevsteps = 0        # Number of timesteps done already (previously)
+lastprint = 0        # Number of timesteps since last printing of run averages
+lastchkpt = 0        # Number of timesteps since last checkpoint
+
+# Logical variable determining whether output is written to
+# stream NTAPE: If T, the output file can get very big.
+dumpx1  = .False.
+uselookup = .true.
+
+###END OF INPUT###
+#
+#
+#  Summary of Subroutines
+#  ----------------------#  
+#        SUBROUTINE FORCE  (called by main)
+#  Runs over all atoms and calculates the force.
+#  
+#        SUBROUTINE RHOSET
+#  Evaluates the argument of the many body part of the potential (rho)
+#  Basically runs over all atoms and calculates a pair potential PHI 
+#  and its derivative DPHI
+#  
+#        SUBROUTINE KINTEN
+#  Evaluates the kinetic energy contribution to the stresses
+#  
+#        SUBROUTINE PREDIC
+#  First part of predictor corrector integrator
+#  
+#        SUBROUTINE MATPRO(N,A,B,C)
+#  Multiply NxN Matrices
+#  
+#        SUBROUTINE INVERT(A,B)
+#  Invert a matrix
+#  
+#        SUBROUTINE CORREC
+#  second  part of predictor corrector integrator
+#  
+#        SUBROUTINE RUNAVS(N1,N2,ND,IQUEN)
+#  Evaluates thermodynamic averages.  May have fallen into disrepair...
+#  
+#        SUBROUTINE SETVEL
+#  Initialises velocities to correct temperature. note, displacements are initialised in GENERAL, and if incompatible the temperature will drift.  There's no easy way to make them compatible!
+#  
+#        SUBROUTINE SCALEV(NOSE)
+#  Rescales the velocitise with a Nose thermostat for constant-T MD
+#  
+#        SUBROUTINE LINKUP
+#  Assigns atoms to link cells, build neighbour lists etc.
+#  
+#        SUBROUTINE RELINK
+#  Re-assigns atoms to link cells, rebuild neighbour lists etc.
+#  
+#        SUBROUTINE CHECKN
+#  Obsolete - finds N nearest neighbours
+#  
+#        SUBROUTINE BIN
+#  Calculates density profile (obsolete)
+#  
+#        SUBROUTINE RDF(LAST)
+#  Generates Radial distribution Function
+#  
+#  	Subroutine AUTO(IFFT) 
+#  
+#  	Builds velocity autocorrelation function (IFFT=0) and
+#  evaluates phonon spectrum (IFFT=1).  Beware - it involves an array of
+#  length the number of timesteps and will crash if there are more than
+#  10000.  Calls to this function are commented out.
+#  
+#        SUBROUTINE PHONDOT(NST)
+#  Projects velocities onto a particular phonon eigenvector (obsolete)
+#  
+#        SUBROUTINE GENERAL
+#  Sets up lattice from fort.19
+#  
+#       SUBROUTINE POTIN
+#  Reads in potential parameters and does sanity checks.  Beware of units!
+#  
+#      SUBROUTINE EMBED(PE)
+#  Deals with the Embedding Function.  In older versions of Moldy the 
+#  Second-Moment sqrt embedding was hard coded
+#  
+#      FUNCTIONS VEE, DVEE, PHI, DPHI, EMB, DEMB
+#  Evalulates the functions for EAM-type potentials.
+#  Would be better to use lookup tables !
+#  
+#         SUBROUTINE QUENCH
+#  Near-independent programme for Conjugate gradients static relaxation
+#  
+#        SUBROUTINE DERIVS(N,X,F,G)
+#  Similar to FORCE - returns forces in appropriate format for VA14AD 
+#  
+#        SUBROUTINE VA14AD/VA14CD
+#  Antedeluvian Conjugate Gradients solver.  Fortran 66 and lots of GOTO
+#  
+#        SUBROUTINE RSTART,        FUNCTION RAND1()
+#  Random number generator.  Used to initialise displacements and velocities - not mission critical!
+#  
+#        SUBROUTINE READIN
+#  Reformatting input and output.  Obsolete.
+#

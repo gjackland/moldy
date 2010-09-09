@@ -33,6 +33,7 @@ module timers_m
 
   !! Public interface
   public :: clock
+  public :: wtime
 
   !!public data (TEMP FOR TIMING PURPOSES ONLY)
   real(kind_wp), public :: omptime=0.
@@ -52,5 +53,13 @@ contains
     end if
     clock=time-firsttime
   end function clock
+  
+  !! Wall clock time
+  function wtime()
+    real( kind_wp ) :: wtime
+    
+    call cpu_time( wtime )
+  
+  end function wtime
 
 end module timers_m

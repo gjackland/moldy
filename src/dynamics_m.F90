@@ -23,8 +23,6 @@
 !!
 !!========================================================================
 
-#include "debug.f90"
-
 !---------------------------------------------------------------------
 !
 !  MOLDY Dynamics module (dynamics_m)
@@ -34,6 +32,9 @@
 !  Contains FORCE routine and forces data.
 !
 !---------------------------------------------------------------------
+
+#include "debug.f90"
+
 module dynamics_m
 
   !! standard module dependencies
