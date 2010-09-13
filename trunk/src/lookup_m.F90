@@ -35,8 +35,19 @@ module lookup_m
   use constants_m
   use particles_m, only : atomic_number
   implicit none
+  
   private
   
+  
+    !! public type
+    public :: lookup_table_1d
+    
+    type lookup_table_1d
+        real( kind_wp ), pointer :: values( : ) => null()
+        real( kind_wp ) :: x_min, x_max, range
+        real( kind_wp ) :: recip_range, recip_step, recip_nlookup   ! Recipricals
+        integer         :: nlookup
+    end type lookup_table_1d
 
   !! public interface
 !  public :: calculate_lookup_table_veephi
@@ -70,6 +81,7 @@ module lookup_m
   interface calculate_lookup_table
      module procedure calculate_lookup_table_veephi
      module procedure calculate_lookup_table_emb
+     module procedure calculate_lookup_table_1d
   end interface
   !----------------------------------------------------------------------------
   !  get_value_from_lookup_table
@@ -77,6 +89,7 @@ module lookup_m
   interface get_value_from_lookup_table
      module procedure get_value_from_lookup_veephi
      module procedure get_value_from_lookup_emb
+     module procedure get_value_from_lookup_1d
   end interface
   !----------------------------------------------------------------------------
   !  free_lookup_table
@@ -84,9 +97,55 @@ module lookup_m
   interface free_lookup_table
      module procedure free_lookup_table2
      module procedure free_lookup_table3
+     module procedure free_lookup_table_1d
   end interface
 
 contains
+
+  !----------------------------------------------------------------------------
+  !
+  !  calculate_lookup_table_1d
+  !
+  !  allocate and calculate lookup table for 1d function
+  !
+  !----------------------------------------------------------------------------
+  subroutine calculate_lookup_table_1d( lookup_table, src_function, dumr_min, dumr_max, dumnlookup )
+    !! Argument variables
+    type( lookup_table_1d ), intent( inout ) :: lookup_table      !! The lookup table being calculated
+    real( kind_wp )                :: src_function                 !! external function
+    real( kind_wp ), intent( in )   :: dumr_min, dumr_max           !! min and max in range
+    integer, intent( in ) :: dumnlookup                             !! number of samples in table
+    external src_function
+    !! Local variables
+    integer :: i        !! loop variables
+    real( kind_wp ) :: r  !! evaluation position
+
+    if(.not.associated( lookup_table%values ) ) then
+    
+        lookup_table%x_min      = dumr_min
+        lookup_table%x_max      = dumr_max
+        lookup_table%nlookup    = dumnlookup
+
+       !! allocate storage space for values array
+       allocate( lookup_table%values( 0:lookup_table%nlookup ), stat=istat )
+       if(istat.ne.0)stop 'ALLOCATION ERROR (calculate_lookup_table_1d) - Possibly out of memory.'
+       
+       !! calculate module private quantities, step, range, and reciprocals
+       lookup_table%range           = lookup_table%x_max - lookup_table%x_min
+       lookup_table%recip_range     = 1._kind_wp / lookup_table%range
+       lookup_table%recip_nlookup   = 1._kind_wp / lookup_table%nlookup
+       lookup_table%recip_step      = lookup_table%nlookup / lookup_table%range
+
+
+        !! populate lookup table
+        do i = 0, lookup_table%nlookup
+            r = r_min + i * lookup_table%range * lookup_table%recip_nlookup
+            lookup_table%values( i )= src_function( r )
+        enddo
+       
+    end if
+
+  end subroutine calculate_lookup_table_1d
 
   !----------------------------------------------------------------------------
   !
@@ -187,6 +246,52 @@ contains
     end if
 
   end subroutine calculate_lookup_table_emb
+  
+  !----------------------------------------------------------------------------
+  !
+  !  get_value_from_lookup_1d
+  !
+  !  retrieve a value base on a lookup table (linearly interpolate)
+  !
+  !----------------------------------------------------------------------------
+  function get_value_from_lookup_1d( lookup_table, r )
+    !Argument variables
+    real( kind_wp ) :: get_value_from_lookup_1d !! function return value
+    type( lookup_table_1d ), intent( in ) :: lookup_table     !! dummy pointer to table
+    real( kind_wp ), intent( in ) :: r            !! evaluation point
+    
+    !Local variables
+    integer :: indx_low                 !! lower index of the adjacent table entry
+    real( kind_wp ) :: r_low              !! r value of lower adjacent table entry
+    real( kind_wp ) :: dr                 !! proportional separation
+    real( kind_wp ) :: r_min_local        !! local copy of module private r_min (for efficiency)
+
+    !! if r is out of range, use value at largest r in range (avoid array overrun)
+    if( r .ge. lookup_table%x_max ) then
+       get_value_from_lookup_1d = lookup_table%values( lookup_table%nlookup )
+    else
+
+       !!copy module private r_min to rmin_local for possible efficiency
+       r_min_local = lookup_table%x_min
+
+       !! indices of the lookup table between which to interpolate
+       indx_low = int( lookup_table%nlookup * ( r - r_min_local ) * lookup_table%recip_range )
+       
+       !! calculate r value as represented by adjacent entries
+       r_low = r_min_local + lookup_table%range * lookup_table%recip_nlookup * indx_low
+       
+       !!relative separation from r
+       dr=( r - r_low ) * lookup_table%recip_step
+       
+       !! Interpolate between lookup table array values and return
+       get_value_from_lookup_1d = &
+            lookup_table%values( indx_low ) * ( 1._kind_wp - dr ) + &
+            lookup_table%values( indx_low + 1 ) * dr
+
+
+    end if
+
+    end function get_value_from_lookup_1d
 
 
   !----------------------------------------------------------------------------
@@ -215,7 +320,7 @@ contains
        get_value_from_lookup_veephi=lookup_table(nlookup,in1,in2)
     else
 
-       !!copy module private r_min ro rmin_local for possible efficiency
+       !!copy module private r_min to rmin_local for possible efficiency
        r_min_local=r_min
 
        !! indices of the lookup table between which to interpolate
@@ -300,6 +405,7 @@ contains
        nullify(lookup_table)
     end if
   end subroutine free_lookup_table2
+  
   subroutine free_lookup_table3(lookup_table)
     real(kind_wp), pointer :: lookup_table(:,:,:) !! dummy table pointer
     if(associated(lookup_table))then
@@ -308,6 +414,15 @@ contains
     end if
   end subroutine free_lookup_table3
 
+    subroutine free_lookup_table_1d( lookup_table )
+        type( lookup_table_1d ) :: lookup_table
+        
+        if( associated( lookup_table%values ) ) then
+            deallocate( lookup_table%values )
+            nullify( lookup_table%values )
+        end if
+        
+    end subroutine free_lookup_table_1d
 
 
 end module lookup_m

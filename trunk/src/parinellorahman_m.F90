@@ -116,7 +116,7 @@ module parinellorahman_m
 !!$  real (kind_wp), dimension(ndim, ndim) :: hdot_  ! 'velocity'
 !!$  real (kind_wp)                        :: w_     ! mass
 
-  type(simparameters), private, save :: simparam
+  type( simparameters ), private, save :: simparam
 
 contains
 
@@ -173,7 +173,7 @@ contains
     ryij=b0(2,1)*dx+b0(2,2)*dy+b0(2,3)*dz
     rzij=b0(3,1)*dx+b0(3,2)*dy+b0(3,3)*dz
     rsq=rxij*rxij+ryij*ryij+rzij*rzij
-    r = sqrt(rsq)
+    r =  sqrt(rsq)
     
   end subroutine pr_get_realsep_from_dx
   
@@ -218,6 +218,6 @@ contains
     call matrix_multiply(nmat,tginv,tgdot,tgid)
     
   end subroutine pr_get_tgid
-  
-  
+
+    
 end module parinellorahman_m
