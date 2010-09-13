@@ -1,0 +1,855 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 35.29    580.78   580.78                             _mcount2
+ 21.86    940.48   359.70 5534948125     0.00     0.00  parinellorahman_m_pr_get_realsep_from_dx_
+  8.52   1080.74   140.26                             __rouexit
+  8.48   1220.29   139.55 5387857500     0.00     0.00  lookup_m_get_value_from_lookup_veephi_
+  4.58   1295.73    75.44      238     0.32     1.27  dynamics_m_force_
+  4.12   1363.55    67.82        1    67.82   306.74  analysis_m_rdf_
+  3.35   1418.67    55.12                             f90io_close
+  2.04   1452.28    33.61                             __mth_i_idnint
+  1.59   1478.53    26.25                             __rouinit
+  1.36   1500.83    22.30      238     0.09     0.34  dynamics_m_rhoset_
+  1.24   1521.21    20.38        2    10.19    10.23  lookup_m_calculate_lookup_table_emb_
+  1.02   1537.98    16.76 1795951500     0.00     0.00  potential_m_phi_
+  0.86   1552.14    14.16 40818000     0.00     0.00  lookup_m_get_value_from_lookup_emb_
+  0.70   1563.69    11.55                             __pgio_set_errno
+  0.69   1575.07    11.38 897977500     0.00     0.00  potential_m_dvee_
+  0.62   1585.24    10.17 1795951000     0.00     0.00  potential_m_dphi_
+  0.51   1593.67     8.43                             __mth_i_dint
+  0.45   1601.02     7.35                             __pgio_errno
+  0.38   1607.32     6.30                             __pgio_environ
+  0.37   1613.48     6.15 897977500     0.00     0.00  potential_m_vee_
+  0.34   1619.08     5.60                             __lookup_m_get_value_from_lookup_veephi_END
+  0.28   1623.71     4.63 20409000     0.00     0.00  potential_m_emb_
+  0.27   1628.12     4.40        1     4.40     4.40  parinellorahman_m_cleanup_parinellorahman_m_
+  0.27   1632.52     4.40                             __parinellorahman_m_cleanup_parinellorahman_m_END
+  0.11   1634.40     1.88      237     0.01     1.79  dynamics_m_velocityverlet_
+  0.10   1636.10     1.71      476     0.00     0.00  parinellorahman_m_pr_get_metric_tensor_
+  0.07   1637.18     1.07                             __lookup_m_calculate_lookup_table_emb_END
+  0.05   1638.04     0.87                             potential_m_potential_set_exact_
+  0.05   1638.86     0.82        2     0.41     2.32  neighbourlist_m_update_neighbourlist_
+  0.04   1639.59     0.73                             __potential_m_dvee_END
+  0.04   1640.32     0.73                             __potential_m_phi_END
+  0.04   1641.00     0.68      237     0.00     0.00  dynamics_m_update_therm_avs_
+  0.04   1641.64     0.64                             __parinellorahman_m_pr_get_realsep_from_dx_END
+  0.03   1642.14     0.50        1     0.50     0.69  potential_m_cleanup_potential_lookups_
+  0.03   1642.62     0.48      238     0.00     0.00  thermostat_m_kinten_
+  0.03   1643.08     0.46                             __potential_m_vee_END
+  0.02   1643.46     0.38                             __potential_m_dphi_END
+  0.02   1643.80     0.34  3778001     0.00     0.00  iron_carbon_vee_src_
+  0.01   1644.03     0.23                             __potential_m_cleanup_potential_lookups_END
+  0.01   1644.25     0.23                             __potential_m_potential_set_exact_END
+  0.01   1644.44     0.18        2     0.09     0.09  lookup_m_free_lookup_table2_
+  0.01   1644.62     0.18                             dynamics_m_write_energy_forces_stress_
+  0.01   1644.77     0.14 20409000     0.00     0.00  potential_m_demb_
+  0.01   1644.91     0.14      238     0.00     0.00  potential_m_embed_
+  0.01   1645.02     0.12        1     0.12     0.78  dynamics_m_energy_calc_
+  0.00   1645.10     0.08 49159658     0.00     0.00  iron_carbon_xh0_
+  0.00   1645.19     0.08     5001     0.00     0.00  iron_carbon_demb_src_
+  0.00   1645.27     0.08                             pgio_ecvt
+  0.00   1645.33     0.06        3     0.02     0.02  iron_carbon_get_supported_potential_range_
+  0.00   1645.38     0.05                             __lookup_m_get_value_from_lookup_emb_END
+  0.00   1645.42     0.04                             cvtp_cp
+  0.00   1645.45     0.03        1     0.03     0.03  potential_m_potin_
+  0.00   1645.47     0.02                             __dynamics_m_rhoset_END
+  0.00   1645.50     0.02                             cvtp_round
+  0.00   1645.52     0.02        1     0.02   755.04  MAIN_
+  0.00   1645.53     0.01                             __c_mzero8
+  0.00   1645.54     0.01                             fw_writenum
+  0.00   1645.56     0.01                             io_m_
+  0.00   1645.57     0.01                             __iron_carbon_demb_src_END
+  0.00   1645.58     0.01                             __iron_carbon_xh0_END
+  0.00   1645.59     0.01                             __potential_m_demb_END
+  0.00   1645.60     0.01                             __potential_m_emb_END
+  0.00   1645.61     0.01      238     0.00     0.00  matrix_m_matrix_invert_
+  0.00   1645.62     0.01        2     0.01     0.01  linkcell_m_linkup_
+  0.00   1645.63     0.01        1     0.01     0.01  thermostat_m_setvel_
+  0.00   1645.64     0.01                             __hpfio_ecvt
+  0.00   1645.65     0.01                             __hpfio_fcvt
+  0.00   1645.66     0.01                             __hpfio_fmt_f
+  0.00   1645.67     0.01                             __hpfio_strtod
+  0.00   1645.68     0.01                             _init
+  0.00   1645.69     0.01                             fw_write_record
+  0.00   1645.70     0.01                             __dynamics_m_update_therm_avs_END
+  0.00   1645.71     0.01                             __hpfio_chk_f
+  0.00   1645.72     0.01                             fw_OZwritenum
+  0.00   1645.72     0.01                             fw_write_item
+  0.00   1645.73     0.01                             utilityfns_m_shellsort_
+  0.00   1645.74     0.01                             dynamics_m_predic_
+  0.00   1645.74     0.01                             iron_carbon_
+  0.00   1645.74     0.00     1704     0.00     0.00  params_m_get_params_
+  0.00   1645.75     0.00                             __utilityfns_m_shellsort_END
+  0.00   1645.75     0.00        1     0.00     0.00  params_m_read_params_
+  0.00   1645.75     0.00                             alloc_fpbuf
+  0.00   1645.76     0.00                             fw_OZbyte
+  0.00   1645.76     0.00      715     0.00     0.00  params_m_set_params_
+  0.00   1645.76     0.00                             params_m_
+  0.00   1645.76     0.00                             __params_m_get_params_END
+  0.00   1645.76     0.00                             __params_m_set_params_END
+  0.00   1645.76     0.00                             __dynamics_m_velocityverlet_END
+  0.00   1645.76     0.00                             __dynamics_m_energy_calc_END
+  0.00   1645.76     0.00   514500     0.00     0.00  random_m_rand1_
+  0.00   1645.76     0.00     5001     0.00     0.00  iron_carbon_dphi_src_
+  0.00   1645.76     0.00     5001     0.00     0.00  iron_carbon_dvee_src_
+  0.00   1645.76     0.00     5001     0.00     0.00  iron_carbon_emb_src_
+  0.00   1645.76     0.00     5001     0.00     0.00  iron_carbon_phi_src_
+  0.00   1645.76     0.00      239     0.00     0.00  timers_m_clock_
+  0.00   1645.76     0.00      238     0.00     0.00  analysis_m_get_thermodynamic_sums_
+  0.00   1645.76     0.00      238     0.00     0.00  matrix_m_matrix_multiply_
+  0.00   1645.76     0.00      238     0.00     0.00  thermostat_m_set_temp_
+  0.00   1645.76     0.00      237     0.00     0.00  analysis_m_set_thermodynamic_sums_
+  0.00   1645.76     0.00      237     0.00     0.00  parinellorahman_m_get_tgid_
+  0.00   1645.76     0.00      237     0.00     0.00  parinellorahman_m_pr_get_tgid_
+  0.00   1645.76     0.00       85     0.00     0.00  utilityfns_m_lcase_
+  0.00   1645.76     0.00       41     0.00     0.00  params_m_readparam_keyvaluepair_
+  0.00   1645.76     0.00       23     0.00     0.00  analysis_m_runavs_
+  0.00   1645.76     0.00       23     0.00     0.00  analysis_m_update_thermodynamic_sums_
+  0.00   1645.76     0.00       23     0.00     0.00  thermostat_m_get_temp_
+  0.00   1645.76     0.00        6     0.00     0.00  utilityfns_m_newunit_
+  0.00   1645.76     0.00        4     0.00     0.00  lookup_m_calculate_lookup_table_veephi_
+  0.00   1645.76     0.00        4     0.00     0.00  lookup_m_free_lookup_table3_
+  0.00   1645.76     0.00        2     0.00     0.00  linkcell_m_get_l0_
+  0.00   1645.76     0.00        2     0.00     0.00  linkcell_m_get_link_
+  0.00   1645.76     0.00        1     0.00     0.00  dynamics_m_cleanup_dynamics_m_
+  0.00   1645.76     0.00        1     0.00     0.00  dynamics_m_init_dynamics_m_
+  0.00   1645.76     0.00        1     0.00     0.00  io_m_read_system_
+  0.00   1645.76     0.00        1     0.00     0.00  io_m_write_textout_header_
+  0.00   1645.76     0.00        1     0.00     0.00  iron_carbon_check_supported_atomic_numbers_
+  0.00   1645.76     0.00        1     0.00     0.00  linkcell_m_cleanup_linkcell_m_
+  0.00   1645.76     0.00        1     0.00     0.00  linkcell_m_init_linkcell_m_
+  0.00   1645.76     0.00        1     0.00     0.00  moldyv2_write_checkpoint_file
+  0.00   1645.76     0.00        1     0.00     0.00  neighbourlist_m_cleanup_neighbourlist_m_
+  0.00   1645.76     0.00        1     0.00     0.00  neighbourlist_m_init_neighbourlist_m_
+  0.00   1645.76     0.00        1     0.00     0.00  parinellorahman_m_init_parinellorahman_m_
+  0.00   1645.76     0.00        1     0.00     0.00  particles_m_cleanup_particles_m_
+  0.00   1645.76     0.00        1     0.00     0.00  particles_m_init_particles_m_
+  0.00   1645.76     0.00        1     0.00     0.00  particles_m_init_species_properties_
+  0.00   1645.76     0.00        1     0.00     0.00  potential_m_check_available_atomic_numbers_
+  0.00   1645.76     0.00        1     0.00     0.00  potential_m_get_available_potential_range_
+  0.00   1645.76     0.00        1     0.00    20.47  potential_m_potential_set_lookup_
+  0.00   1645.76     0.00        1     0.00     0.00  quench_m_cleanup_quench_m_
+  0.00   1645.76     0.00        1     0.00     0.00  quench_m_init_quench_m_
+  0.00   1645.76     0.00        1     0.00     0.00  random_m_rstart_
+  0.00   1645.76     0.00        1     0.00     0.00  thermostat_m_cleanup_thermostat_m_
+  0.00   1645.76     0.00        1     0.00     0.00  thermostat_m_init_thermostat_m_
+  0.00   1645.76     0.00        1     0.00     0.00  thermostat_m_scalev_
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 128 byte(s) for 0.00% of 1645.76 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     46.2    0.00  760.16                 main [1]
+                0.02  755.02       1/1           MAIN_ [2]
+                4.40    0.00       1/1           parinellorahman_m_cleanup_parinellorahman_m_ [28]
+                0.50    0.18       1/1           potential_m_cleanup_potential_lookups_ [36]
+                0.02    0.00       1/3           iron_carbon_get_supported_potential_range_ [52]
+                0.00    0.00       1/476         parinellorahman_m_pr_get_metric_tensor_ [30]
+                0.00    0.00     476/715         params_m_set_params_ [87]
+                0.00    0.00     238/1704        params_m_get_params_ [82]
+                0.00    0.00     237/238         thermostat_m_set_temp_ [102]
+                0.00    0.00     237/237         analysis_m_set_thermodynamic_sums_ [103]
+                0.00    0.00     237/238         analysis_m_get_thermodynamic_sums_ [100]
+                0.00    0.00      23/23          analysis_m_update_thermodynamic_sums_ [108]
+                0.00    0.00       1/1           thermostat_m_cleanup_thermostat_m_ [133]
+                0.00    0.00       1/1           particles_m_cleanup_particles_m_ [125]
+                0.00    0.00       1/1           potential_m_check_available_atomic_numbers_ [128]
+                0.00    0.00       1/1           potential_m_get_available_potential_range_ [129]
+                0.00    0.00       1/1           quench_m_cleanup_quench_m_ [130]
+                0.00    0.00       1/1           linkcell_m_cleanup_linkcell_m_ [119]
+                0.00    0.00       1/1           neighbourlist_m_cleanup_neighbourlist_m_ [122]
+                0.00    0.00       1/1           dynamics_m_cleanup_dynamics_m_ [114]
+-----------------------------------------------
+                0.02  755.02       1/1           main [1]
+[2]     45.9    0.02  755.02       1         MAIN_ [2]
+                1.88  421.74     237/237         dynamics_m_velocityverlet_ [4]
+               67.82  238.92       1/1           analysis_m_rdf_ [6]
+                0.00   20.47       1/1           potential_m_potential_set_lookup_ [14]
+                0.32    0.95       1/238         dynamics_m_force_ [7]
+                0.85    0.00     238/476         parinellorahman_m_pr_get_metric_tensor_ [30]
+                0.12    0.66       1/1           dynamics_m_energy_calc_ [33]
+                0.68    0.00     237/237         dynamics_m_update_therm_avs_ [37]
+                0.39    0.00 15105500/5387857500     lookup_m_get_value_from_lookup_veephi_ [9]
+                0.05    0.00 3776500/897977500     potential_m_dvee_ [19]
+                0.04    0.00 7549000/1795951000     potential_m_dphi_ [20]
+                0.04    0.00       2/3           iron_carbon_get_supported_potential_range_ [52]
+                0.03    0.00       1/1           potential_m_potin_ [55]
+                0.03    0.00 3776500/897977500     potential_m_vee_ [24]
+                0.01    0.00       2/2           linkcell_m_linkup_ [66]
+                0.01    0.00       1/1           thermostat_m_setvel_ [67]
+                0.00    0.01     237/237         parinellorahman_m_pr_get_tgid_ [74]
+                0.00    0.00       1/1           params_m_read_params_ [84]
+                0.00    0.00     513/1704        params_m_get_params_ [82]
+                0.00    0.00    1000/40818000     lookup_m_get_value_from_lookup_emb_ [17]
+                0.00    0.00     500/20409000     potential_m_emb_ [27]
+                0.00    0.00       1/238         matrix_m_matrix_invert_ [65]
+                0.00    0.00    3500/1795951500     potential_m_phi_ [16]
+                0.00    0.00       2/715         params_m_set_params_ [87]
+                0.00    0.00     500/20409000     potential_m_demb_ [47]
+                0.00    0.00  514500/514500      random_m_rand1_ [94]
+                0.00    0.00     239/239         timers_m_clock_ [99]
+                0.00    0.00     237/237         parinellorahman_m_get_tgid_ [104]
+                0.00    0.00      23/23          analysis_m_runavs_ [107]
+                0.00    0.00      23/23          thermostat_m_get_temp_ [109]
+                0.00    0.00       1/1           parinellorahman_m_init_parinellorahman_m_ [124]
+                0.00    0.00       1/1           random_m_rstart_ [132]
+                0.00    0.00       1/1           moldyv2_write_checkpoint_file [121]
+                0.00    0.00       1/238         analysis_m_get_thermodynamic_sums_ [100]
+                0.00    0.00       1/1           linkcell_m_init_linkcell_m_ [120]
+                0.00    0.00       1/1           particles_m_init_particles_m_ [126]
+                0.00    0.00       1/1           thermostat_m_scalev_ [135]
+                0.00    0.00       1/1           quench_m_init_quench_m_ [131]
+                0.00    0.00       1/1           neighbourlist_m_init_neighbourlist_m_ [123]
+                0.00    0.00       1/6           utilityfns_m_newunit_ [110]
+                0.00    0.00       1/1           io_m_read_system_ [116]
+                0.00    0.00       1/1           thermostat_m_init_thermostat_m_ [134]
+                0.00    0.00       1/238         thermostat_m_set_temp_ [102]
+                0.00    0.00       1/1           io_m_write_textout_header_ [117]
+                0.00    0.00       1/1           dynamics_m_init_dynamics_m_ [115]
+                0.00    0.00       1/238         matrix_m_matrix_multiply_ [101]
+-----------------------------------------------
+                                                 <spontaneous>
+[3]     35.3  580.78    0.00                 _mcount2 [3]
+-----------------------------------------------
+                1.88  421.74     237/237         MAIN_ [2]
+[4]     25.7    1.88  421.74     237         dynamics_m_velocityverlet_ [4]
+               75.12  225.54     237/238         dynamics_m_force_ [7]
+               92.64    0.00 3576804000/5387857500     lookup_m_get_value_from_lookup_veephi_ [9]
+               11.33    0.00 894201000/897977500     potential_m_dvee_ [19]
+               10.13    0.00 1788402000/1795951000     potential_m_dphi_ [20]
+                6.13    0.00 894201000/897977500     potential_m_vee_ [24]
+                0.85    0.00     237/476         parinellorahman_m_pr_get_metric_tensor_ [30]
+                0.00    0.00     237/715         params_m_set_params_ [87]
+                0.00    0.00     237/1704        params_m_get_params_ [82]
+-----------------------------------------------
+                0.25    0.00 3773000/5534948125     dynamics_m_energy_calc_ [33]
+                3.82    0.00 58738750/5534948125     neighbourlist_m_update_neighbourlist_ [26]
+               58.36    0.00 897974000/5534948125     dynamics_m_rhoset_ [10]
+               58.36    0.00 897974000/5534948125     dynamics_m_force_ [7]
+              238.92    0.00 3676488375/5534948125     analysis_m_rdf_ [6]
+[5]     21.9  359.70    0.00 5534948125         parinellorahman_m_pr_get_realsep_from_dx_ [5]
+-----------------------------------------------
+               67.82  238.92       1/1           MAIN_ [2]
+[6]     18.6   67.82  238.92       1         analysis_m_rdf_ [6]
+              238.92    0.00 3676488375/5534948125     parinellorahman_m_pr_get_realsep_from_dx_ [5]
+                0.00    0.00       1/6           utilityfns_m_newunit_ [110]
+-----------------------------------------------
+                0.32    0.95       1/238         MAIN_ [2]
+               75.12  225.54     237/238         dynamics_m_velocityverlet_ [4]
+[7]     18.3   75.44  226.49     238         dynamics_m_force_ [7]
+               22.30   58.36     238/238         dynamics_m_rhoset_ [10]
+               58.36    0.00 897974000/5534948125     parinellorahman_m_pr_get_realsep_from_dx_ [5]
+               46.52    0.00 1795948000/5387857500     lookup_m_get_value_from_lookup_veephi_ [9]
+               16.76    0.00 1795948000/1795951500     potential_m_phi_ [16]
+               14.16    0.00 40817000/40818000     lookup_m_get_value_from_lookup_emb_ [17]
+                0.82    3.82       2/2           neighbourlist_m_update_neighbourlist_ [26]
+                4.63    0.00 20408500/20409000     potential_m_emb_ [27]
+                0.48    0.00     238/238         thermostat_m_kinten_ [39]
+                0.14    0.00 20408500/20409000     potential_m_demb_ [47]
+                0.14    0.00     238/238         potential_m_embed_ [48]
+                0.00    0.00     716/1704        params_m_get_params_ [82]
+                0.00    0.00       2/2           linkcell_m_get_l0_ [112]
+                0.00    0.00       2/2           linkcell_m_get_link_ [113]
+-----------------------------------------------
+                                                 <spontaneous>
+[8]      8.5  140.26    0.00                 __rouexit [8]
+-----------------------------------------------
+                0.39    0.00 15105500/5387857500     MAIN_ [2]
+               46.52    0.00 1795948000/5387857500     dynamics_m_force_ [7]
+               92.64    0.00 3576804000/5387857500     dynamics_m_velocityverlet_ [4]
+[9]      8.5  139.55    0.00 5387857500         lookup_m_get_value_from_lookup_veephi_ [9]
+-----------------------------------------------
+               22.30   58.36     238/238         dynamics_m_force_ [7]
+[10]     4.9   22.30   58.36     238         dynamics_m_rhoset_ [10]
+               58.36    0.00 897974000/5534948125     parinellorahman_m_pr_get_realsep_from_dx_ [5]
+-----------------------------------------------
+                                                 <spontaneous>
+[11]     3.3   55.12    0.00                 f90io_close [11]
+-----------------------------------------------
+                                                 <spontaneous>
+[12]     2.0   33.61    0.00                 __mth_i_idnint [12]
+-----------------------------------------------
+                                                 <spontaneous>
+[13]     1.6   26.25    0.00                 __rouinit [13]
+-----------------------------------------------
+                0.00   20.47       1/1           MAIN_ [2]
+[14]     1.2    0.00   20.47       1         potential_m_potential_set_lookup_ [14]
+               20.38    0.08       2/2           lookup_m_calculate_lookup_table_emb_ [15]
+                0.00    0.00       4/4           lookup_m_calculate_lookup_table_veephi_ [89]
+                0.00    0.00    5001/5001        iron_carbon_emb_src_ [97]
+-----------------------------------------------
+               20.38    0.08       2/2           potential_m_potential_set_lookup_ [14]
+[15]     1.2   20.38    0.08       2         lookup_m_calculate_lookup_table_emb_ [15]
+                0.08    0.00    5001/5001        iron_carbon_demb_src_ [50]
+-----------------------------------------------
+                0.00    0.00    3500/1795951500     MAIN_ [2]
+               16.76    0.00 1795948000/1795951500     dynamics_m_force_ [7]
+[16]     1.0   16.76    0.00 1795951500         potential_m_phi_ [16]
+-----------------------------------------------
+                0.00    0.00    1000/40818000     MAIN_ [2]
+               14.16    0.00 40817000/40818000     dynamics_m_force_ [7]
+[17]     0.9   14.16    0.00 40818000         lookup_m_get_value_from_lookup_emb_ [17]
+-----------------------------------------------
+                                                 <spontaneous>
+[18]     0.7   11.55    0.00                 __pgio_set_errno [18]
+-----------------------------------------------
+                0.05    0.00 3776500/897977500     MAIN_ [2]
+               11.33    0.00 894201000/897977500     dynamics_m_velocityverlet_ [4]
+[19]     0.7   11.38    0.00 897977500         potential_m_dvee_ [19]
+-----------------------------------------------
+                0.04    0.00 7549000/1795951000     MAIN_ [2]
+               10.13    0.00 1788402000/1795951000     dynamics_m_velocityverlet_ [4]
+[20]     0.6   10.17    0.00 1795951000         potential_m_dphi_ [20]
+-----------------------------------------------
+                                                 <spontaneous>
+[21]     0.5    8.43    0.00                 __mth_i_dint [21]
+-----------------------------------------------
+                                                 <spontaneous>
+[22]     0.4    7.35    0.00                 __pgio_errno [22]
+-----------------------------------------------
+                                                 <spontaneous>
+[23]     0.4    6.30    0.00                 __pgio_environ [23]
+-----------------------------------------------
+                0.03    0.00 3776500/897977500     MAIN_ [2]
+                6.13    0.00 894201000/897977500     dynamics_m_velocityverlet_ [4]
+[24]     0.4    6.15    0.00 897977500         potential_m_vee_ [24]
+-----------------------------------------------
+                                                 <spontaneous>
+[25]     0.3    5.60    0.00                 __lookup_m_get_value_from_lookup_veephi_END [25]
+-----------------------------------------------
+                0.82    3.82       2/2           dynamics_m_force_ [7]
+[26]     0.3    0.82    3.82       2         neighbourlist_m_update_neighbourlist_ [26]
+                3.82    0.00 58738750/5534948125     parinellorahman_m_pr_get_realsep_from_dx_ [5]
+-----------------------------------------------
+                0.00    0.00     500/20409000     MAIN_ [2]
+                4.63    0.00 20408500/20409000     dynamics_m_force_ [7]
+[27]     0.3    4.63    0.00 20409000         potential_m_emb_ [27]
+-----------------------------------------------
+                4.40    0.00       1/1           main [1]
+[28]     0.3    4.40    0.00       1         parinellorahman_m_cleanup_parinellorahman_m_ [28]
+-----------------------------------------------
+                                                 <spontaneous>
+[29]     0.3    4.40    0.00                 __parinellorahman_m_cleanup_parinellorahman_m_END [29]
+-----------------------------------------------
+                0.00    0.00       1/476         main [1]
+                0.85    0.00     237/476         dynamics_m_velocityverlet_ [4]
+                0.85    0.00     238/476         MAIN_ [2]
+[30]     0.1    1.71    0.00     476         parinellorahman_m_pr_get_metric_tensor_ [30]
+-----------------------------------------------
+                                                 <spontaneous>
+[31]     0.1    1.07    0.00                 __lookup_m_calculate_lookup_table_emb_END [31]
+-----------------------------------------------
+                                                 <spontaneous>
+[32]     0.1    0.87    0.00                 potential_m_potential_set_exact_ [32]
+-----------------------------------------------
+                0.12    0.66       1/1           MAIN_ [2]
+[33]     0.0    0.12    0.66       1         dynamics_m_energy_calc_ [33]
+                0.33    0.00 3773000/3778001     iron_carbon_vee_src_ [42]
+                0.25    0.00 3773000/5534948125     parinellorahman_m_pr_get_realsep_from_dx_ [5]
+                0.08    0.00 49049000/49159658     iron_carbon_xh0_ [49]
+-----------------------------------------------
+                                                 <spontaneous>
+[34]     0.0    0.73    0.00                 __potential_m_dvee_END [34]
+-----------------------------------------------
+                                                 <spontaneous>
+[35]     0.0    0.73    0.00                 __potential_m_phi_END [35]
+-----------------------------------------------
+                0.50    0.18       1/1           main [1]
+[36]     0.0    0.50    0.18       1         potential_m_cleanup_potential_lookups_ [36]
+                0.18    0.00       2/2           lookup_m_free_lookup_table2_ [45]
+                0.00    0.00       4/4           lookup_m_free_lookup_table3_ [111]
+-----------------------------------------------
+                0.68    0.00     237/237         MAIN_ [2]
+[37]     0.0    0.68    0.00     237         dynamics_m_update_therm_avs_ [37]
+-----------------------------------------------
+                                                 <spontaneous>
+[38]     0.0    0.64    0.00                 __parinellorahman_m_pr_get_realsep_from_dx_END [38]
+-----------------------------------------------
+                0.48    0.00     238/238         dynamics_m_force_ [7]
+[39]     0.0    0.48    0.00     238         thermostat_m_kinten_ [39]
+-----------------------------------------------
+                                                 <spontaneous>
+[40]     0.0    0.46    0.00                 __potential_m_vee_END [40]
+-----------------------------------------------
+                                                 <spontaneous>
+[41]     0.0    0.38    0.00                 __potential_m_dphi_END [41]
+-----------------------------------------------
+                0.00    0.00    5001/3778001     lookup_m_calculate_lookup_table_veephi_ [89]
+                0.33    0.00 3773000/3778001     dynamics_m_energy_calc_ [33]
+[42]     0.0    0.34    0.00 3778001         iron_carbon_vee_src_ [42]
+-----------------------------------------------
+                                                 <spontaneous>
+[43]     0.0    0.23    0.00                 __potential_m_cleanup_potential_lookups_END [43]
+-----------------------------------------------
+                                                 <spontaneous>
+[44]     0.0    0.23    0.00                 __potential_m_potential_set_exact_END [44]
+-----------------------------------------------
+                0.18    0.00       2/2           potential_m_cleanup_potential_lookups_ [36]
+[45]     0.0    0.18    0.00       2         lookup_m_free_lookup_table2_ [45]
+-----------------------------------------------
+                                                 <spontaneous>
+[46]     0.0    0.18    0.00                 dynamics_m_write_energy_forces_stress_ [46]
+-----------------------------------------------
+                0.00    0.00     500/20409000     MAIN_ [2]
+                0.14    0.00 20408500/20409000     dynamics_m_force_ [7]
+[47]     0.0    0.14    0.00 20409000         potential_m_demb_ [47]
+-----------------------------------------------
+                0.14    0.00     238/238         dynamics_m_force_ [7]
+[48]     0.0    0.14    0.00     238         potential_m_embed_ [48]
+-----------------------------------------------
+                0.00    0.00  110658/49159658     lookup_m_calculate_lookup_table_veephi_ [89]
+                0.08    0.00 49049000/49159658     dynamics_m_energy_calc_ [33]
+[49]     0.0    0.08    0.00 49159658         iron_carbon_xh0_ [49]
+-----------------------------------------------
+                0.08    0.00    5001/5001        lookup_m_calculate_lookup_table_emb_ [15]
+[50]     0.0    0.08    0.00    5001         iron_carbon_demb_src_ [50]
+-----------------------------------------------
+                                                 <spontaneous>
+[51]     0.0    0.08    0.00                 pgio_ecvt [51]
+-----------------------------------------------
+                0.02    0.00       1/3           main [1]
+                0.04    0.00       2/3           MAIN_ [2]
+[52]     0.0    0.06    0.00       3         iron_carbon_get_supported_potential_range_ [52]
+-----------------------------------------------
+                                                 <spontaneous>
+[53]     0.0    0.05    0.00                 __lookup_m_get_value_from_lookup_emb_END [53]
+-----------------------------------------------
+                                                 <spontaneous>
+[54]     0.0    0.04    0.00                 cvtp_cp [54]
+-----------------------------------------------
+                0.03    0.00       1/1           MAIN_ [2]
+[55]     0.0    0.03    0.00       1         potential_m_potin_ [55]
+                0.00    0.00       1/6           utilityfns_m_newunit_ [110]
+-----------------------------------------------
+                                                 <spontaneous>
+[56]     0.0    0.02    0.00                 __dynamics_m_rhoset_END [56]
+-----------------------------------------------
+                                                 <spontaneous>
+[57]     0.0    0.02    0.00                 cvtp_round [57]
+-----------------------------------------------
+                                                 <spontaneous>
+[58]     0.0    0.01    0.00                 __c_mzero8 [58]
+-----------------------------------------------
+                                                 <spontaneous>
+[59]     0.0    0.01    0.00                 fw_writenum [59]
+-----------------------------------------------
+                                                 <spontaneous>
+[60]     0.0    0.01    0.00                 io_m_ [60]
+-----------------------------------------------
+                                                 <spontaneous>
+[61]     0.0    0.01    0.00                 __iron_carbon_demb_src_END [61]
+-----------------------------------------------
+                                                 <spontaneous>
+[62]     0.0    0.01    0.00                 __iron_carbon_xh0_END [62]
+-----------------------------------------------
+                                                 <spontaneous>
+[63]     0.0    0.01    0.00                 __potential_m_demb_END [63]
+-----------------------------------------------
+                                                 <spontaneous>
+[64]     0.0    0.01    0.00                 __potential_m_emb_END [64]
+-----------------------------------------------
+                0.00    0.00       1/238         MAIN_ [2]
+                0.01    0.00     237/238         parinellorahman_m_pr_get_tgid_ [74]
+[65]     0.0    0.01    0.00     238         matrix_m_matrix_invert_ [65]
+-----------------------------------------------
+                0.01    0.00       2/2           MAIN_ [2]
+[66]     0.0    0.01    0.00       2         linkcell_m_linkup_ [66]
+-----------------------------------------------
+                0.01    0.00       1/1           MAIN_ [2]
+[67]     0.0    0.01    0.00       1         thermostat_m_setvel_ [67]
+-----------------------------------------------
+                                                 <spontaneous>
+[68]     0.0    0.01    0.00                 fw_write_record [68]
+-----------------------------------------------
+                                                 <spontaneous>
+[69]     0.0    0.01    0.00                 __hpfio_ecvt [69]
+-----------------------------------------------
+                                                 <spontaneous>
+[70]     0.0    0.01    0.00                 __hpfio_fcvt [70]
+-----------------------------------------------
+                                                 <spontaneous>
+[71]     0.0    0.01    0.00                 __hpfio_fmt_f [71]
+-----------------------------------------------
+                                                 <spontaneous>
+[72]     0.0    0.01    0.00                 __hpfio_strtod [72]
+-----------------------------------------------
+                                                 <spontaneous>
+[73]     0.0    0.01    0.00                 _init [73]
+-----------------------------------------------
+                0.00    0.01     237/237         MAIN_ [2]
+[74]     0.0    0.00    0.01     237         parinellorahman_m_pr_get_tgid_ [74]
+                0.01    0.00     237/238         matrix_m_matrix_invert_ [65]
+                0.00    0.00     237/238         matrix_m_matrix_multiply_ [101]
+-----------------------------------------------
+                                                 <spontaneous>
+[75]     0.0    0.01    0.00                 __dynamics_m_update_therm_avs_END [75]
+-----------------------------------------------
+                                                 <spontaneous>
+[76]     0.0    0.01    0.00                 fw_OZwritenum [76]
+-----------------------------------------------
+                                                 <spontaneous>
+[77]     0.0    0.01    0.00                 fw_write_item [77]
+-----------------------------------------------
+                                                 <spontaneous>
+[78]     0.0    0.01    0.00                 __hpfio_chk_f [78]
+-----------------------------------------------
+                                                 <spontaneous>
+[79]     0.0    0.01    0.00                 utilityfns_m_shellsort_ [79]
+-----------------------------------------------
+                                                 <spontaneous>
+[80]     0.0    0.01    0.00                 dynamics_m_predic_ [80]
+-----------------------------------------------
+                                                 <spontaneous>
+[81]     0.0    0.01    0.00                 iron_carbon_ [81]
+-----------------------------------------------
+                0.00    0.00     237/1704        dynamics_m_velocityverlet_ [4]
+                0.00    0.00     238/1704        main [1]
+                0.00    0.00     513/1704        MAIN_ [2]
+                0.00    0.00     716/1704        dynamics_m_force_ [7]
+[82]     0.0    0.00    0.00    1704         params_m_get_params_ [82]
+-----------------------------------------------
+                                                 <spontaneous>
+[83]     0.0    0.00    0.00                 __utilityfns_m_shellsort_END [83]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[84]     0.0    0.00    0.00       1         params_m_read_params_ [84]
+                0.00    0.00      41/41          params_m_readparam_keyvaluepair_ [106]
+                0.00    0.00       1/6           utilityfns_m_newunit_ [110]
+-----------------------------------------------
+                                                 <spontaneous>
+[85]     0.0    0.00    0.00                 alloc_fpbuf [85]
+-----------------------------------------------
+                                                 <spontaneous>
+[86]     0.0    0.00    0.00                 fw_OZbyte [86]
+-----------------------------------------------
+                0.00    0.00       2/715         MAIN_ [2]
+                0.00    0.00     237/715         dynamics_m_velocityverlet_ [4]
+                0.00    0.00     476/715         main [1]
+[87]     0.0    0.00    0.00     715         params_m_set_params_ [87]
+-----------------------------------------------
+                                                 <spontaneous>
+[88]     0.0    0.00    0.00                 params_m_ [88]
+-----------------------------------------------
+                0.00    0.00       4/4           potential_m_potential_set_lookup_ [14]
+[89]     0.0    0.00    0.00       4         lookup_m_calculate_lookup_table_veephi_ [89]
+                0.00    0.00    5001/3778001     iron_carbon_vee_src_ [42]
+                0.00    0.00  110658/49159658     iron_carbon_xh0_ [49]
+                0.00    0.00    5001/5001        iron_carbon_dvee_src_ [96]
+                0.00    0.00    5001/5001        iron_carbon_dphi_src_ [95]
+                0.00    0.00    5001/5001        iron_carbon_phi_src_ [98]
+-----------------------------------------------
+                                                 <spontaneous>
+[90]     0.0    0.00    0.00                 __params_m_get_params_END [90]
+-----------------------------------------------
+                                                 <spontaneous>
+[91]     0.0    0.00    0.00                 __params_m_set_params_END [91]
+-----------------------------------------------
+                                                 <spontaneous>
+[92]     0.0    0.00    0.00                 __dynamics_m_velocityverlet_END [92]
+-----------------------------------------------
+                                                 <spontaneous>
+[93]     0.0    0.00    0.00                 __dynamics_m_energy_calc_END [93]
+-----------------------------------------------
+                0.00    0.00  514500/514500      MAIN_ [2]
+[94]     0.0    0.00    0.00  514500         random_m_rand1_ [94]
+-----------------------------------------------
+                0.00    0.00    5001/5001        lookup_m_calculate_lookup_table_veephi_ [89]
+[95]     0.0    0.00    0.00    5001         iron_carbon_dphi_src_ [95]
+-----------------------------------------------
+                0.00    0.00    5001/5001        lookup_m_calculate_lookup_table_veephi_ [89]
+[96]     0.0    0.00    0.00    5001         iron_carbon_dvee_src_ [96]
+-----------------------------------------------
+                0.00    0.00    5001/5001        potential_m_potential_set_lookup_ [14]
+[97]     0.0    0.00    0.00    5001         iron_carbon_emb_src_ [97]
+-----------------------------------------------
+                0.00    0.00    5001/5001        lookup_m_calculate_lookup_table_veephi_ [89]
+[98]     0.0    0.00    0.00    5001         iron_carbon_phi_src_ [98]
+-----------------------------------------------
+                0.00    0.00     239/239         MAIN_ [2]
+[99]     0.0    0.00    0.00     239         timers_m_clock_ [99]
+-----------------------------------------------
+                0.00    0.00       1/238         MAIN_ [2]
+                0.00    0.00     237/238         main [1]
+[100]    0.0    0.00    0.00     238         analysis_m_get_thermodynamic_sums_ [100]
+-----------------------------------------------
+                0.00    0.00       1/238         MAIN_ [2]
+                0.00    0.00     237/238         parinellorahman_m_pr_get_tgid_ [74]
+[101]    0.0    0.00    0.00     238         matrix_m_matrix_multiply_ [101]
+-----------------------------------------------
+                0.00    0.00       1/238         MAIN_ [2]
+                0.00    0.00     237/238         main [1]
+[102]    0.0    0.00    0.00     238         thermostat_m_set_temp_ [102]
+-----------------------------------------------
+                0.00    0.00     237/237         main [1]
+[103]    0.0    0.00    0.00     237         analysis_m_set_thermodynamic_sums_ [103]
+-----------------------------------------------
+                0.00    0.00     237/237         MAIN_ [2]
+[104]    0.0    0.00    0.00     237         parinellorahman_m_get_tgid_ [104]
+-----------------------------------------------
+                0.00    0.00      85/85          params_m_readparam_keyvaluepair_ [106]
+[105]    0.0    0.00    0.00      85         utilityfns_m_lcase_ [105]
+-----------------------------------------------
+                0.00    0.00      41/41          params_m_read_params_ [84]
+[106]    0.0    0.00    0.00      41         params_m_readparam_keyvaluepair_ [106]
+                0.00    0.00      85/85          utilityfns_m_lcase_ [105]
+-----------------------------------------------
+                0.00    0.00      23/23          MAIN_ [2]
+[107]    0.0    0.00    0.00      23         analysis_m_runavs_ [107]
+-----------------------------------------------
+                0.00    0.00      23/23          main [1]
+[108]    0.0    0.00    0.00      23         analysis_m_update_thermodynamic_sums_ [108]
+-----------------------------------------------
+                0.00    0.00      23/23          MAIN_ [2]
+[109]    0.0    0.00    0.00      23         thermostat_m_get_temp_ [109]
+-----------------------------------------------
+                0.00    0.00       1/6           potential_m_potin_ [55]
+                0.00    0.00       1/6           analysis_m_rdf_ [6]
+                0.00    0.00       1/6           MAIN_ [2]
+                0.00    0.00       1/6           io_m_read_system_ [116]
+                0.00    0.00       1/6           params_m_read_params_ [84]
+                0.00    0.00       1/6           moldyv2_write_checkpoint_file [121]
+[110]    0.0    0.00    0.00       6         utilityfns_m_newunit_ [110]
+-----------------------------------------------
+                0.00    0.00       4/4           potential_m_cleanup_potential_lookups_ [36]
+[111]    0.0    0.00    0.00       4         lookup_m_free_lookup_table3_ [111]
+-----------------------------------------------
+                0.00    0.00       2/2           dynamics_m_force_ [7]
+[112]    0.0    0.00    0.00       2         linkcell_m_get_l0_ [112]
+-----------------------------------------------
+                0.00    0.00       2/2           dynamics_m_force_ [7]
+[113]    0.0    0.00    0.00       2         linkcell_m_get_link_ [113]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[114]    0.0    0.00    0.00       1         dynamics_m_cleanup_dynamics_m_ [114]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[115]    0.0    0.00    0.00       1         dynamics_m_init_dynamics_m_ [115]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[116]    0.0    0.00    0.00       1         io_m_read_system_ [116]
+                0.00    0.00       1/6           utilityfns_m_newunit_ [110]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[117]    0.0    0.00    0.00       1         io_m_write_textout_header_ [117]
+-----------------------------------------------
+                0.00    0.00       1/1           potential_m_check_available_atomic_numbers_ [128]
+[118]    0.0    0.00    0.00       1         iron_carbon_check_supported_atomic_numbers_ [118]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[119]    0.0    0.00    0.00       1         linkcell_m_cleanup_linkcell_m_ [119]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[120]    0.0    0.00    0.00       1         linkcell_m_init_linkcell_m_ [120]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[121]    0.0    0.00    0.00       1         moldyv2_write_checkpoint_file [121]
+                0.00    0.00       1/6           utilityfns_m_newunit_ [110]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[122]    0.0    0.00    0.00       1         neighbourlist_m_cleanup_neighbourlist_m_ [122]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[123]    0.0    0.00    0.00       1         neighbourlist_m_init_neighbourlist_m_ [123]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[124]    0.0    0.00    0.00       1         parinellorahman_m_init_parinellorahman_m_ [124]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[125]    0.0    0.00    0.00       1         particles_m_cleanup_particles_m_ [125]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[126]    0.0    0.00    0.00       1         particles_m_init_particles_m_ [126]
+                0.00    0.00       1/1           particles_m_init_species_properties_ [127]
+-----------------------------------------------
+                0.00    0.00       1/1           particles_m_init_particles_m_ [126]
+[127]    0.0    0.00    0.00       1         particles_m_init_species_properties_ [127]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[128]    0.0    0.00    0.00       1         potential_m_check_available_atomic_numbers_ [128]
+                0.00    0.00       1/1           iron_carbon_check_supported_atomic_numbers_ [118]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[129]    0.0    0.00    0.00       1         potential_m_get_available_potential_range_ [129]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[130]    0.0    0.00    0.00       1         quench_m_cleanup_quench_m_ [130]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[131]    0.0    0.00    0.00       1         quench_m_init_quench_m_ [131]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[132]    0.0    0.00    0.00       1         random_m_rstart_ [132]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[133]    0.0    0.00    0.00       1         thermostat_m_cleanup_thermostat_m_ [133]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[134]    0.0    0.00    0.00       1         thermostat_m_init_thermostat_m_ [134]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN_ [2]
+[135]    0.0    0.00    0.00       1         thermostat_m_scalev_ [135]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+
+Index by function name
+
+   [2] MAIN_                  [57] cvtp_round             [26] neighbourlist_m_update_neighbourlist_
+  [58] __c_mzero8            [114] dynamics_m_cleanup_dynamics_m_ [88] params_m_
+  [93] __dynamics_m_energy_calc_END (dynamics_m.F90) [33] dynamics_m_energy_calc_ [82] params_m_get_params_
+  [56] __dynamics_m_rhoset_END (dynamics_m.F90) [7] dynamics_m_force_ [84] params_m_read_params_
+  [75] __dynamics_m_update_therm_avs_END [115] dynamics_m_init_dynamics_m_ [106] params_m_readparam_keyvaluepair_
+  [92] __dynamics_m_velocityverlet_END (dynamics_m.F90) [80] dynamics_m_predic_ [87] params_m_set_params_
+  [78] __hpfio_chk_f          [10] dynamics_m_rhoset_     [28] parinellorahman_m_cleanup_parinellorahman_m_
+  [69] __hpfio_ecvt           [37] dynamics_m_update_therm_avs_ [104] parinellorahman_m_get_tgid_
+  [70] __hpfio_fcvt            [4] dynamics_m_velocityverlet_ [124] parinellorahman_m_init_parinellorahman_m_
+  [71] __hpfio_fmt_f          [46] dynamics_m_write_energy_forces_stress_ [30] parinellorahman_m_pr_get_metric_tensor_
+  [72] __hpfio_strtod         [11] f90io_close             [5] parinellorahman_m_pr_get_realsep_from_dx_
+  [61] __iron_carbon_demb_src_END (iron_carbon.F90) [86] fw_OZbyte [74] parinellorahman_m_pr_get_tgid_
+  [62] __iron_carbon_xh0_END (iron_carbon.F90) [76] fw_OZwritenum [125] particles_m_cleanup_particles_m_
+  [31] __lookup_m_calculate_lookup_table_emb_END (lookup_m.F90) [77] fw_write_item [126] particles_m_init_particles_m_
+  [53] __lookup_m_get_value_from_lookup_emb_END (lookup_m.F90) [68] fw_write_record [127] particles_m_init_species_properties_
+  [25] __lookup_m_get_value_from_lookup_veephi_END (lookup_m.F90) [59] fw_writenum [51] pgio_ecvt
+  [21] __mth_i_dint           [60] io_m_                 [128] potential_m_check_available_atomic_numbers_
+  [12] __mth_i_idnint        [116] io_m_read_system_      [36] potential_m_cleanup_potential_lookups_
+  [90] __params_m_get_params_END (params_m.F90) [117] io_m_write_textout_header_ [47] potential_m_demb_
+  [91] __params_m_set_params_END (params_m.F90) [81] iron_carbon_ [20] potential_m_dphi_
+  [29] __parinellorahman_m_cleanup_parinellorahman_m_END (parinellorahman_m.F90) [118] iron_carbon_check_supported_atomic_numbers_ [19] potential_m_dvee_
+  [38] __parinellorahman_m_pr_get_realsep_from_dx_END (parinellorahman_m.F90) [50] iron_carbon_demb_src_ [27] potential_m_emb_
+  [23] __pgio_environ         [95] iron_carbon_dphi_src_  [48] potential_m_embed_
+  [22] __pgio_errno           [96] iron_carbon_dvee_src_ [129] potential_m_get_available_potential_range_
+  [18] __pgio_set_errno       [97] iron_carbon_emb_src_   [16] potential_m_phi_
+  [43] __potential_m_cleanup_potential_lookups_END (potential_m.F90) [52] iron_carbon_get_supported_potential_range_ [32] potential_m_potential_set_exact_
+  [63] __potential_m_demb_END (potential_m.F90) [98] iron_carbon_phi_src_ [14] potential_m_potential_set_lookup_
+  [41] __potential_m_dphi_END (potential_m.F90) [42] iron_carbon_vee_src_ [55] potential_m_potin_
+  [34] __potential_m_dvee_END (potential_m.F90) [49] iron_carbon_xh0_ [24] potential_m_vee_
+  [64] __potential_m_emb_END (potential_m.F90) [119] linkcell_m_cleanup_linkcell_m_ [130] quench_m_cleanup_quench_m_
+  [35] __potential_m_phi_END (potential_m.F90) [112] linkcell_m_get_l0_ [131] quench_m_init_quench_m_
+  [44] __potential_m_potential_set_exact_END (potential_m.F90) [113] linkcell_m_get_link_ [94] random_m_rand1_
+  [40] __potential_m_vee_END (potential_m.F90) [120] linkcell_m_init_linkcell_m_ [132] random_m_rstart_
+   [8] __rouexit              [66] linkcell_m_linkup_    [133] thermostat_m_cleanup_thermostat_m_
+  [13] __rouinit              [15] lookup_m_calculate_lookup_table_emb_ [109] thermostat_m_get_temp_
+  [83] __utilityfns_m_shellsort_END [89] lookup_m_calculate_lookup_table_veephi_ [134] thermostat_m_init_thermostat_m_
+  [73] _init                  [45] lookup_m_free_lookup_table2_ [39] thermostat_m_kinten_
+   [3] _mcount2              [111] lookup_m_free_lookup_table3_ [135] thermostat_m_scalev_
+  [85] alloc_fpbuf            [17] lookup_m_get_value_from_lookup_emb_ [102] thermostat_m_set_temp_
+ [100] analysis_m_get_thermodynamic_sums_ [9] lookup_m_get_value_from_lookup_veephi_ [67] thermostat_m_setvel_
+   [6] analysis_m_rdf_        [65] matrix_m_matrix_invert_ [99] timers_m_clock_
+ [107] analysis_m_runavs_    [101] matrix_m_matrix_multiply_ [105] utilityfns_m_lcase_
+ [103] analysis_m_set_thermodynamic_sums_ [121] moldyv2_write_checkpoint_file (moldin.F90) [110] utilityfns_m_newunit_
+ [108] analysis_m_update_thermodynamic_sums_ [122] neighbourlist_m_cleanup_neighbourlist_m_ [79] utilityfns_m_shellsort_
+  [54] cvtp_cp               [123] neighbourlist_m_init_neighbourlist_m_

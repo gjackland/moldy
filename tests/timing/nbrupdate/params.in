@@ -45,7 +45,7 @@ nspec   = 1          # Confirm number of distinct species
 ### Key simulation parameters ###
 nsteps    = 1000      # Number of timesteps to be done in this run or
                      #     number of calculations in quench (0 = keep trying)
-nbrupdate = 1		# Frequency of updating list of neighbours
+nbrupdate = 880		# Frequency of updating list of neighbours
 nloops    = 1      # Number of iterative loops around the whole program
                      #     (useful for random alloys)
 restart   = 0        # Switch defining type of run:

@@ -13,7 +13,7 @@ readonly tools_reldir="../../../tools"			# Path to directory where all the tools
 readonly run_script="${tools_reldir}/run_steps.sh"	# Script to actually execute the timing runs
 readonly param_set_script="replace_token.sh"		# The name of the script in the tools directory that sets the parameter to its new value
 readonly param_token="nbrupdate"				# Token of the parameter to be varied
-readonly param_values=(440 240 120 60 30 15 1)		# Values that the parameter will take
+readonly param_values=(2000 880)		# Values that the parameter will take
 readonly timing_out="timing.out"				# The file where timing data will be stored
 
 ## Export all the settings ##
