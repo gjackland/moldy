@@ -40,6 +40,7 @@ module io_m
   !! Publicly accessible interfaces
   public :: read_system
   public :: write_textout_header, write_textout
+  public :: write_system_out_file
 
   !! Private module data
   logical :: exists,opened !< exists and "is opened" logical flags
@@ -236,11 +237,11 @@ contains
       if(simparam%iverlet.eq.1)    WRITE(unit_stdout,*)"Using Velocity Verlet"
 
     
-    WRITE(unit_stdout,50) simparam%DELTAT*time_to_sec,simparam%rcut,simparam%Rpad,simparam%NTCM,simparam%NLOOPS
+    WRITE(unit_stdout,50) simparam%DELTAT*time_to_sec,simparam%rcut,simparam%Rpad,simparam%NTCM,simparam%strainloops
 50  FORMAT(' TIMESTEP  DELTAT  = ',D15.6,' SECONDS',/ &
          & ' PAD DISTANCE FOR NEIGHBOUR LIST RPAD (RNEAR=RCUT+RPAD) = ',2D15.6,' ANGSTROMS',/ &
          & ' TIMESTEPS BETWEEN NEIGHBOUR LIST UPDATES  NTCM = ',I6,/ &
-         & ' NUMBER OF DIFFERENT CONFIGURATIONS      NLOOPS = ',I6,/)
+         & ' NUMBER OF DIFFERENT CONFIGURATIONS      STRAINLOOPS = ',I6,/)
     
     WRITE(unit_stdout,51) simparam%prevsteps,simparam%lastprint
 51  FORMAT(' PREVSTEPS =',I5,'  LASTPRINT =',I5,/)
@@ -306,5 +307,32 @@ end subroutine write_textout_header
     !    close(unit_stdout)
   end subroutine write_textout
 
+  
+  
+  !--------------------------------------------------------------
+  !
+  !  subroutine write_system_out_file
+  !
+  !  writes out ASCII system state file identical in format to
+  !  system.in file
+  !
+  !--------------------------------------------------------------
+  subroutine write_system_out_file( filename )
+    character( len = * ), intent( in ) :: filename
+    integer :: unit_output
+    integer :: i, j
+
+    unit_output=newunit()
+    open (unit=unit_output, file=filename,FORM='FORMATTED')
+    WRITE(unit_output,*) simparam%NM
+    WRITE(unit_output,*) "1 1 1"
+    do  i=1,nmat
+       WRITE(unit_output,*) (b0(j,i),j=1,nmat)              
+    end do
+        WRITE(unit_output,321) (X0(I),Y0(I),Z0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM)
+321     FORMAT(3f11.5,3X,I3,2X,2f11.5)
+    close(unit_output)
+  
+  end subroutine write_system_out_file
 
 end module io_m

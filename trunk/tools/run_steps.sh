@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Run steps version 1.3	##
+## Run steps version 1.31	##
 ## by Martin Uhrin		##
 #
 # This file take a bunch of parameter inputs taken from export commands
@@ -15,11 +15,11 @@
 readonly tools_reldir="."				# Path to directory where all the tools binaries are stored
 readonly atoms_token="nm"				# Token used in params.in to designate number of atoms
 readonly timing_out="timing.out"			# The file where timing data will be stored
-readonly runtime_string="Run time:"		# The string that preceeds the execution time as printed by MOLDY
 
 ## Default values ##
-declare -ir d_num_repeats=3
-declare -ir d_num_threads=(1 8)
+declare -ir d_num_repeats=3				# Number of times to repeat each run
+declare -ir d_num_threads=(1 8)			# Numbers of threads to use
+declare -r d_runtime_string="MDloop runtime:"	# The string that preceeds the execution time as printed by MOLDY
 
 ## Check that required parameters are set ##
 # The moldy binary to use for running the sim, must be compiled for right potential
@@ -36,8 +36,9 @@ if [ -z "${input_files[*]}" ]; then
 fi	
 
 ## use default values if not supplied ##
-# OMP_NUM_THREADS numbers to use
-declare -ar num_threads=( ${x_num_threads=${d_num_threads[*]}} )
+
+declare -ar num_threads=( ${x_num_threads=${d_num_threads[*]}} )	# OMP_NUM_THREADS numbers to use
+declare -r runtime_string=${RUNTIME_STRING=${d_runtime_string}}	# String used to get time from MOLDY output
 
 # Number of times to repeat runs for each set of variables
 if [ -z "${num_repeats}" ]; then
@@ -74,13 +75,13 @@ declare -i num_atoms=0
 declare -i line_no=0
 
 
-echo -ne "# input_file\tnum_atoms\tnum_threads\ttimestamp" >> $timing_out
-if [ -z "${custom_param}" ]; then
+echo -ne "# input_file\tnum_atoms\tnum_threads" >> $timing_out
+if [ -n "${custom_param}" ]; then
 	echo -ne "\t${custom_param}" >> $timing_out
 fi
-echo -e "\truntime\t...(repeated runs)" >> $timing_out
+echo -e "\ttimestamp\truntime\t...(repeated runs)" >> $timing_out
 
-for input in $input_files
+for input in ${input_files[@]}
 do
 	echo "Processing input $input"
 	
@@ -99,8 +100,8 @@ do
 		echo -ne "$input\t$num_atoms\t$i" >> $timing_out
 
 		# If the user has specified a custom parameter value then print that as well
-		if [ -z "${custom_param}" ]; then
-			echo -ne "\t$custom_param_value"
+		if [ -n "${custom_param}" ]; then
+			echo -ne "\t$custom_param_value" >> $timing_out
 		fi
 
 		# Define the name of the file to store output from the simulation run

@@ -45,7 +45,7 @@ MATERIAL= -DIRON_CARBON
 #MATERIAL= -DCDAU  
 
 # Name of the final executable
- EXE=    ../build/moldy.exe
+ EXE=    ../build/moldy.FeC
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -59,7 +59,7 @@ MATERIAL= -DIRON_CARBON
 #
 ######################################################
 #FC=     pgf90
-#FC=     pgf90 -fast -O4
+FC=     pgf90 -fast -O4
 #FC=     pgf90 -fast -O4 -Minline=levels:1 -Minfo=inline
 #FC=     pgf90 -fast -Mipa=fast,inline -Minfo=inline -tp core2-64
 #FC=     pgf90 -fast -Mipa=fast,inline -Minfo=inline -tp x64
@@ -73,7 +73,7 @@ MATERIAL= -DIRON_CARBON
 #FC=     ifort -O2
 #FC=     f95 -O2
 #FC=     gfortran -fbounds-check
-FC=     gfortran -O4
+#FC=     gfortran -O4
 
 # C Preprocessing Directives 
 CPPFLAGS= $(MATERIAL) $(DEBUG)
@@ -81,13 +81,13 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OpenMP flags
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
-#OMPFLAGS= -mp
+OMPFLAGS= -mp
 #OMPFLAGS = -fopenmp # For gfortran
 
 #Debugging
 #DEBUGGING= -g -C
 
-#Any kind of profiling
+#	Any kind of profiling
 #PROFILING= -pg
 
 #Any libraries to be linked
@@ -190,16 +190,15 @@ moldin.o: timers_m.o thermostat_m.o random_m.o potential_m.o params_m.o  system_
 	quench_m.o io_m.o
 
 thermostat_m.o: random_m.o potential_m.o params_m.o  system_m.o  constants_m.o \
-	 parinellorahman_m.o  particles_m.o \
-	 linkcell_m.o
+	 parinellorahman_m.o  particles_m.o
 
 analysis_m.o: thermostat_m.o
 
 random_m.o: debug_m.o particles_m.o
 
-dynamics_m.o: debug_m.o particles_m.o  system_m.o matrix_m.o analysis_m.o parinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
+dynamics_m.o: debug_m.o particles_m.o  system_m.o matrix_m.o parinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
 
-io_m.o: params_m.o random_m.o particles_m.o parinellorahman_m.o utilityfns_m.o
+io_m.o: params_m.o random_m.o particles_m.o parinellorahman_m.o utilityfns_m.o analysis_m.o
 
 params_m.o: constants_m.o utilityfns_m.o
 
@@ -217,10 +216,10 @@ lookup_m.o: constants_m.o generic_atvf.o iron_carbon.o zirconium.o
 
 parinellorahman_m.o analysis_m.o particles_m.o linkcell_m.o: constants_m.o params_m.o
 
-analysis_m.o: parinellorahman_m.o io_m.o system_m.o dynamics_m.o
+analysis_m.o: parinellorahman_m.o system_m.o dynamics_m.o
 
-parinellorahman_m.o: matrix_m.o
+parinellorahman_m.o: matrix_m.o lookup_m.o
 
-linkcell_m.o: io_m.o
+linkcell_m.o: parinellorahman_m.o
 
 matrix_m.o: utilityfns_m.o

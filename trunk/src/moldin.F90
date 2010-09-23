@@ -101,10 +101,9 @@ program moldyv2
 
 
   !! Miscellaneous declarations
-  integer :: i,j,iter,idel                       !< local loop variables
+  integer :: i,j,iter,idel                  !< local loop variables
   integer :: istep                          !< the MD step number (loop counter)
   integer :: unit_generic                   !< general purpose unit number for io
-    integer :: unit_output
   logical :: showcalculationprogress=.false.!< write calculation progress to stderr
   integer :: istat                          !< memory allocation status
   integer :: ierror                         !< general error return flag
@@ -326,7 +325,7 @@ program moldyv2
 
   !! Loops through iterations of the whole simulation 
   !!  This is now to apply constant strain rate
-  simulationloops: do iter=1,simparam%nloops
+  strainloops: do iter=1,simparam%strainloops
       simparam%laststep =  simparam%currentstep+simparam%NSTEPS
     !! apply strain to box;   Reuse b2 as unstrained box
     if(simparam%ivol.ne.0)then
@@ -407,7 +406,7 @@ program moldyv2
 
 
         !! step-by-step output (usually turn off)
-        if(showcalculationprogress)then
+        if( showcalculationprogress ) then
            write(stderr,'(8X,"ENTERED MOLECULAR DYNAMICS LOOP - ",I5," STEPS",/,8X,72("="))') &
                 simparam%currentstep
         end if
@@ -459,7 +458,7 @@ program moldyv2
         if (simparam%ntc.eq.0) call relink
 
         !! optionally write large output to file
-        if(simparam%dumpx1)then
+        if( simparam%dumpx1 )then
            open(simparam%ntape,file=file_dumpx1,form='unformatted',position='append')
            write(simparam%ntape) simparam%currentstep,x0,y0,z0,b0
            write(simparam%ntape) simparam%currentstep,x1,y1,z1,b1
@@ -531,16 +530,12 @@ program moldyv2
      !        call auto(1)
      !     end if
 
-     !! This line allows alternate quenching and MD if nloops.gt.1
-     if(simparam%nloops.gt.1.and.simparam%alternate_quench_md)then
-        simparam%iquen = abs(simparam%iquen-1)
-     end if
      !!  end MD or Quench loop
 
-        endif   
+     endif   
 
      !! end of loop through iterations
-  end do simulationloops
+  end do strainloops
 
 #if DEBUG_TIMING
         loops_endtime = wtime()
@@ -557,17 +552,8 @@ program moldyv2
     
       call energy_calc
       write(*,*) "Done energy calc"
-    !! Write atomic positions, species (currently to "system.out")
-    unit_output=newunit()
-    open (unit=unit_output, file='system.out',FORM='FORMATTED')
-    WRITE(unit_output,*) simparam%NM
-    WRITE(unit_output,*) "1 1 1"
-    do  i=1,nmat
-       WRITE(unit_output,*) (b0(j,i),j=1,nmat)              
-    end do
-        WRITE(unit_output,321) (X0(I),Y0(I),Z0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM)
-321     FORMAT(3f11.5,3X,I3,2X,2f11.5)
-    close(unit_output)  
+    
+      call write_system_out_file( 'system.out' )
 
      write(unit_stdout,6) vol
 6   format(' VOLUME: ',d14.7, ' MD-BOX VECTORS (Ang) :'/)
@@ -593,7 +579,14 @@ program moldyv2
 
 contains
 
-  !< read the checkpoint file
+
+  !--------------------------------------------------------------
+  !
+  !  subroutine read_checkpoint_file
+  !
+  !  reads in binary format checkpoint file
+  !
+  !--------------------------------------------------------------
   subroutine read_checkpoint_file
     integer :: unit_checkpoint
     integer :: local_nlcx, local_nlcy, local_nlcz
@@ -667,7 +660,13 @@ contains
     !    close(23)
   end subroutine read_checkpoint_file
 
-  !< write a checkpoint file
+  !--------------------------------------------------------------
+  !
+  !  subroutine write_checkpoint_file
+  !
+  !  writes out binary format checkpoint file
+  !
+  !--------------------------------------------------------------
   subroutine write_checkpoint_file
     integer :: unit_checkpoint
     thmsums=get_thermodynamic_sums()
@@ -686,7 +685,6 @@ contains
     close(unit_checkpoint)
     write(unit_stdout,'("Checkpoint at step:",i6///)')simparam%currentstep
   end subroutine write_checkpoint_file
-
 
   
 end program moldyv2

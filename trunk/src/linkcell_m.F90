@@ -116,20 +116,20 @@ contains
     integer :: l1(simparam%nlcx*simparam%nlcy*simparam%nlcz) !< index of the last atom of the
     !! closed chain in each link cell
     
+!$  !!OpenMP reqd (local declarations)
+!$  integer :: lclock             !< index of currently locked link cell
+    
     integer :: unit_output
     
-    
     !! initialise link cell counters to zero 
-    DO I=1,simparam%NLCX*simparam%NLCY*simparam%NLCZ
-       L0(I)=0
-       L1(I)=0
-    end do
+    l0(:) = 0
+    l1(:) = 0
 
     !----------------------------------------------------
 
     ! DETERMINE IN WHICH LINK CELL ATOM I IS SITUATED.
-    
-    DO I=1,simparam%NM
+
+    do i=1,simparam%NM
 
        !! calculate the link cell for particle i
        !! x index 
@@ -140,7 +140,6 @@ contains
 
       ip = ix + simparam%nlcx*iy + simparam%nlcx*simparam%nlcy*iz + 1
        
-
        !! assign atom i to link cell ip
        ic(i) = ip
        me = l1(ip)
@@ -225,7 +224,7 @@ contains
        me = ic(i)
 
        !! j is the starter atom in link cell "me"
-       J = L0(ME)
+       j = L0(ME)
 
        !! now ask the question "is i the next atom after j in the chain?"
        !! continue searching through the chain segment of cell "me" until
