@@ -287,7 +287,7 @@ contains
 
   integer :: i, j                 !< loop parameters
   real(kind_wp) :: rx, ry, rz     !< local velocity components
-  real(kind_wp) :: sx, sy, sz     !< local momentum sums
+  real(kind_wp) :: sx, sy, sz     !< local velocity sums
   real(kind_wp) :: snhf           !< Nose scaling factor
   real(kind_wp) :: s3         !< new kinetic energy accumulator
   type(simparameters) :: simparam !< simulation parameters
@@ -301,39 +301,41 @@ contains
     sx=0.0d0
     sy=0.0d0
     sz=0.0d0
+    s3=0.0d0
+
     !!average the momentum/lattice parameter over all particles
     do i=1,simparam%nm
-       sx=sx+x1(i)*atomic_mass(i)
-       sy=sy+x2(i)*atomic_mass(i)
-       sz=sz+x3(i)*atomic_mass(i)
+       sx = sx + x1(i)
+       sy = sy + y1(i)
+       sz = sz + z1(i)
     end do
 
        sx=sx/float(simparam%nm)
        sy=sy/float(simparam%nm)
        sz=sz/float(simparam%nm)
-   
 
-    s3=0.0d0
+!$OMP PARALLEL PRIVATE( i, rx, ry, rz ), &
+!$OMP SHARED( x1, y1, z1, atomic_mass, sx, sy, sz, s3, ke, simparam, b0, snhv, snhf, atomic_number ), &
+!$OMP DEFAULT( NONE )
+
+!$OMP DO REDUCTION( + : s3 )
     do i=1,simparam%nm
        if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
     !!subtract average from velocity components to remove any bulk motion
-       x1(i)=x1(i)-sx/atomic_mass(i)
-       y1(i)=y1(i)-sy/atomic_mass(i)
-       z1(i)=z1(i)-sz/atomic_mass(i)
+       x1(i)=x1(i)-sx
+       y1(i)=y1(i)-sy
+       z1(i)=z1(i)-sz
     !! accumulate KE
        rx=b0(1,1)*x1(i)+b0(1,2)*y1(i)+b0(1,3)*z1(i)
        ry=b0(2,1)*x1(i)+b0(2,2)*y1(i)+b0(2,3)*z1(i)
        rz=b0(3,1)*x1(i)+b0(3,2)*y1(i)+b0(3,3)*z1(i)
        s3=s3+atomic_mass(i)*(rx*rx+ry*ry+rz*rz)
     end do
-
-
-
-
+!$OMP END DO
+!$OMP END PARALLEL
 
     !!calculate the accumulated kinetic energy
     ke = s3/(simparam%deltat**2)/2.d0
-
 
      !! scaling factor based on the current discrepancy (and damping based on Nose)
      if(ke.gt.0.0d0)then
@@ -343,25 +345,10 @@ contains
      !! update the running Nose Hoover velocity scaling
      snhv = snhv - snhf
      
-     
-     !! update particles
-     do i=1,simparam%nm
-        if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
-        !!rescale velocities
-        x1(i)=x1(i)*(1.d0+snhv)
-        y1(i)=y1(i)*(1.d0+snhv)
-        z1(i)=z1(i)*(1.d0+snhv)
-        !!accumulate new kinetic energy
-        s3=0.d0
-        rx=b0(1,1)*x1(i)+b0(1,2)*y1(i)+b0(1,3)*z1(i)
-        ry=b0(2,1)*x1(i)+b0(2,2)*y1(i)+b0(2,3)*z1(i)
-        rz=b0(3,1)*x1(i)+b0(3,2)*y1(i)+b0(3,3)*z1(i)
-        s3=s3+(rx*rx+ry*ry+rz*rz)*atomic_mass(i)
-     end do
-     ke = s3/(simparam%deltat**2)/2.d0
-     
-!! update simulation temperature
-     call set_temp(ke/(1.5d0*BK*simparam%NM))     
+     ! Warning: the temperature of the simulation will now be different and
+     ! is not recalculated here however it will be recalculated in update_therm_avs
+     ! on the next timestep
+  
   end if
 
   return

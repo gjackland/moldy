@@ -139,7 +139,7 @@ contains
     real(kind_wp) :: dx, dy, dz
     real(kind_wp) :: ddfx, ddfy, ddfz
     real(kind_wp) :: fcp, fp, fpp
-    real(kind_wp) :: r, rsq, pp
+    real(kind_wp) :: r, rsq, pp, r_recip
     real(kind_wp) :: rxij, ryij, rzij !< spatial separation components
     real(kind_wp), parameter :: point5=0.5d0
     real(kind_wp) :: fxi, fyi, fzi !< ith particle force accumulator (in particleloop)
@@ -204,7 +204,7 @@ contains
        end do
     end do
 
-!$OMP PARALLEL PRIVATE(neighlc,i,j,fxi,fyi,fzi,nlist_ji,dx,dy,dz,r,pp,fpp,fcp,fp,rxij,ryij,rzij,ddfx,ddfy,ddfz), &
+!$OMP PARALLEL PRIVATE(neighlc,i,j,fxi,fyi,fzi,nlist_ji,dx,dy,dz,r,pp,fpp,fcp,fp,rxij,ryij,rzij,ddfx,ddfy,ddfz,r_recip), &
 #if DEBUG_OMP_TIMING
 !$OMP PRIVATE( thread_num, start_time ), &
 #endif
@@ -242,12 +242,13 @@ contains
           
           !! get real spatial separation from fractional components dx/y/z
           call pr_get_realsep_from_dx(r,dx,dy,dz)
+          r_recip = 1.0d0 / r   !! Calculate the reciprical
 
           !! pair potential pp
           pp = vee(r,atomic_number(i),atomic_number(nlist_ji))
           
           !! pair pot. force is (-1/r) * derivative of pair potential        
-          fpp = -dvee(r,atomic_number(i),atomic_number(nlist_ji))/r
+          fpp = -dvee(r,atomic_number(i),atomic_number(nlist_ji)) * r_recip
           
           !! accumulate the potential energy
           pe = pe + pp
@@ -256,7 +257,7 @@ contains
           fcp = -1.d0*( &
                dphi(r,atomic_number(i),atomic_number(nlist_ji))*dafrho(i) + &
                dphi(r,atomic_number(nlist_ji),atomic_number(i))*dafrho(nlist_ji) &
-               )/r
+               ) * r_recip
           
           !! fp is the total force on atom i from atom j
           fp = fpp + fcp

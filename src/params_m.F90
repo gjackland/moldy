@@ -84,9 +84,6 @@ module params_m
      real(kind_wp) :: rqke   !< Required kinetic energy
      real(kind_wp) :: press=0.  !< Required external pressure
 
-
-     integer :: nloops=1     !< Number of iterative loops around the whole program
-                             !! (useful for random alloys)
      integer :: nsteps=0     !< Number of timesteps to be done in this run, or
                              !! number of calculations in quench (0 = keep trying)
      integer :: nprint=100   !< Frequency of printing of thermodynamic averages
@@ -98,8 +95,6 @@ module params_m
                              !! -1 => old coordinates, new velocities 
                              !!  1 => old coordinates, old velocities
      real(kind_wp) :: nose=0.0 !< Softness of damping force in the Nose thermostat 
-
-     logical :: alternate_quench_md=.false. !< Alternate Quench and MD on successive loops
 
      !!SCHEDULED FOR REMOVAL
      integer :: nout=96     !< fortran unit to write restart file
@@ -132,6 +127,7 @@ module params_m
      integer :: lastchkpt=0       !< Number of timesteps since last checkpoint
      integer :: ntc=0       !< Number of timesteps since Neighbour list updated (cf ntcm above)
      real(kind_wp) :: strx(3,3)  !< Strain tensor
+     integer :: strainloops = 1  !< Loop over nsteps for strainloops, each time applying the strain tensor
 
      logical :: uselookup=.false. !< Use lookup tables instead of exact potential fns
 
@@ -152,6 +148,12 @@ module params_m
 
   !! private module data (where the simulation parameters are actually kept)
   type(simparameters), save :: simparam
+  
+  integer, parameter :: keylen = 50
+  
+  integer, parameter :: numdepkeys=2         !< number of deprecated keys
+  character(len=keylen) :: depkey(numdepkeys)!< array of registered keys (hardcoded)
+  integer :: depkeylength(numdepkeys)        !< array of registered deprecated key lengths
 
 contains
 
@@ -202,9 +204,10 @@ contains
     integer, intent(in) :: iunit            !< unit input file is open on
     integer, intent(out) :: ierror          !< -2=unrecognised,-1=malformed,1=EOF,0=ok
     !!routine parameters (saved)
-    integer, parameter :: numkeys=46  !< increase numkeys when adding keywords
-    character(len=50), save  :: key(numkeys)!< array of registered keys (hardcoded)
+    integer, parameter :: numkeys=45        !< increase numkeys when adding keywords
+    character(len=keylen), save  :: key(numkeys)!< array of registered keys (hardcoded)
     integer, save :: keylength(numkeys)     !< array of registered key lengths
+    
     logical, save :: initialised=.false.    !< flag to perform one-off initialisation
     !!local routine worker variables
     integer :: i
@@ -231,13 +234,13 @@ contains
        key(7)='deltat'
        key(8)='rpad'
        key(9)='nbrupdate'
-       key(10)='nloops'
+       key(10)='strainloops'
        key(11)='prevsteps'
        key(12)='lastprint'
        key(13)='lastchkpt'
        key(14)='ntc'
        key(15)='nchkpt'
-       key(16)='alternate_quench_md'
+       key(16)='write_rdf'
        key(17)='temprq'
        key(18)='press'
        key(19)='restart'
@@ -267,7 +270,6 @@ contains
        key(43)='file_dumpx1'
        key(44)='tempsp'
        key(45)='zlayer'
-       key(46)='write_rdf'
 
        !!adjust, set lowercase, and measure the length of registered keys
        do i=1,numkeys
@@ -275,6 +277,17 @@ contains
           call lcase(key(i))
           keylength(i)=len_trim(key(i))
           !write(0,'(a,x,i)')key(i)(:keylength(i))//"-EOS-",keylength(i)
+       end do
+       
+       ! Deprecated keys go here
+       depkey(1)='nloops'
+       depkey(2)='alternate_quench_md'
+       
+       !!adjust, set lowercase, and measure the length of registered keys
+       do i=1,numdepkeys
+          depkey(i)=adjustl(depkey(i))
+          call lcase(depkey(i))
+          depkeylength(i)=len_trim(depkey(i))
        end do
 
        !!flag up that this section has been done
@@ -327,9 +340,15 @@ contains
 
     !!throw an error if input key is not recognised
     if(.not.matchedkey)then
-       write(0,*)"Line",linenum,": ERROR IN KEYVALUEPAIR: key is not recognised:"//keystring
-       ierror=-2
-       return
+        if( is_key_deprecated( keystring, keystringlength ) ) then
+            write(0,*)"Line", linenum, ": ERROR IN KEYVALUEPAIR: key is deprecated:", keystring, &
+                " please remove"
+            ierror=-3
+        else
+            write(0,*)"Line",linenum,": ERROR IN KEYVALUEPAIR: key is not recognised:"//keystring
+            ierror=-2
+         endif
+         return
     end if
 
 
@@ -375,9 +394,9 @@ contains
        read(inputstring(eqindex+1:),*) simparam%ntcm
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%ntcm
 
-    case(10) !'nloops'
-       read(inputstring(eqindex+1:),*) simparam%nloops
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nloops
+    case(10) !'strainloops'
+       read(inputstring(eqindex+1:),*) simparam%strainloops
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%strainloops
 
     case(11) !'prevsteps'
        read(inputstring(eqindex+1:),*) simparam%prevsteps
@@ -399,9 +418,9 @@ contains
        read(inputstring(eqindex+1:),*) simparam%nchkpt
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nchkpt
 
-    case(16) !'alternate_quench_md'
-       read(inputstring(eqindex+1:),*) simparam%alternate_quench_md
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%alternate_quench_md
+    case(16) !'write_rdf'
+       read(inputstring(eqindex+1:),*) simparam%write_rdf
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%write_rdf
 
     case(17) !'temprq'
        read(inputstring(eqindex+1:),*) simparam%temprq
@@ -521,10 +540,6 @@ contains
        read(inputstring(eqindex+1:),*)  simparam%zlayer
        write(0,*) "zlayer = ", simparam%zlayer
 
-    case(46) !'write_rdf'
-       read(inputstring(eqindex+1:),*) simparam%write_rdf
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%write_rdf
-
     case default
        write(0,*) "NOT RECOGNISED"
     end select action
@@ -540,5 +555,28 @@ contains
 
 
   end subroutine readparam_keyvaluepair
+  
+  pure function is_key_deprecated( keystring, keystringlength )
+    logical :: is_key_deprecated
+    character( len = * ), intent( in ) :: keystring
+    integer, intent( in ) :: keystringlength
+    
+    logical :: matchedkey
+    integer :: inum
+  
+    !! match input keystring with registered keys
+    matchedkey=.false.
+    match:do inum=1,numdepkeys
+       if(keystringlength.eq.depkeylength(inum))then
+          if(keystring(:keystringlength).eq.depkey(inum)(:depkeylength(inum)))then
+             matchedkey=.true.
+             exit match
+          end if
+       end if
+    end do match
+    
+    is_key_deprecated = matchedkey
+  
+  end function is_key_deprecated
 
 end module params_m
