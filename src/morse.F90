@@ -262,14 +262,16 @@ contains
     !! set default return value to success, find a spare io unit
     ierror=0    
     iunit=newunit()
+
+    allocate(rmin(species_number,species_number))
+
+
     !! fill coeff_index array
     do i=1,species_number
        coeff_index(spna(i))=i
     end do
 
-    !!allocate the coefficient number arrays and potential ranges
-    allocate(rmin(species_number,species_number))
-    allocate(rmax(species_number,species_number))
+
     write(*,*) "Checking Atomic Numbers"
 
     !! test for the existence only of all generic potential files necessary
@@ -291,8 +293,6 @@ contains
          
           !!close file
           close(iunit)
-          write(*,*)"Read in ",iunit
-
           if(ierror.eq.2)then
              write(stderr,*) "Inconsistencies in file: ","morse_"//a3_na1//"_"//a3_na2//".in"
              return
@@ -303,18 +303,20 @@ contains
 
 
     !! allocate the coefficients arrays
+    !!allocate the coefficient number arrays and potential ranges
     allocate(a_0(species_number,species_number))
     allocate(eps(species_number,species_number))
     allocate(alpha(species_number,species_number))
     allocate(rmax(species_number,species_number))
     allocate(vee_rmax(species_number,species_number))
 
+
     !! initialise data
     a_0=0._kind_wp ; eps=0._kind_wp 
     rmax=0._kind_wp ;vee_rmax=0._kind_wp
     alpha = 0._kind_wp
     !! reopen potential files and read coefficients
-    write(*,*) "Reading potentials files..."
+
     do i=1,species_number
        do j=1,species_number
 
@@ -327,8 +329,7 @@ contains
 
           !! re-read potential file
           read(iunit,'(a100)',err=102,iostat=ierror)potentialtitle
-          write(stderr,*)"Found: ","morse_"//a3_na1//"_"//a3_na2//".in"
-          write(stderr,*)potentialtitle
+          write(stderr,*)"Found: ","morse_"//a3_na1//"_"//a3_na2//".in",potentialtitle
           read(iunit,*,err=102,iostat=ierror)input_na
           read(iunit,*,err=102,iostat=ierror)input_na
 
@@ -338,6 +339,7 @@ contains
           read(iunit,*,err=102,iostat=ierror)a_0(coeff_index(spna(i)),coeff_index(spna(j)))
           read(iunit,*,err=102,iostat=ierror)alpha(coeff_index(spna(i)),coeff_index(spna(j)))
           read(iunit,*,err=102,iostat=ierror)rmaxtemp
+
         rmax(coeff_index(spna(i)),coeff_index(spna(j)))=rmaxtemp
         if(pot_rmax.lt.rmaxtemp)pot_rmax=rmaxtemp 
           !! close file
@@ -347,14 +349,12 @@ contains
        x = exp( alpha(ni,nj) *(a_0(ni,nj)-rmax(ni,nj)))
 
        vee_rmax(ni,nj) =  eps(ni,nj)*x*(x-2d0)
-      write(*,*) vee_src( rmax(ni,nj), ni,nj ),x, VEE_RMAX(ni,nj), rmax(ni,nj),pot_rmax
        end do
     end do
 
 
     !! successful return point
  
-
     return
 
     !! i/o error conditions
