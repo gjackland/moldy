@@ -42,10 +42,11 @@ module params_m
 
   !! public type
   type simparameters
-     character*72 :: title1  !< Titles, used in moldin
-     character*72 :: title2  !< Titles, used in moldin
+     character*72 :: title1="It would have been nice"   !< Titles, used in moldin
+     character*72 :: title2="To give this run a title"  !< Titles, used in moldin
      integer :: ivol=-1      !< IVOL=0 -> Constant Pressure
                              !! IVOL=1 -> Constant Volume
+
                              !! IVOL=2 -> free-surface-on-z, constant-volume-on-x&y
                              !! IVOL=3 -> cluster
                              !! IVOL=4 -> constant volume, atoms cannot cross cells
@@ -71,6 +72,7 @@ module params_m
      real(kind_wp) :: dsp=0._kind_wp  !< Amplitude of random position
                                       !! displacements, used when reading
                                       !! in particles positions
+      integer :: pka=0       !< Number of PKA for cascade simulations   
 
      real(kind_wp) :: rpad=0._kind_wp !< User specified, padding thickness around rcut
      real(kind_wp) :: rcut   !< Cutoff radius for potential
@@ -135,7 +137,6 @@ module params_m
      real(kind_wp) :: BOXTEM !< Box temperature
      real(kind_wp) :: BDEL2  !< Box related timescale
      real(kind_wp) :: BMASS  !< Box mass
-
   end type simparameters
 
   !!Currently public file declarations (could ultimately change this to private/simparam equiv.)
@@ -204,8 +205,13 @@ contains
     integer, intent(in) :: iunit            !< unit input file is open on
     integer, intent(out) :: ierror          !< -2=unrecognised,-1=malformed,1=EOF,0=ok
     !!routine parameters (saved)
+<<<<<<< .mine
+    integer, parameter :: numkeys=47  !< increase numkeys when adding keywords
+    character(len=50), save  :: key(numkeys)!< array of registered keys (hardcoded)
+=======
     integer, parameter :: numkeys=45        !< increase numkeys when adding keywords
     character(len=keylen), save  :: key(numkeys)!< array of registered keys (hardcoded)
+>>>>>>> .r9
     integer, save :: keylength(numkeys)     !< array of registered key lengths
     
     logical, save :: initialised=.false.    !< flag to perform one-off initialisation
@@ -270,6 +276,7 @@ contains
        key(43)='file_dumpx1'
        key(44)='tempsp'
        key(45)='zlayer'
+       key(47)='pka'
 
        !!adjust, set lowercase, and measure the length of registered keys
        do i=1,numkeys
@@ -539,6 +546,10 @@ contains
     case(45) !'zlayer'
        read(inputstring(eqindex+1:),*)  simparam%zlayer
        write(0,*) "zlayer = ", simparam%zlayer
+
+    case(47) !'pka'
+       read(inputstring(eqindex+1:),*) simparam%pka
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pka
 
     case default
        write(0,*) "NOT RECOGNISED"

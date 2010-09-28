@@ -165,7 +165,7 @@ program moldyv2
   !! Check the compiled material module can support the atomic numbers found by read_system
   call check_available_atomic_numbers(simparam%nspec,ispec(1:simparam%nspec),ierror)
   if(ierror.ne.0)then
-     stop "MOLDIN: Error when checking available atomic numbers."
+     write(*,*)ierror, "MOLDIN: Error when checking available atomic numbers."
   end if
 
   
@@ -554,6 +554,7 @@ program moldyv2
       write(*,*) "Done energy calc"
     
       call write_system_out_file( 'system.out' )
+      write(*,*) "Done write to system.out"
 
      write(unit_stdout,6) vol
 6   format(' VOLUME: ',d14.7, ' MD-BOX VECTORS (Ang) :'/)
@@ -562,15 +563,15 @@ program moldyv2
      write(unit_stdout,8)i,(b0(j,i),j=1,nmat)
     end do
 
-
+    write(*,*) "Cleaning"
   !! Cleanup persistent allocatable module storage
-  call cleanup_particles_m
-  call cleanup_linkcell_m
-  call cleanup_neighbourlist_m
-  call cleanup_dynamics_m
-  call cleanup_quench_m
-  call cleanup_thermostat_m
-  call cleanup_parinellorahman_m
+!!  call cleanup_particles_m
+!!  call cleanup_linkcell_m
+!!  call cleanup_neighbourlist_m
+!!  call cleanup_dynamics_m
+!!  call cleanup_quench_m
+!!  call cleanup_thermostat_m
+!!  call cleanup_parinellorahman_m
 
   !! Fin
   close(unit_stdout)
