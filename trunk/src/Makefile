@@ -38,18 +38,14 @@ BUILD_DIR=../build
 ######################################################
 # Material Choice and Location of Executable
 #MATERIAL= -DIRON_CARBON
-#MATERIAL= -DZIRCONIUM
+MATERIAL= -DZIRCONIUM
 #MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
-MATERIAL= -DMORSE 
+#MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
 # Name of the final executable
-<<<<<<< .mine
- EXE=    ../build/moldymorse.exe
-=======
- EXE=    ../build/moldy.FeC
->>>>>>> .r9
+ EXE=    $(BUILD_DIR)/moldy
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -86,7 +82,7 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
 OMPFLAGS= -mp
-OMPFLAGS = -fopenmp # For gfortran
+#OMPFLAGS = -fopenmp # For gfortran
 
 #Debugging
 #DEBUGGING= -g -C
