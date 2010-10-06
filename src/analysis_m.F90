@@ -422,7 +422,7 @@ contains
     integer :: binsperangstrom        !< number of bins per Angstrom
 
     !!local variables
-    integer :: i, j                   !< loop variables
+    integer :: i, j, ineigh           !< loop variables
     integer :: istat                  !< allocation status
     integer :: ipick                  !< index of different RDFs
     integer :: ibin                   !< bin index
@@ -460,9 +460,11 @@ contains
        if(ispec(atomic_index(i)).eq.0) cycle particleloop !don't calculate vacancies
 
 
-       !! loop over pairs, indexed up to particle i
-       pairloop: do j=1,i-1
-          if(Ispec(atomic_index(J)).EQ.0) cycle pairloop !don't calculate vacancies
+       !! loop over pairs, indexed up to particle i  was      pairloop: do j=1,i-1
+
+       neighbourloop: do ineigh=1,numn(i)
+                       j  = nlist(ineigh,i)
+          if(Ispec(atomic_index(J)).EQ.0) cycle neighbourloop !don't calculate vacancies
 
 
           !! Separation in fractional coordinates
@@ -483,11 +485,11 @@ contains
           !! calculate bin and increment its count
           ibin = int(r*binsperangstrom)
           if(r.le.minrad)write(unit_stdout,*) 'RDF: too close < ', minrad, 'A ', i,j,r
-          if(ibin.gt.maxbin)cycle pairloop
+          if(ibin.gt.maxbin)cycle neighbourloop
           nbin(ibin,ipick) = nbin(ibin,ipick)+1
 
 
-       end do pairloop
+       end do neighbourloop
     end do particleloop
 
 
