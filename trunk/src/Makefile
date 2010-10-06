@@ -45,7 +45,11 @@ MATERIAL= -DZIRCONIUM
 #MATERIAL= -DCDAU  
 
 # Name of the final executable
+<<<<<<< .mine
+ EXE=    ../build/moldy.morse
+=======
  EXE=    $(BUILD_DIR)/moldy
+>>>>>>> .r11
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -59,7 +63,7 @@ MATERIAL= -DZIRCONIUM
 #
 ######################################################
 #FC=     pgf90
-FC=     pgf90 -fast -O4
+#FC=     pgf90 -fast -O4
 #FC=     pgf90 -fast -O4 -Minline=levels:1 -Minfo=inline
 #FC=     pgf90 -fast -Mipa=fast,inline -Minfo=inline -tp core2-64
 #FC=     pgf90 -fast -Mipa=fast,inline -Minfo=inline -tp x64
@@ -72,7 +76,7 @@ FC=     pgf90 -fast -O4
 #FC=     xlf90 -O4 -qfree
 #FC=     ifort -O2
 #FC=     f95 -O2
-#FC=     gfortran -fbounds-check
+FC=     gfortran -fbounds-check
 #FC=     gfortran -O4
 
 # C Preprocessing Directives 

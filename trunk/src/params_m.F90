@@ -49,7 +49,7 @@ module params_m
 
                              !! IVOL=2 -> free-surface-on-z, constant-volume-on-x&y
                              !! IVOL=3 -> cluster
-                             !! IVOL=4 -> constant volume, atoms cannot cross cells
+                             !! IVOL=4 -> constant volume on xy, constant pressure on z
                              !! IVOL=5 -> pillar, free-surface-on-xy, constant-volume-on-z
                              !! IVOL=-1 -> UNSET
      integer :: iquen=-1     !< IQUEN=0 -> Molecular Dynamics
@@ -205,13 +205,8 @@ contains
     integer, intent(in) :: iunit            !< unit input file is open on
     integer, intent(out) :: ierror          !< -2=unrecognised,-1=malformed,1=EOF,0=ok
     !!routine parameters (saved)
-<<<<<<< .mine
     integer, parameter :: numkeys=47  !< increase numkeys when adding keywords
     character(len=50), save  :: key(numkeys)!< array of registered keys (hardcoded)
-=======
-    integer, parameter :: numkeys=45        !< increase numkeys when adding keywords
-    character(len=keylen), save  :: key(numkeys)!< array of registered keys (hardcoded)
->>>>>>> .r9
     integer, save :: keylength(numkeys)     !< array of registered key lengths
     
     logical, save :: initialised=.false.    !< flag to perform one-off initialisation
