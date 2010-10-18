@@ -347,7 +347,6 @@ contains
        ni = coeff_index(spna(i))
        nj = coeff_index(spna(j))
        x = exp( alpha(ni,nj) *(a_0(ni,nj)-rmax(ni,nj)))
-
        vee_rmax(ni,nj) =  eps(ni,nj)*x*(x-2d0)
        end do
     end do

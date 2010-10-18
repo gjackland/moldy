@@ -110,9 +110,9 @@ program moldyv2
 
 #if DEBUG_TIMING
   !! MD loop timing variables (nsteps)
-  real(kind_wp) :: g_time, g_starttime      !< Global simulation timing variables
+#  real(kind_wp) :: g_time, g_starttime      !< Global simulation timing variables
   !! Simulation loop timing (nloops)
-  real(kind_wp) :: loops_starttime, loops_endtime
+#  real(kind_wp) :: loops_starttime, loops_endtime
 #endif
 
   !! Timing declarations
@@ -320,21 +320,23 @@ program moldyv2
 36   format(10X,' SET UP LINK CELLS'///)
 
 #if DEBUG_TIMING
-    loops_starttime = wtime()
+#    loops_starttime = wtime()
 #endif
 
   !! Loops through iterations of the whole simulation 
   !!  This is now to apply constant strain rate
-  strainloops: do iter=1,simparam%strainloops
+      strainloops: do iter=1,simparam%strainloops
       simparam%laststep =  simparam%currentstep+simparam%NSTEPS
     !! apply strain to box;   Reuse b2 as unstrained box
     if(simparam%ivol.ne.0)then
        b2=b0
        call matrix_multiply(3,simparam%strx,b2,b0)
-       write(0,37)"b0*strx:",b0
- 37    format(10x,a10/3d17.8/3d17.8/3d17.8/)
+       write(0,37)"TEMPRQ =",simparam%temprq, "b0*strx:",b0
+ 37    format( 10x,a10,f10.2, 10x,a10/3d17.8/3d17.8/3d17.8/)
     endif
-    
+    !! change target temperature and target KE
+      simparam%temprq=simparam%temprq+simparam%tempsp
+      simparam%RQKE = 1.5d0*bk*simparam%TEMPRQ*(simparam%NM-3)
 
      !!Complete initialisation of the system prior to MD.
     !!   if(simparam%restart.eq.1.or.simparam%iquen.eq.1)then
@@ -386,7 +388,7 @@ program moldyv2
      !! *****     =======     ***** !!
         
 #if DEBUG_TIMING
-  g_starttime = wtime()
+#  g_starttime = wtime()
 #endif
 
         !! either quench, or perform MD.
@@ -504,19 +506,11 @@ program moldyv2
      
 #if DEBUG_TIMING
         g_time = wtime()
-        write(*,*)"MDloop runtime: ", g_time - g_starttime
+#        write(*,*)"MDloop runtime: ", g_time - g_starttime
 #endif
-
-     !! time when exiting the MD loop
-     time=clock()
-     write(unit_stdout,'(20X,"QUIT MOLECULAR DYNAMICS LOOP"/20X,"CPU-TIME USED",T50,F15.2," SECONDS")')time
 
      !! calculate final averages from quench and print
      IF (simparam%IQUEN.EQ.1)CALL RUNAVS(simparam%nprint)
-     !!write last checkpoint file
-     if(simparam%nchkpt.gt.0)then
-        call write_checkpoint_file
-     end if
      call linkup
 
 
@@ -535,11 +529,25 @@ program moldyv2
      endif   
 
      !! end of loop through iterations
+        !! exit condition when running short on time
+        time=clock()
+
+        if(time-starttime.gt.simparam%tjob-simparam%tfinalise) exit strainloops
   end do strainloops
+     !!write last checkpoint file
+     if(simparam%nchkpt.gt.0)then
+        call write_checkpoint_file
+     end if
+
+     !! time when exiting the MD loop
+     time=clock()
+     write(unit_stdout,'(20X,"QUIT MOLECULAR DYNAMICS LOOP USING",T50,F15.2,"CPU SECONDS")')time
+
+
 
 #if DEBUG_TIMING
-        loops_endtime = wtime()
-        write(*,*)"Simulationloops runtime: ", loops_endtime - loops_starttime
+#        loops_endtime = wtime()
+#        write(*,*)"Simulationloops runtime: ", loops_endtime - loops_starttime
 #endif
 
   !! if lookup tables have been used, clean them up before exit

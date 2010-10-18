@@ -61,7 +61,7 @@ contains
   subroutine init_thermostat_m
     type(simparameters) :: simparam
     simparam=get_params()
-    simparam%RQKE = 1.5d0*bk*simparam%TEMPRQ*simparam%NM
+    simparam%RQKE = 1.5d0*bk*simparam%TEMPRQ*(simparam%NM-3)
     call set_params(simparam)
   end subroutine init_thermostat_m
   subroutine cleanup_thermostat_m
@@ -174,9 +174,7 @@ contains
     end do
         write(*,*)simparam%nm, "atoms, of which  ",nmove, "  are moveable"
    
-!!     z1(1) =  100.0
-!!     x1(1) =  10.0
-!!     write(*,*) "Sputter velocity", x1(1),y1(1),z1(1) 
+
     !!average the momentum/lattice parameter over all particles
     sx=0.0d0
     sy=0.0d0
@@ -345,10 +343,19 @@ contains
      !! update the running Nose Hoover velocity scaling
      snhv = snhv - snhf
      
-     ! Warning: the temperature of the simulation will now be different and
+     ! Warning: the temperature and KE of the simulation will now be different and
      ! is not recalculated here however it will be recalculated in update_therm_avs
      ! on the next timestep
   
+!! update particles
+        
+     do i=1,simparam%nm
+        if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
+       x1(i)=x1(i)*(1.d0+snhv)
+       y1(i)=y1(i)*(1.d0+snhv)
+       z1(i)=z1(i)*(1.d0+snhv)
+     enddo
+
   end if
 
   return
