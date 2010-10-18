@@ -28,9 +28,9 @@
 #define __DEBUG_F90_
 
 ! Use this to turn off all debugging globally
-#define GLOBAL_DEBUG        1
+#define GLOBAL_DEBUG        0
 
-#define DEBUG_TIMING        GLOBAL_DEBUG & 1
+#define DEBUG_TIMING        GLOBAL_DEBUG & 0
 #define DEBUG_OMP_LOCKS     GLOBAL_DEBUG & 0
 #define DEBUG_OMP_TIMING    GLOBAL_DEBUG & 0
 

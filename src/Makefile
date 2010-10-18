@@ -37,19 +37,14 @@ BUILD_DIR=../build
 #
 ######################################################
 # Material Choice and Location of Executable
-#MATERIAL= -DIRON_CARBON
-MATERIAL= -DZIRCONIUM
+MATERIAL= -DIRON_CARBON
+#MATERIAL= -DZIRCONIUM
 #MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
-# Name of the final executable
-<<<<<<< .mine
- EXE=    ../build/moldy.morse
-=======
- EXE=    $(BUILD_DIR)/moldy
->>>>>>> .r11
+ EXE=    ../build/moldy.fec
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -68,7 +63,6 @@ MATERIAL= -DZIRCONIUM
 #FC=     pgf90 -fast -Mipa=fast,inline -Minfo=inline -tp core2-64
 #FC=     pgf90 -fast -Mipa=fast,inline -Minfo=inline -tp x64
 #FC=     pgf90 -fast -Mipa=fast,inline -tp x64
-
 #FC=     pgf90 -O2 -Munroll=c:1 -Mnoframe -Mlre  -Mvect=sse -Mscalarsse -Mcache_align -Mflushz
 #FC=     pgf90 -O2 -Munroll=c:1 -Mnoframe -Mlre -Mscalarsse -Mcache_align -Mflushz -Mbounds
 #FC=     pgf90
@@ -76,8 +70,8 @@ MATERIAL= -DZIRCONIUM
 #FC=     xlf90 -O4 -qfree
 #FC=     ifort -O2
 #FC=     f95 -O2
-FC=     gfortran -fbounds-check
-#FC=     gfortran -O4
+#FC=     gfortran -fbounds-check
+FC=     gfortran -O4
 
 # C Preprocessing Directives 
 CPPFLAGS= $(MATERIAL) $(DEBUG)
@@ -85,8 +79,8 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OpenMP flags
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
-OMPFLAGS= -mp
-#OMPFLAGS = -fopenmp # For gfortran
+#OMPFLAGS= -mp
+OMPFLAGS = -fopenmp # For gfortran
 
 #Debugging
 #DEBUGGING= -g -C
