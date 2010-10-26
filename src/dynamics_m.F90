@@ -209,7 +209,7 @@ contains
 !$OMP PRIVATE( thread_num, start_time ), &
 #endif
 !$OMP DEFAULT(NONE), &
-!$OMP SHARED( simparam, numn, nlist, x0, y0, z0, atomic_number, dafrho, b0, ic, lc_lock, fx, fy, fz, tc ), &
+!$OMP SHARED( simparam, numn, nlist, x0, y0, z0, atomic_number, atomic_mass , dafrho, b0, ic, lc_lock, fx, fy, fz, tc ), &
 #if DEBUG_OMP_LOCKS
 !$OMP REDUCTION(+:num_locks), &
 #endif
@@ -259,7 +259,7 @@ contains
                dphi(r,atomic_number(nlist_ji),atomic_number(i))*dafrho(nlist_ji) &
                ) * r_recip
           
-          !! fp is the total force on atom i from atom j
+          !! fp is the total force on atom i from atom  nlist_ji
           fp = fpp + fcp
 
           !! calculate spatial separation components from dx
@@ -269,6 +269,9 @@ contains
 
           
           !! apply fp componentwise to tp
+          !! don't include stress due to forces between fixed atoms
+          !! kinetic term doesn't matter because fixed atoms dont contribute
+         if((atomic_mass(i)+atomic_mass(nlist_ji)).gt.0.1) then
           tp(1,1)=tp(1,1)+dx*rxij*fp
           tp(2,1)=tp(2,1)+dx*ryij*fp
           tp(3,1)=tp(3,1)+dx*rzij*fp
@@ -278,6 +281,7 @@ contains
           tp(1,3)=tp(1,3)+dz*rxij*fp
           tp(2,3)=tp(2,3)+dz*ryij*fp
           tp(3,3)=tp(3,3)+dz*rzij*fp
+         endif
           ddfx = -dx*fp
           ddfy = -dy*fp
           ddfz = -dz*fp

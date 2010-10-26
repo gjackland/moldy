@@ -37,14 +37,14 @@ BUILD_DIR=../build
 #
 ######################################################
 # Material Choice and Location of Executable
-MATERIAL= -DIRON_CARBON
+#MATERIAL= -DIRON_CARBON
 #MATERIAL= -DZIRCONIUM
 #MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
-#MATERIAL= -DMORSE 
+MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
- EXE=    ../build/moldy.fec
+ EXE=    ../build/moldy.morse
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
