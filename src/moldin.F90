@@ -1,4 +1,4 @@
-!!========================================================================
+!!=======================================================================
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.Ackland, K.D'Mellow, University of Edinburgh.
@@ -102,8 +102,9 @@ program moldyv2
 
   !! Miscellaneous declarations
   integer :: i,j,iter,idel                  !< local loop variables
-  integer :: istep                          !< the MD step number (loop counter)
+  integer :: istep,ip                       !< the MD step number (loop counter and posav loop counter)
   integer :: unit_generic                   !< general purpose unit number for io
+  integer :: unit_posavs                   !< posavs io unit
   logical :: showcalculationprogress=.false.!< write calculation progress to stderr
   integer :: istat                          !< memory allocation status
   integer :: ierror                         !< general error return flag
@@ -124,7 +125,8 @@ program moldyv2
   !! Local copy of thermodynamic sums
   type(thermodynamic_sums) :: thmsums       !< thermodynamic sums
   real(kind_wp) :: s1,s2,s3                 !< local copies of correc arguments
-   real(kind_wp):: boxke
+  real(kind_wp), allocatable :: ax0(:),ay0(:),az0(:)              !< local copies of mean positions
+  real(kind_wp):: boxke
 
   !! Declarations that need moving (todo: revisit and factor into p-r)
   real(kind_wp) :: a1,a2,a3                 !< parinello-rahman variables
@@ -491,15 +493,26 @@ program moldyv2
 
 
         !! boxquench when IQUEN is 2
-        if(simparam%iquen.ne.2)cycle mdloop
-        iloop: do i = 1,nmat
+        if(simparam%iquen.eq.2) then
+         iloop: do i = 1,nmat
            jloop: do j = 1,nmat
               if((b1(i,j)*b2(i,j)).gt.0) cycle jloop
               b1(i,j)=0.0d0
            end do jloop
-        end do iloop
-     
-        !! quit MD-Loop
+         end do iloop
+        endif
+ !! position averages over last nposav steps
+        ip = simparam%nposav+istep-simparam%laststep
+        if(ip.le.0)cycle mdloop
+!!  set up average counter
+        if(ip.eq.1)then
+              allocate(ax0(simparam%nm),ay0(simparam%nm),az0(simparam%nm))
+              ax0=0.0
+              ay0=0.0
+              az0=0.0
+        endif
+              call  posavs(ip,ax0,ay0,az0)
+         !! quit MD-Loop
      end do mdloop
  
      simparam%prevsteps = simparam%currentstep
@@ -509,13 +522,12 @@ program moldyv2
 #        write(*,*)"MDloop runtime: ", g_time - g_starttime
 #endif
 
-     !! calculate final averages from quench and print
-     IF (simparam%IQUEN.EQ.1)CALL RUNAVS(simparam%nprint)
      call linkup
 
 
      !! Consider optionally calling RDF repeatedly, every (param)#
-     !! iterations in order to to measure RDF evolution.
+     !! iterations in order to to measure RDF evolution.  Not parallelised, so 
+     !! this will be really slow
      !     call rdf(500,50)
 
 
@@ -563,6 +575,20 @@ program moldyv2
     
       call write_system_out_file( 'system.out' )
       write(*,*) "Done write to system.out"
+     IF (simparam%IQUEN.EQ.1)CALL RUNAVS(simparam%nprint)
+     IF (simparam%nposav.NE.0) then 
+       unit_posavs=newunit()
+       open (unit=unit_posavs, file="sys_avs.out",FORM='FORMATTED')
+       WRITE(unit_posavs,*) simparam%NM
+       WRITE(unit_posavs,*) "1 1 1"
+       do  i=1,nmat
+         WRITE(unit_posavs,*) (b0(j,i),j=1,nmat)              
+       end do
+         WRITE(unit_posavs,321) (AX0(I),AY0(I),AZ0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM)
+321     FORMAT(3f11.5,3X,I3,2X,2f11.5)
+        close(unit_posavs)
+      endif
+
 
      write(unit_stdout,6) vol
 6   format(' VOLUME: ',d14.7, ' MD-BOX VECTORS (Ang) :'/)

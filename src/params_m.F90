@@ -91,6 +91,7 @@ module params_m
      integer :: nprint=100   !< Frequency of printing of thermodynamic averages
      integer :: ntcm         !< Frequency of updating list of neighbours
      integer :: nchkpt=-1    !< Frequency of checkpointing
+     integer :: nposav=0    !< Average positions over last nposav steps
 
      integer :: restart=0    !< Switch defining type of run
                              !!  0 => new coordinates
@@ -205,7 +206,7 @@ contains
     integer, intent(in) :: iunit            !< unit input file is open on
     integer, intent(out) :: ierror          !< -2=unrecognised,-1=malformed,1=EOF,0=ok
     !!routine parameters (saved)
-    integer, parameter :: numkeys=47  !< increase numkeys when adding keywords
+    integer, parameter :: numkeys=48  !< increase numkeys when adding keywords
     character(len=50), save  :: key(numkeys)!< array of registered keys (hardcoded)
     integer, save :: keylength(numkeys)     !< array of registered key lengths
     
@@ -272,7 +273,7 @@ contains
        key(44)='tempsp'
        key(45)='zlayer'
        key(47)='pka'
-
+       key(48)='nposav'
        !!adjust, set lowercase, and measure the length of registered keys
        do i=1,numkeys
           key(i)=adjustl(key(i))
@@ -545,6 +546,10 @@ contains
     case(47) !'pka'
        read(inputstring(eqindex+1:),*) simparam%pka
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pka
+
+    case(48) !'nposav'
+       read(inputstring(eqindex+1:),*) simparam%nposav
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nposav
 
     case default
        write(0,*) "NOT RECOGNISED"
