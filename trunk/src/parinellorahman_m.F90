@@ -92,6 +92,7 @@ module parinellorahman_m
   public :: pr_get_tgid
   public :: pr_get_sigma
   public :: pr_get_realsep_from_dx
+  public :: pr_get_realsep2_from_dx
 
 
   !! Public data
@@ -137,7 +138,7 @@ contains
   !
   ! subroutine pr_get_realsep_from_dx
   !
-  ! returns the real spatial separation between two particles
+  ! returns the  real spatial separation between two particles
   ! whose fractional separation components have been input in 
   ! dx, dy, dz
   !
@@ -147,6 +148,40 @@ contains
     real(kind_wp), intent(inout) :: dx, dy, dz
     real(kind_wp) :: rxij, ryij, rzij
     real(kind_wp) :: rsq
+    
+    !! periodicity transformations on dx, dy, dz
+
+      if(simparam%ivol.eq.0.or.simparam%ivol.eq.1.or.simparam%ivol.eq.4)then !PBC
+             dx= dx -nint(dx)
+             dy= dy -nint(dy)
+             dz= dz -nint(dz)
+      elseif (simparam%ivol.eq.2)then ! free surface
+             dx= dx -nint(dx)
+             dy= dy -nint(dy)
+      elseif (simparam%ivol.eq.5)then ! pillar
+             dz= dz -nint(dz)
+      endif
+
+    !!real spatial separation
+    rxij=b0(1,1)*dx+b0(1,2)*dy+b0(1,3)*dz
+    ryij=b0(2,1)*dx+b0(2,2)*dy+b0(2,3)*dz
+    rzij=b0(3,1)*dx+b0(3,2)*dy+b0(3,3)*dz
+    r=sqrt(rxij*rxij+ryij*ryij+rzij*rzij)
+  end subroutine pr_get_realsep_from_dx
+
+  !-------------------------------------------------------------
+  !
+  ! subroutine pr_get_realsep2_from_dx
+  !
+  ! returns the squared real spatial separation between two particles
+  ! whose fractional separation components have been input in 
+  ! dx, dy, dz
+  !
+  !-------------------------------------------------------------
+  subroutine pr_get_realsep2_from_dx(rsq,dx,dy,dz)
+    real(kind_wp), intent(out) :: rsq
+    real(kind_wp), intent(inout) :: dx, dy, dz
+    real(kind_wp) :: rxij, ryij, rzij
     
     !! periodicity transformations on dx, dy, dz
 
@@ -173,9 +208,7 @@ contains
     ryij=b0(2,1)*dx+b0(2,2)*dy+b0(2,3)*dz
     rzij=b0(3,1)*dx+b0(3,2)*dy+b0(3,3)*dz
     rsq=rxij*rxij+ryij*ryij+rzij*rzij
-    r =  sqrt(rsq)
-    
-  end subroutine pr_get_realsep_from_dx
+  end subroutine pr_get_realsep2_from_dx
   
   !------------------------------------------------------
   !

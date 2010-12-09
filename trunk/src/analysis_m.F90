@@ -43,7 +43,7 @@ module analysis_m
   public :: update_thermodynamic_sums
   public :: set_thermodynamic_sums
   public :: get_thermodynamic_sums
-  public :: runavs, rdf, auto
+  public :: runavs, rdf, auto, posavs
   public :: thermodynamic_sums
 
   !! derived type used to hold all running sums of thermodynamic quantities
@@ -293,6 +293,25 @@ contains
 9   format('Atom 1 Trace: ',6E17.8)
 
   end subroutine runavs
+  !--------------------------------------------------------------
+  !
+  !  subroutine posavs
+  !
+  !  evaluates average positions for high-T crystal structure
+  !  especially reliable if equilibration not done well. now
+  !  changed to do averages across the entire run in spite of
+  !  the nose thermostat.
+  !
+  !
+  !--------------------------------------------------------------
+  subroutine posavs(np,ax0,ay0,az0)
+    real(kind_wp) :: ax0(:),ay0(:),az0(:)
+    integer :: i, j, k
+    integer :: np
+    ax0 = (ax0*(np-1.0)+x0)/np
+    ay0 = (ay0*(np-1.0)+y0)/np
+    az0 = (az0*(np-1.0)+z0)/np
+  end subroutine posavs
 
 
   !--------------------------------------------------------------
@@ -415,6 +434,7 @@ contains
   !! two distinct species (see assignment of the ipick index)
   !! One day, could rewrite with 3d RDF array nbin, to allow two indices
   !
+  !  Also, does not use link cells, so can be very slow
   !--------------------------------------------------------------
   subroutine rdf(maxbin,binsperangstrom)
     !! argument variables
@@ -429,12 +449,11 @@ contains
     integer :: nbins                  !< reported unmber of particles in a bin
     integer, allocatable :: nbin(:,:) !< RDF bin array
     real(kind_wp) :: dx, dy, dz       !< fractional separations
-    real(kind_wp) :: r                !< physical pair separation
-    real(kind_wp) :: minrad           !< minimum radius before warning
+    real(kind_wp) :: r, rsq           !< physical pair separation
+    real(kind_wp) :: minrad, rsqmax   !< minimum radius before warning, maximum in rdf
     integer :: unit_rdf               !< io unit number for RDF
     type(simparameters) :: simparam   !< local copy of simulation parameters
     simparam=get_params()
-
 
     !! allocate the RDF array
     allocate(nbin(maxbin,2*simparam%nspec-1),stat=istat)
@@ -454,7 +473,7 @@ contains
      minrad = 0.9d0
 #endif
 
-
+    rsqmax=(maxbin/binsperangstrom)**2 
     !!loop over particles
     particleloop: do i=1,simparam%nm
        if(ispec(atomic_index(i)).eq.0) cycle particleloop !don't calculate vacancies
@@ -474,9 +493,9 @@ contains
 
 
           !! get real spatial separation from fractional components dx/y/z
-          call pr_get_realsep_from_dx(r,dx,dy,dz)
-
-
+          call pr_get_realsep2_from_dx(rsq,dx,dy,dz)
+          if(rsq.gt.rsqmax) cycle neighbourloop
+          r=sqrt(rsq)
           !! ipick is the index of the RDF to contibute to
           !! note that this is insufficient for more than two distinct species
           ipick = atomic_index(i) + atomic_index(j) - 1
