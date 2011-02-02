@@ -424,7 +424,7 @@ contains
     !! query valid range of potential
     call get_supported_potential_range(rmin,rmax)
 
-    !! open a file
+    !! open a file to write potential
     ounit=newunit()
     open(ounit,file="potential.55",status='unknown')
 
@@ -485,8 +485,9 @@ contains
                   12*(x3b/x1b)*dphi(x3b,ni,nj) +       &
                   24*(x4b/x1b)*dphi(x4b,ni,nj) +       &
                   8*(x5b/x1b)*dphi(x5b,ni,nj))
-             write(ounit,55) x2b,ecbccb,presbr,presbc,dembo, &
-                  &       vee(x2b,ni,nj),dvee(x2b,ni,nj),phi(x2b,ni,nj),dphi(x2b,ni,nj)
+             write(ounit,55) x2b,&
+       vee(x2b,ni,nj),dvee(x2b,ni,nj),phi(x2b,ni,nj),dphi(x2b,ni,nj)
+          !!, ecbccb,presbr,presbc,dembo
 55           format(9e12.4)
           enddo
           

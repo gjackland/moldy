@@ -126,7 +126,7 @@ contains
             xH0(r_v_(coeff_index(na1),coeff_index(na2),i)-r)
      end do
     elseif(r.gt.bier_cut1.and.r.lt.bier_cut2)then
-      vee_src = spline(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
+      vee_src = line(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
                        bier_cut2,bier_v2(coeff_index(na1),coeff_index(na2)),bier_dv2(coeff_index(na1),coeff_index(na2)),r)
     elseif(r.lt.bier_cut1)then
       vee_src= biersack(r, na1, na2)
@@ -157,7 +157,7 @@ contains
             xH0(r_v_(coeff_index(na1),coeff_index(na2),i)-r)
       end do
     elseif(r.gt.bier_cut1)then
-      dvee_src = dspline(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
+      dvee_src = dline(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
                        bier_cut2,bier_v2(coeff_index(na1),coeff_index(na2)),bier_dv2(coeff_index(na1),coeff_index(na2)),r)
     elseif(r.lt.bier_cut1)then
       dvee_src= dvee_biersack(r, na1, na2)
@@ -356,6 +356,25 @@ function dspline(a1,x1,v1,a2,x2,v2,r)
     return
   end function dspline
 
+function line(a1,x1,v1,a2,x2,v2,r)
+     real (kind_wp) :: line ! result 
+     real (kind_wp) :: a1,x1,v1,a2,x2,v2,r ! inputs
+     real (kind_wp) :: t
+
+        t = (r-a1)/(a2-a1)
+
+       line = x1*(1.0-t)+x2*t
+    return
+end function line
+
+function dline(a1,x1,v1,a2,x2,v2,r)
+     real (kind_wp) :: dline ! result 
+     real (kind_wp) :: a1,x1,v1,a2,x2,v2,r ! inputs
+     real (kind_wp) :: t
+      dline = (x2-x1)/(a2-a1)
+    return
+  end function dline
+
   function dvee_biersack(r, na1, na2)
     use constants_m
     real (kind_wp) :: dvee_biersack ! result (eV)
@@ -542,15 +561,16 @@ function dspline(a1,x1,v1,a2,x2,v2,r)
        end do
     end do
 
-    !! Evaluate Biersack and join function limits between 1 and 2 Angstroms
+    !! Evaluate Biersack and join function limits between 1 Angstroms and 
+    !! 25% inside near neighbour (i.e. first spline)
     do i=1,species_number
        do j=1,species_number
      na1 = spna(i)
      na2 = spna(j)
-     bier_cut1 = 1.5d0
-     bier_cut2 = 2.5d0
+     bier_cut1 = r_v_(coeff_index(na1),coeff_index(na2),ncoeffv(coeff_index(na1),coeff_index(na2)))*0.5
+     bier_cut2 = r_v_(coeff_index(na1),coeff_index(na2),ncoeffv(coeff_index(na1),coeff_index(na2)))*0.75
       bier_v1(i,j) = biersack( bier_cut1, na1, na2)
-     bier_dv1(i,j) = dvee_biersack( bier_cut1, na1, na2)  
+      bier_dv1(i,j) = dvee_biersack( bier_cut1, na1, na2)  
        bier_v2(i,j) =0d0
        bier_dv2(i,j) =0d0
 
@@ -562,13 +582,13 @@ function dspline(a1,x1,v1,a2,x2,v2,r)
             (r_v_(coeff_index(na1),coeff_index(na2),ii)-bier_cut2)**2*     &
             xH0(r_v_(coeff_index(na1),coeff_index(na2),ii)- bier_cut2)
       end do
-      write(*,*)"Bier", na1,na2, bier_v1(i,j),bier_dv1(i,j), bier_v2(i,j),bier_dv2(i,j)
+      write(*,*)"Biersack core", na1,na2, " between ", bier_cut1, bier_cut2
      end do
     end do
 
-      write(*,*)"Ncoeff ", ncoeffv, ncoeffp
-      write(*,*)"Bier", bier_v1,bier_dv1, bier_v2,bier_dv2
-      write(*,*)"rmax/rmin", rmax,rmin
+!!      write(*,*)"Ncoeff ", ncoeffv, ncoeffp
+!!      write(*,*)"Bier", bier_v1,bier_dv1, bier_v2,bier_dv2
+!!      write(*,*)"rmax/rmin", rmax,rmin
 
 
     !! successful return point
