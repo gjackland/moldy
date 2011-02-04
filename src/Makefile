@@ -81,6 +81,7 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OMPFLAGS= -mp -Minfo=mp
 #OMPFLAGS= -mp
 OMPFLAGS = -fopenmp # For gfortran
+#OMPFLAGS -openmp [1]
 
 #Debugging
 #DEBUGGING= -g -C
