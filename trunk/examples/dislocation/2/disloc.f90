@@ -18,7 +18,7 @@ program disloc
 	character( len = 100 ) :: line
 	type( basis_info ) :: b_info
 
-	if( iargc() .ne. 3 ) then
+	if( command_argument_count() .ne. 3 ) then
 		call getarg( 0, arg )
 		write( *, * ) 'Usage: ', trim( arg ), ' [input system file] [output system file] [basis input file]'
 		stop

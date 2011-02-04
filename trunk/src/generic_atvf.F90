@@ -101,6 +101,7 @@ module generic_atvf
   real(kind_wp), allocatable :: bier_dv1(:,:)
   real(kind_wp), allocatable :: bier_dv2(:,:)
   real(kind_wp) :: bier_cut1, bier_cut2
+  real(kind_wp) :: a,b,c,d                  !< coefficients for joining function
 contains
 
 
@@ -112,6 +113,7 @@ contains
   !----------------------------------------------------------------------------
   function vee_src(r, na1, na2)
     real (kind_wp) :: vee_src       !< result (eV)
+    real (kind_wp) :: a,b,c,d       !< joining function
     real (kind_wp), intent(in) :: r !< separation (angstrom)
     integer, intent(in) :: na1      !< atomic number atom 1
     integer, intent(in) :: na2      !< atomic number atom 2
@@ -126,8 +128,17 @@ contains
             xH0(r_v_(coeff_index(na1),coeff_index(na2),i)-r)
      end do
     elseif(r.gt.bier_cut1.and.r.lt.bier_cut2)then
-      vee_src = line(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
-                       bier_cut2,bier_v2(coeff_index(na1),coeff_index(na2)),bier_dv2(coeff_index(na1),coeff_index(na2)),r)
+
+    call set_exp_spline(bier_cut1,  &
+     bier_v1(coeff_index(na1),coeff_index(na2)), &
+     bier_dv1(coeff_index(na1),coeff_index(na2)), &
+                        bier_cut2,   &
+     bier_v2(coeff_index(na1),coeff_index(na2)), &
+     bier_dv2(coeff_index(na1),coeff_index(na2)),a,b,c,d )
+
+    vee_src=expspline(a,b,c,d,bier_cut1,bier_cut2,r)
+!!      vee_src = line(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
+!!                       bier_cut2,bier_v2(coeff_index(na1),coeff_index(na2)),bier_dv2(coeff_index(na1),coeff_index(na2)),r)
     elseif(r.lt.bier_cut1)then
       vee_src= biersack(r, na1, na2)
     endif
@@ -144,6 +155,7 @@ contains
   function dvee_src(r, na1, na2)
     real (kind_wp) :: dvee_src      !< result (eV)
     real (kind_wp), intent(in) :: r !< separation (angstrom)
+    real (kind_wp) :: a,b,c,d       !< joining function
     integer, intent(in) :: na1      !< atomic number atom 1
     integer, intent(in) :: na2      !< atomic number atom 2
     integer :: i                    !< loop variable
@@ -157,8 +169,15 @@ contains
             xH0(r_v_(coeff_index(na1),coeff_index(na2),i)-r)
       end do
     elseif(r.gt.bier_cut1)then
-      dvee_src = dline(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
-                       bier_cut2,bier_v2(coeff_index(na1),coeff_index(na2)),bier_dv2(coeff_index(na1),coeff_index(na2)),r)
+    call set_exp_spline(bier_cut1,  &
+     bier_v1(coeff_index(na1),coeff_index(na2)), &
+     bier_dv1(coeff_index(na1),coeff_index(na2)), &
+                        bier_cut2,   &
+     bier_v2(coeff_index(na1),coeff_index(na2)), &
+     bier_dv2(coeff_index(na1),coeff_index(na2)),a,b,c,d )
+    dvee_src=dexpspline(a,b,c,d,bier_cut1,bier_cut2,r)
+!      dvee_src = dline(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
+!                       bier_cut2,bier_v2(coeff_index(na1),coeff_index(na2)),bier_dv2(coeff_index(na1),coeff_index(na2)),r)
     elseif(r.lt.bier_cut1)then
       dvee_src= dvee_biersack(r, na1, na2)
     endif
@@ -324,8 +343,39 @@ contains
     phi_bier = 0.1818*exp(-3.2*x) +0.5099*exp(-0.9423*x) +0.2802*exp(-0.4029*x) +0.02817*exp(-0.2016*x) 
      biersack =  zed*phi_bier/r
      return
-    
-  end function biersack
+   end function biersack
+
+function expspline(a,b,c,d,a1,a2,r)
+     real (kind_wp) :: expspline ! result 
+     real (kind_wp) :: a,b,c,d,a1,a2,r ! inputs
+     real (kind_wp) :: t
+        t = (r-a1)/(a2-a1)
+      expspline = exp(a+b*t+c*t*t+d*t*t*t)
+    return
+end function expspline
+
+function dexpspline(a,b,c,d,a1,a2,r)
+     real (kind_wp) :: dexpspline ! result 
+     real (kind_wp) :: a,b,c,d,a1,a2,r ! inputs
+     real (kind_wp) :: t
+        t = (r-a1)/(a2-a1)
+      dexpspline = (b+2*c*t+3*d*t)*exp(a+b*t+c*t*t+d*t*t*t)
+    return
+end function dexpspline
+
+
+subroutine set_exp_spline(a1,x1,v1,a2,x2,v2,a,b,c,d)
+     real (kind_wp) :: a1,x1,v1,a2,x2,v2 ! inputs
+     real (kind_wp) :: a,b,c,d ! outputs
+     real (kind_wp) :: t
+!  Spline join in region 0-1
+       a=log(x1)
+       b=v1/x1
+       c=3*log(x2/x1)-2*v1/x1-v2/x2
+       d=v1/x1 + v2/x2 -2*log(x2/x1)
+    return
+end subroutine set_exp_spline
+
 
 function spline(a1,x1,v1,a2,x2,v2,r)
      real (kind_wp) :: spline ! result 
