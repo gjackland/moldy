@@ -70,8 +70,7 @@ program disloc
             if( x .ge. x_to .and. z .lt. z_to ) x =  ( x + CMIN ) / squeeze_factor - CMIN
 
             write( unit = 11, fmt = line_fmt ) x, y, z, IZ, AM, energy
-                        write( *, fmt = line_fmt ) x, y, z, IZ, AM, energy
-             nmnew = nmnew + 1        ! Count up the number of atoms left after remove the dislocation atoms
+            nmnew = nmnew + 1        ! Count up the number of atoms left after remove the dislocation atoms
         endif
      enddo
 
