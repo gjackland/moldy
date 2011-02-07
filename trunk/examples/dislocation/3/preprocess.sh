@@ -1,3 +1,4 @@
+cp ../2/system.out system.in
 gfortran -O4 freeze_surface.f90 -o freeze_surface.exe
 ./freeze_surface.exe system.in system.in.new
 rm system.in
