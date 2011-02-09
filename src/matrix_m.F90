@@ -23,7 +23,14 @@
 !!
 !!========================================================================
 
-!< Some explicitly coded generic martrix operations.
+!============================================================================
+!
+!  matrix_m.F90
+!
+!  Module providing some explicitly coded generic matrix operations.
+!
+!============================================================================
+
 !!These may come in useful if we decide not to use Fortran intrinsics.
 module matrix_m
   

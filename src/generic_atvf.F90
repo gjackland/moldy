@@ -25,6 +25,8 @@
 
 !============================================================================
 !
+! generic_atvf.F90
+!
 ! Generic materials module which loads ATVF format potentials as required
 ! from the potentials/ subdirectory. All potential files follow the naming
 ! convention pot_XXX_YYY.in where XXX and YYY are the atomic numbers of the

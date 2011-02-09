@@ -23,7 +23,16 @@
 !!
 !!========================================================================
 
-!< This module holds all runtime parameters, and their access and read/write routines
+!============================================================================
+!
+! params_m.F90
+!
+! This module holds all runtime parameters, and their access and read/write
+! routines
+!
+!============================================================================
+
+!< 
 module params_m
 
   use constants_m

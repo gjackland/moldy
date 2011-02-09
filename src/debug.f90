@@ -23,6 +23,15 @@
 !!
 !!========================================================================
 
+!==========================================================================
+!
+!  debug_m.F90
+!
+!  A debug preprocessing file that can be used to enable debugging routines
+!  throughout the code.
+!
+!==========================================================================
+
 ! Make sure this file is only included once
 #ifndef __DEBUG_F90_
 #define __DEBUG_F90_

@@ -25,6 +25,8 @@
 
 !============================================================================
 !
+!  potential_m.F90
+!
 !  Potential module
 !
 !  This module provides the interface to the potential. The actual

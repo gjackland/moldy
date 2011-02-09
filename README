@@ -23,52 +23,10 @@
 !!
 !!========================================================================
 
+For information about how to use MOLDY please visit our wiki:
 
-!---------------------------------------------------------------------
-!
-!  timers_m.F90
-!
-!  This module provides timing subroutines that can be used to
-!  evaluate the execution time of sections of the code.
-!
-!---------------------------------------------------------------------
-module timers_m
-  
-  use params_m
-  use constants_m
+https://www.wiki.ed.ac.uk/display/ComputerSim/Home
 
-  implicit none
-  private
+The newest version of MOLDY can be downloaded from:
 
-  !! Public interface
-  public :: clock
-  public :: wtime
-
-  !!public data (TEMP FOR TIMING PURPOSES ONLY)
-  real(kind_wp), public :: omptime=0.
-
-contains
-  
-  function clock()
-    real(kind_wp) :: clock
-    real(kind_wp) :: time
-    real(kind_wp), save :: firsttime
-    logical, save :: calledbefore=.false.
-
-    call cpu_time(time)
-    if(.not.calledbefore)then
-       firsttime=time
-       calledbefore=.true.
-    end if
-    clock=time-firsttime
-  end function clock
-  
-  !! Wall clock time
-  function wtime()
-    real( kind_wp ) :: wtime
-    
-    call cpu_time( wtime )
-  
-  end function wtime
-
-end module timers_m
+http://code.google.com/p/moldy/

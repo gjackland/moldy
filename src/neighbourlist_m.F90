@@ -23,6 +23,15 @@
 !!
 !!========================================================================
 
+!============================================================================
+!
+!  neighbourlist_m.F90
+!
+!  Module that provides a neighbour list implementation which is used in
+!  conjunction with the link cell algorithm.
+!
+!============================================================================
+
 module neighbourlist_m
 
   !! Functional dependencies

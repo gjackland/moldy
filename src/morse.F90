@@ -25,7 +25,9 @@
 
 !============================================================================
 !
-! Pairwise Potentials: Morse potential
+! morse.F90
+!
+! A multispecies Morse potential with parameters read at runtime.
 !
 ! See <reference>
 !

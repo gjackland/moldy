@@ -23,7 +23,15 @@
 !!
 !!========================================================================
 
-!< Module to provide the link-cell functionality to MOLDIN.
+!============================================================================
+!
+! linkcell_m.F90
+!
+! Module to provide the link-cell functionality to MOLDIN.
+!
+!
+!============================================================================
+
 module linkcell_m
 
 

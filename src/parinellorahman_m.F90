@@ -25,6 +25,8 @@
 
 !==========================================================================
 !
+!  parinelloraman_m.F90
+!
 !  This module holds the metric quantities associated with
 !  the Lagrangian formulation of Parinello and Rahman
 !  [notation follows J. Appl. Phys. 52, 7182--7190 (1982)].

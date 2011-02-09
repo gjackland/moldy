@@ -25,6 +25,8 @@
 
 !---------------------------------------------------------------------
 !
+!  thermostat_m.F90
+!
 !  thermostat module
 !
 !  contains all subroutines involved in setting and rescaling
