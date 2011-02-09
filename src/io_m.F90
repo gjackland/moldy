@@ -51,7 +51,7 @@ module io_m
   public :: write_system_out_file
   
   ! Format used for lines in system input and output files
-  public, character( len = 40 ), parameter :: line_fmt = "( 3f11.5, 3X, I3, 2X, 2f11.5 )"
+  character( len = 40 ), parameter :: line_fmt = "( 3f11.5, 3X, I3, 2X, 2f11.5 )"
 
   !! Private module data
   logical :: exists,opened !< exists and "is opened" logical flags
