@@ -25,7 +25,9 @@
 
 !============================================================================
 !
-! Zirconium
+! zirconium.F90
+!
+! Single species Zr hcp potential.
 !
 ! See <reference>
 !
