@@ -23,6 +23,16 @@
 !!
 !!========================================================================
 
+!==========================================================================
+!
+!  particles_m.F90
+!
+!  This module hold data relating to particle in the system e.g. positions,
+!  velocities, etc.  It also contains a list of atomic masses for each of
+!  the atom species.
+!
+!==========================================================================
+
 module particles_m
 
 

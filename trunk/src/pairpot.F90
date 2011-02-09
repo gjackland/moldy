@@ -25,7 +25,7 @@
 
 !============================================================================
 !
-! Pairwise Potentials
+! A multispecies Lennard Jones potential with parameter read at runtime.
 !
 ! See <reference>
 !

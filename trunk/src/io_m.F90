@@ -23,6 +23,14 @@
 !!
 !!========================================================================
 
+!============================================================================
+!
+!  io_m.F90
+!
+!  Module to handle MOLDY input and output.
+!
+!============================================================================
+
 module io_m
 
   use constants_m
@@ -41,6 +49,9 @@ module io_m
   public :: read_system
   public :: write_textout_header, write_textout
   public :: write_system_out_file
+  
+  ! Format used for lines in system input and output files
+  public, character( len = 40 ), parameter :: line_fmt = "( 3f11.5, 3X, I3, 2X, 2f11.5 )"
 
   !! Private module data
   logical :: exists,opened !< exists and "is opened" logical flags
@@ -329,8 +340,7 @@ end subroutine write_textout_header
     do  i=1,nmat
        WRITE(unit_output,*) (b0(j,i),j=1,nmat)              
     end do
-        WRITE(unit_output,321) (X0(I),Y0(I),Z0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM)
-321     FORMAT(3f11.5,3X,I3,2X,2f11.5)
+        WRITE(unit_output, fmt = line_fmt ) (X0(I),Y0(I),Z0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM)
     close(unit_output)
   
   end subroutine write_system_out_file

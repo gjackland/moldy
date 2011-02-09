@@ -1,7 +1,252 @@
-For information about how to use MOLDY please visit our wiki:
+!!========================================================================
+!!
+!! MOLDY - Short Range Molecular Dynamics
+!! Copyright (C) 2009 G.Ackland, K.D'Mellow, University of Edinburgh.
+!!
+!! This program is free software; you can redistribute it and/or modify
+!! it under the terms of the GNU General Public License as published by
+!! the Free Software Foundation; either version 2 of the License, or
+!! (at your option) any later version.
+!!
+!! This program is distributed in the hope that it will be useful,
+!! but WITHOUT ANY WARRANTY; without even the implied warranty of
+!! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!! GNU General Public License for more details.
+!!
+!! You should have received a copy of the GNU General Public License
+!! along with this program; if not, write to the Free Software
+!! Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+!!
+!! You can contact the authors by email on g.j.ackland@ed.ac.uk
+!! or by writing to Prof. G Ackland, School of Physics, JCMB,
+!! University of Edinburgh, Edinburgh, EH9 3JZ, UK.
+!!
+!!========================================================================
 
-https://www.wiki.ed.ac.uk/display/ComputerSim/Home
+Code Map
+========
 
-The newest version of MOLDY can be downloaded from:
+This is a guide for developers looking to make alterations to the MOLDY
+source code or to understand how MOLDY works.
 
-http://code.google.com/p/moldy/
+analysis_m.F90
+--------------
+
+Analysis subroutines used for calculating thermodynamic properties and
+properties like the radial distribution function.
+
+constants_m.F90
+---------------
+
+Parameter definitions for machine and other constants
+
+MOLDY defines the following system of units:
+
+                     Length - angstroms
+                     Mass   - atomic units
+                     Energy - electron volts
+
+The units of time are constructed as a combination of the above
+with dimensions ( mass * length^2 / energy )^1/2
+As this gives an unusual number (~1.018d-14 seconds) we convert
+all input from femtoseconds to model units, and output from model units
+to femtoseconds for human consumption.
+
+Similarly the units of pressure are constructed as a combination of
+the above with dimensions ( eV / angstrom ) / angstrom^2
+As this gives an unusual number (~160.2 GPa) we convert all input
+from GPa to model units, and output from model units to GPa for
+human consumption.
+
+ Constants categories:
+      - machine constants (data types)
+      - io unit numbers
+      - some (minimal) hardcoded parameters
+      - physical constants
+      - constants for unit conversion between natural units and SI 
+
+debug_m.F90
+-----------
+
+A debug preprocessing file that can be used to enable debugging routines
+throughout the code.
+
+NOTE: For this file to work a C style preprocessor must be enabled during
+compilation.
+
+
+dynamics_m.F90
+--------------
+
+MOLDY Dynamics module (dynamics_m)
+
+Contains Predictor-Corrector routines, PREDIC and CORREC.
+Contains VELOCITY-VERLET routine.
+Contains FORCE routine and forces data.
+
+io_m.F90
+--------
+
+Module to handle MOLDY input and output.
+
+linkcell_m.F90
+--------------
+
+Module to provide the link-cell functionality to MOLDIN.
+
+lookup_m.F90
+------------
+
+This module provides an interface to lookup tables.
+
+matrix_m.F90
+------------
+
+Module providing some explicitly coded generic matrix operations.
+
+
+moldin.F90
+----------
+
+The main program file.
+
+neighbourlist_m.F90
+-------------------
+
+Module that provides a neighbour list implementation which is used in
+conjunction with the link cell algorithm.
+
+params_m.F90
+------------
+
+This module holds all runtime parameters, and their access and read/write
+routines
+
+parinelloraman_m.F90
+--------------------
+
+This module holds the metric quantities associated with
+the Lagrangian formulation of Parinello and Rahman
+[notation follows J. Appl. Phys. 52, 7182--7190 (1982)].
+
+particles_m.F90
+---------------
+
+This module hold data relating to particle in the system e.g. positions,
+velocities, etc.  It also contains a list of atomic masses for each of
+the atom species.
+
+potential_m.F90
+---------------
+
+Potential module
+
+This module provides the interface to the potential. The actual
+implementation is currently a compile-time substitution of the
+potential required, using preprocessor directives.
+
+Note that the code en-masse should only interact with this module's
+public interface, and not the actual potential as supplied by the
+relevant *material* module.
+
+quench_m.F90
+------------
+
+This module provides subroutines to enable quenching of the system.
+
+rand.f90
+--------
+
+This module provides random number creation and seeding facilities.
+
+system_m.F90
+------------
+
+This module stores data system properties such as the total potential
+and kinetic energies.
+
+thermostat_m.F90
+----------------
+
+This module contains all subroutines involved in setting and rescaling
+temperature, KE etc.
+
+timers_m.F90
+------------
+
+This module provides timing subroutines that can be used to
+evaluate the execution time of sections of the code.
+
+utilityfns_m.F90
+----------------
+
+This module contains some useful routines that various modules
+can call on for IO, string handling etc.
+
+Note that this module should have no use dependencies
+
+Potentials
+==========
+
+CdAu.F90
+--------
+
+Pairwise Potentials: CdAu potential
+
+generic_atvf.F90
+----------------
+
+Generic materials module which loads ATVF format potentials as required
+from the potentials/ subdirectory. All potential files follow the naming
+convention pot_XXX_YYY.in where XXX and YYY are the atomic numbers of the
+two species concerned. Examples:
+
+   pot_040_040.in for Zr-Zr
+
+   pot_026_006.in and pot_006_026.in for Fe-C and C-Fe.
+
+All required potential files must be found and read for the simulation to run.
+ 
+The ATVF format is the following:
+
+Label
+  a1 a2 a3 a4 a5 a6
+  r1 r2 r3 r4 r5 r6
+  A1 A2
+  R1 R2
+
+These are contained in the pot_XXX_YYY.in files (fixed format)
+
+Refer to eqn's 8 and 9 of Han et al., J. Appl. Phys., Vol.93, No.6, 2003
+
+Vanadium is published in Journal of Applied Physics, Vol. 93, No. 6, pp. 3328.
+
+Cu, Ag, Au and Ni from G.J.Ackland, G.I.Tichy, V.Vitek, and M.W.Finnis,
+Phil.Mag.A, 56, 735. (1987)
+
+Ti and Zr from G.J.Ackland, Phil.Mag.A, 66, 917. (1992) and G.J.Ackland,
+S.J.Wooding and D.J.Bacon, Phil. Mag. A 71 553-565 (1995) Note typos in
+the journal version of zirconium. 
+
+Others are unpublished and untested: let the authors know if you try them and
+find anything!
+
+Iron Carbon (Fe C)
+------------------
+
+Potentials for Iron Carbon (Fe C) following Hepburn and Ackland.
+
+morse.F90
+---------
+
+A multispecies Morse potential with parameters read at runtime.
+
+pairpot.F90
+-----------
+
+A multispecies Lennard Jones potential with parameter read at runtime.
+
+zirconium.F90
+-------------
+
+Single species Zr hcp potential.

@@ -23,6 +23,17 @@
 !!
 !!========================================================================
 
+!==========================================================================
+!
+!  analysis_m.F90
+!
+!  Analysis subroutines used for calculating thermodynamic properties and
+!  properties like the radial distribution function.
+!
+!
+!
+!==========================================================================
+
 !< Contains analysis routines 
 module analysis_m
 
