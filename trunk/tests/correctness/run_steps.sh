@@ -9,9 +9,9 @@
 ## File/directory settings ##
 
 readonly tools_reldir="../../tools"			# Path to directory where all the tools binaries are stored
-readonly moldy_exe="../../build/moldy.FeC"		# The moldy binary to use for running the sim, must be compiled for right potential
+readonly moldy_exe="../../build/moldy.iron"		# The moldy binary to use for running the sim, must be compiled for right potential
 readonly reference_dir="../reference"			# Directory containing directories of reference results
-readonly test_dirs=(`find $reference_dir/* -maxdepth 1 -type d | sed "s_${reference_dir}/__"`)	# Get all the test directories
+readonly test_dirs=(`find $reference_dir/* -maxdepth 0 -type d | sed "s_${reference_dir}/__"`)	# Get all the test directories
 readonly system_in_token="file_system"
 readonly output_file="run.out"
 readonly params_file="params.in"
@@ -30,7 +30,7 @@ else
 fi
 
 ## Run settings ##
-declare -ir sig_digits=10	# Results have to agree to this many significant digits
+declare -ir sig_digits=4	# Results have to agree to this many significant digits
 readonly num_threads=(8)	# OMP_NUM_THREADS numbers to use
 
 # The command to comare two files
@@ -88,11 +88,13 @@ do
 		../$moldy_exe &> $output_file
 
 		# Check that the files agree to within a given number of significant digits
-		system_out_diff="`$compare system.out ../$reference_dir/$test_dir/system.out`"
+		$compare system.out ../$reference_dir/$test_dir/system.out > system.out.diff
 		# Diff output66 but ignore the CPU-TIME used as this obviously varies
-		output_66_diff="`$compare -i "CPU-TIME USED" output66.txt ../$reference_dir/$test_dir/output66.txt`"
+		$compare -i "CPU-TIME USED" output66.txt ../$reference_dir/$test_dir/output66.txt > output66.txt.diff
 
-		if [ "$system_out_diff" == '' -a "$output_66_diff" == '' ]; then
+		if [ "`cat system.out.diff`" == '' -a "`cat output66.txt.diff`" == '' ]; then
+			rm system.out.diff
+			rm output66.txt.diff
 			echo -e "\tTest PASSED"
 		else
 			echo -e "\tTest FAILED"
@@ -101,8 +103,8 @@ do
 			cp system.out $fail_dir
 			cp output66.txt $fail_dir
 			cp run.out $fail_dir
-			echo $system_out_diff > $fail_dir/system.out.diff
-			echo $output_66_diff > $fail_dir/output66.diff
+			mv system.out.diff $fail_dir
+			mv output66.txt.diff $fail_dir
 			echo -e "\tRun output saved to $test_dir/$fail_dir"
 		fi
 
