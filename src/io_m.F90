@@ -340,7 +340,8 @@ end subroutine write_textout_header
     do  i=1,nmat
        WRITE(unit_output,*) (b0(j,i),j=1,nmat)              
     end do
-        WRITE(unit_output, fmt = line_fmt ) (X0(I),Y0(I),Z0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM)
+        WRITE(unit_output,321) (X0(I),Y0(I),Z0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM)
+321     FORMAT(3g14.6,1X,I3,2g13.5)
     close(unit_output)
   
   end subroutine write_system_out_file

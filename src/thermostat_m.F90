@@ -63,7 +63,7 @@ contains
   subroutine init_thermostat_m
     type(simparameters) :: simparam
     simparam=get_params()
-    simparam%RQKE = 1.5d0*bk*simparam%TEMPRQ*(simparam%NM-3)
+    simparam%RQKE = 1.5d0*bk*simparam%TEMPRQ*(simparam%NM-1)
     call set_params(simparam)
   end subroutine init_thermostat_m
   subroutine cleanup_thermostat_m

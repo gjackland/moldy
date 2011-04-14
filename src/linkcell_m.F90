@@ -140,10 +140,15 @@ contains
     do i=1,simparam%NM
 
        !! calculate the link cell for particle i
-       !! x index 
-      ix = int (  ( x0(i)-NINT(x0(I))+hmeps  )*simparam%nlcx)
-      iy = int (  ( y0(i)-NINT(y0(I))+hmeps  )*simparam%nlcy)
-      iz = int (  ( z0(i)-NINT(z0(I))+hmeps  )*simparam%nlcz)
+       !! This folds everything back into the single cell.  
+!!  there are conceptual problems with free surfaces here
+!!  in that material relaxing outwards will be assigned to 
+!!  the link cell on the far side.  Normally this will be OK, 
+!!  since the linkcell search ALWAYS have periodic boundaries 
+
+       ix = int (  ( x0(i)-NINT(x0(I))+hmeps  )*simparam%nlcx)
+       iy = int (  ( y0(i)-NINT(y0(I))+hmeps  )*simparam%nlcy)
+       iz = int (  ( z0(i)-NINT(z0(I))+hmeps  )*simparam%nlcz)
 !!      write(*,*)   x0(i),y0(I),z0(I), ix,iy,iz
 
       ip = ix + simparam%nlcx*iy + simparam%nlcx*simparam%nlcy*iz + 1

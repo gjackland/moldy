@@ -32,9 +32,7 @@
 !!  Hybrid Neighbour List - Link Cell Method.
 !!
 !!  The program is a greatly modified and extended version of
-!!  code developed by S.Deleeuw for constant stress molecular
-!!  dynamics using the Parinello-Rahman Lagrangian.
-!!  Subsequently this code was modified by G.J.Ackland and
+!!  code developed by G.J.Ackland and
 !!  M.W.Finnis to incorporate quenching and box-quenching options,
 !!  and optimised for use on a cray. Most recently, the code is currently being
 !!  modernised and refactored by K.J.D'Mellow.
@@ -206,7 +204,7 @@ program moldyv2
   !! initialise link-cell after system is read in
   call init_linkcell_m
   call init_dynamics_m !! only requires init after linkcell for OpenMP
-
+                       !!  Also sets up parameters for magnetic potential  
 
   !! exit criterion - after calculating nsteps MD steps
   simparam%laststep=simparam%NSTEPS
@@ -299,8 +297,12 @@ program moldyv2
         !!update local copy of parameters
         simparam=get_params()
 
+        !! overwrite checkpoint thermodynamic sums with zero
+        thmsums=get_thermodynamic_sums()
         !! the thermodynamic sums
         call set_thermodynamic_sums(thmsums)
+
+
 
         !! set counters to continue on according to previous runs
         simparam%laststep=simparam%prevsteps+simparam%laststep
@@ -330,8 +332,12 @@ program moldyv2
 
   !! Loops through iterations of the whole simulation 
   !!  This is now to apply constant strain rate
+  !!  Ot to apply temperature increase
       strainloops: do iter=1,simparam%strainloops
       simparam%laststep =  simparam%currentstep+simparam%NSTEPS
+        !! overwrite thermodynamic sums with zero
+        call zero_thermodynamic_sums()
+        thmsums=get_thermodynamic_sums()
     !! apply strain to box;   Reuse b2 as unstrained box
     if(simparam%ivol.ne.0)then
        b2=b0
@@ -339,7 +345,8 @@ program moldyv2
        write(0,37)"TEMPRQ =",simparam%temprq, "b0*strx:",b0
  37    format( 10x,a10,f10.2, 10x,a10/3d17.8/3d17.8/3d17.8/)
     endif
-    !! change target temperature and target KE
+    !! change target pressure, temperature and target KE
+      simparam%press=simparam%press+simparam%pressstep
       simparam%temprq=simparam%temprq+simparam%tempsp
       simparam%RQKE = 1.5d0*bk*simparam%TEMPRQ*(simparam%NM-3)
 
@@ -351,7 +358,7 @@ program moldyv2
         call force
         
         !! write out to energy_forces_stress file (default test)
-        !! call write_energy_forces_stress
+        call write_energy_forces_stress
         
         !! invert tg
         call matrix_invert(tg,tginv)
@@ -399,6 +406,7 @@ program moldyv2
         !! either quench, or perform MD.
         if (simparam%iquen.eq.1) then
            call quench
+
         else
 
      mdloop: do istep=simparam%prevsteps+1,simparam%laststep
@@ -461,7 +469,6 @@ program moldyv2
            !! enthalpy
            H=TE+simparam%PRESS*VOL
            TH=H+boxKE
-
         if (simparam%ntc.eq.0) call relink
 
         !! optionally write large output to file
@@ -472,10 +479,10 @@ program moldyv2
            close(simparam%ntape)
         end if
 
-        if(mod(simparam%lastprint,simparam%nprint).eq.0)then
-        !! calculate sums of thermodynamic quantities
+        if(mod(simparam%lastprint,simparam%nprint/10).eq.0)then
+        !! calculate sums of thermodynamic quantities ten times between printouts
               call update_thermodynamic_sums
-           if(simparam%iquen.ne.1) call runavs(istep)
+           if(simparam%iquen.ne.1.and.mod(simparam%lastprint,simparam%nprint).eq.0) call runavs(istep-simparam%prevsteps)
         endif
 
         !! checkpoint if needed
@@ -504,12 +511,13 @@ program moldyv2
            end do jloop
          end do iloop
         endif
+
  !! position averages over last nposav steps
         ip = simparam%nposav+istep-simparam%laststep
         if(ip.le.0)cycle mdloop
 !!  set up average counter
         if(ip.eq.1)then
-              allocate(ax0(simparam%nm),ay0(simparam%nm),az0(simparam%nm))
+        if(iter.eq.1)allocate(ax0(simparam%nm),ay0(simparam%nm),az0(simparam%nm))
               ax0=0.0
               ay0=0.0
               az0=0.0
@@ -572,9 +580,10 @@ program moldyv2
     if( simparam%write_rdf .eqv. .true. ) then
       call rdf(500,50)
     end if
-    
+
+      write(*,*) "Doing energy calc"
+        
       call energy_calc
-      write(*,*) "Done energy calc"
     
       call write_system_out_file( 'system.out' )
       write(*,*) "Done write to system.out"
