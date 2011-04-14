@@ -92,6 +92,7 @@ module params_m
      real(kind_wp) :: temprq !< Required temperature (read in at runtime)
      real(kind_wp) :: tempsp=0._kind_wp !< Difference in Temperatures for Thermal gradient
      real(kind_wp) :: zlayer=0._kind_wp !< Atoms in z plane which do not move
+     real(kind_wp) :: pressstep=0._kind_wp !< Difference in Pressures for pressure gradient
      real(kind_wp) :: rqke   !< Required kinetic energy
      real(kind_wp) :: press=0.  !< Required external pressure
 
@@ -281,6 +282,7 @@ contains
        key(43)='file_dumpx1'
        key(44)='tempsp'
        key(45)='zlayer'
+       key(46)='pressstep'
        key(47)='pka'
        key(48)='nposav'
        !!adjust, set lowercase, and measure the length of registered keys
@@ -370,11 +372,11 @@ contains
     action: select case (inum)
     case(1) !'title1'
        read(inputstring(eqindex+1:),*) simparam%title1
-       write(0,*) key(inum)(:keylength(inum))//" = "//simparam%title1
+       write(0,*) simparam%title1
 
     case(2) !'title2'
        read(inputstring(eqindex+1:),*) simparam%title2
-       write(0,*) key(inum)(:keylength(inum))//" = "//simparam%title2
+       write(0,*) simparam%title2
 
     case(3) !'file_system'
        read(inputstring(eqindex+1:),*) file_system
@@ -551,6 +553,10 @@ contains
     case(45) !'zlayer'
        read(inputstring(eqindex+1:),*)  simparam%zlayer
        write(0,*) "zlayer = ", simparam%zlayer
+
+    case(46) !'pressstep'
+       read(inputstring(eqindex+1:),*) simparam%pressstep
+       write(0,*) "pressstep = ", simparam%pressstep
 
     case(47) !'pka'
        read(inputstring(eqindex+1:),*) simparam%pka

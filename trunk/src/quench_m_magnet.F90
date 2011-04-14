@@ -23,21 +23,12 @@
 !!
 !!========================================================================
 
-!============================================================================
-!
-!  quench_m.F90
-!
-!
-!  This module provides subroutines to enable quenching of the system.
-!
-!============================================================================
-
 module quench_m
 
   !! standard dependencies
   use constants_m
   use params_m
-  use constants_m
+  use utilityfns_m
 
   !! functional dependencies
   use analysis_m
@@ -62,9 +53,11 @@ module quench_m
   !! module private variables
   integer :: nvari
   real(kind_wp), allocatable :: energy(:)
+!!  real(kind_wp), allocatable :: amu(:)
   real(kind_wp), allocatable :: x(:), g(:)
   integer :: istat                         !< memory allocation status
   type(simparameters), save :: simparam    !< module copy of simulation parameters
+    real(kind_wp) :: Etrans,zeffs,zeffd,adcoh,ascoh,adrep,asrep,ac,bc,afd,r1,r2,w,Efree,apk,bpk,ap,RHigh,Dcut,snumber 
 
 
 contains
@@ -81,8 +74,30 @@ contains
     simparam=get_params()
     NVARI=3*simparam%NM+9
     allocate(x(nvari),g(nvari),stat=istat)
+    allocate(amu(simparam%NM),stat=istat)
     if(istat.ne.0)stop 'ALLOCATION ERROR (init_quench_m) - Possibly out of memory.'
+
+    !! set quantities required for the two-band potential
+ iunit=newunit()
+  open(unit=iunit,file="magpot.in",status='old',action='read')
+   read(iunit,*)RHigh
+   read(iunit,*) Dcut
+ read(iunit,*) Efree
+ read(iunit,*) Etrans
+ read(iunit,*)ascoh
+ read(iunit,*)adcoh
+ read(iunit,*)Zeffd
+ read(iunit,*)Zeffs
+ read(iunit,*)ap
+ read(iunit,*)apk
+ read(iunit,*)bpk
+ read(iunit,*)ac
+ read(iunit,*)bc
+ read(iunit,*)snumber
+   close(iunit)
   end subroutine init_quench_m
+
+
   subroutine cleanup_quench_m
     deallocate(x,g)
   end subroutine cleanup_quench_m
@@ -105,6 +120,8 @@ contains
     write(unit_stdout,200)simparam%nm
 200 format(' QUENCH, FINDING MINIMUM ENERGY CONFIGURATION OF', &
          &  I5,' ATOMS')
+    write(*,200)simparam%nm
+
 
     do i=1,simparam%nm
        i31=3*i-2
@@ -128,24 +145,22 @@ contains
     if(istat.ne.0)stop 'ALLOCATION ERROR (quench) - Possibly out of memory.'
 
     !! Harwell subroutine library's VA14CD
-    dfn = 0.1d0
-    acc= 5.0e-8*simparam%NM !! accuracy depends on number of atoms 
+    dfn = 0.05d0 
+    acc= 2.0e-5*simparam%NM !! accuracy depends on number of atoms 
     call va14cd(derivs,nvari,f,dfn,acc)
-    pe = f
 
     !! sync params after va14cd
     call set_params(simparam)
 
     !! output results
-    write(unit_stdout,*)'ATOM,  ENERGY'
-    do i=1,simparam%nm
-!     write(unit_stdout,*)i,energy(i)
+     do i=1,simparam%nm
        i3=3*i-2
        i31=i3+1
        i32=i3+2
        x0(i) = x(i3)
        y0(i) = x(i31)
        z0(i) = x(i32)
+       en_atom(I)=energy(I)
     end do
 
     !! deallocate energy when finished with it (used in derivs)
@@ -185,7 +200,7 @@ contains
 !!       if(simparam%ivol.lt.3) x0(i)=x0(i)-aint(2.0*x0(i))
 !!       if(simparam%ivol.lt.3) y0(i)=y0(i)-aint(2.0*y0(i))
 !!       if(simparam%ivol.lt.2.or.simparam%ivol.ge.4) z0(i)=z0(i)-aint(2.0*z0(i))
-
+    write(33,*)i,x0(I),y0(I),z0(I),en_atom(I),amu(I)
     end do
     call set_temp(0.0_kind_wp)
     ke=0.0
@@ -198,7 +213,6 @@ contains
 
     h=te+simparam%press*vol
     th=h
-
     return
 
   end subroutine quench
@@ -213,7 +227,7 @@ contains
   !--------------------------------------------------------------------------------
   subroutine derivs(n,f)
 
-    !! argument variables
+    !! argument variables 
     integer :: n
     real(kind_wp) :: f
 
@@ -221,25 +235,27 @@ contains
     integer :: i, j, k
     integer :: i31, i32, i33
     integer :: nlisti, nm3
-    integer :: ijs
+    integer :: ijs, jatom, iatom
     real(kind_wp) :: dx, dy, dz             !< fractional particle separation
     real(kind_wp) :: r                      !< spatial separation
     real(kind_wp) :: rxij,ryij,rzij         !< physical separation components
-    real(kind_wp) :: fcp, fp, fpp, pp, rsq
+    real(kind_wp) :: fcp, fp, fp1, fpp, pp, rsq
     real(kind_wp) :: xi, yi, zi
-    real(kind_wp) :: dfx, dfy, dfz
     real(kind_wp) :: xnbr,ynbr,znbr !< positions between neighbours
     real(kind_wp) :: tp(nmat,nmat)
-!    simparam=get_params()
-
-    nm3=3*simparam%nm
+    real(kind_wp) :: dnumber,amuimax,snumber2,dnumber2,amui2
+    real(kind_wp) :: sump(simparam%nm),sumx(simparam%nm),sums(simparam%nm),sumd(simparam%nm),sumj(simparam%nm)
+    real(kind_wp) :: ws(simparam%nm),wd(simparam%nm)
+    real(kind_wp) ::  eslaterS, eslaterD, epauli, excorr
+    simparam=get_params()
+    nm3=3*simparam%nm 
     do i=1,nmat
        do j=1,nmat
           nm3=nm3+1
           b0(i,j) = x(nm3)
        end do
     end do
-    do i=1,simparam%nm
+    do i=1,simparam%nm 
        energy(i)= 0.0d0
        i31=3*i-2
        i32=i31+1
@@ -251,7 +267,6 @@ contains
        fy(i)=0.0d0
        fz(i)=0.0d0
     end do
-
     !! compute metric tensor
     call pr_get_metric_tensor
 
@@ -261,11 +276,6 @@ contains
        call set_params(simparam)
        call update_neighbourlist
     end if
-
-    !! set rho(i) and related quantities required for the finnis-sinclair potential
-    call rhoset
-
-    call embed(pe)
 
     !! compute h transposed * h  = g
     do i=1,nmat
@@ -279,54 +289,43 @@ contains
        end do
     end do
 
-    tp(:,:)=0.0d0
+    call setsum
+    call geten
 
-    ! use the neighbour list
-    mainloop:do i=1,simparam%nm
-       xi=x0(i)
-       yi=y0(i)
-       zi=z0(i)
-       k=numn(i)
+    do i=1,nmat
+       do k=1,nmat
+          do j=1,nmat
+             tg(i,j)=tg(i,j)+b0(k,i)*b0(k,j)
+          end do
+       end do
+    end do
+
+
+    mainloop:do iatom=1,simparam%nm
+       xi=x0(iatom)
+       yi=y0(iatom)
+       zi=z0(iatom)
+       k=numn(iatom)
        if(k.eq.0) cycle mainloop
+       fjloop: do jatom=1,k
+          nlisti  = nlist(jatom,iatom)
 
-       do j=1,k
-          nlisti  = nlist(j,i)
-
-          !! fractional position of the j neighbour of atom i
-          xnbr = x0(nlisti)
-          ynbr = y0(nlisti)
-          znbr = z0(nlisti)
-
-          !! fractional separation between atoms i and j
-          dx=xi-xnbr
-          dy=yi-ynbr
-          dz=zi-znbr
-
+          !! fractional separation between atoms iatom and nlisti
+          dx=xi-x0(nlisti)
+          dy=yi-y0(nlisti)
+          dz=zi-z0(nlisti)
           !! evaluate r, the physical separation between atoms i and j
           call pr_get_realsep_from_dx(r,dx,dy,dz)
+!! calculate force between these atoms
+!!  double counting for neighbour loop
+          r_recip = 1.0d0 / r   !! Calculate the reciprocal
+          dNo2=dNo*dNo  
 
+!! calculate force between these atoms
+    fp = ffij(Iatom,nlisti)
 
-          !! evaluate pair potential pp and (-1/r)*(derivative of pp), fpp:
-          !! ie   fpp  = (-1/r) d pp /d r
-          !!      r    = interatomic distance
-          !!      rsq  = r*r
-          pp  =   vee(r,atomic_number(i),atomic_number(nlisti))
-          fpp = -dvee(r,atomic_number(i),atomic_number(nlisti))/r
-          pe = pe+pp
-          energy(i) = energy(i)+pp/2.d0
-          energy(nlisti) = energy(nlisti)+pp/2.d0
-
-
-          !! evaluate (-1/r)*(derivative of cohesive potential), fcp
-          fcp = -1.d0*( &
-               dphi(r,atomic_number(i),atomic_number(nlisti))*dafrho(i) + &
-               dphi(r,atomic_number(nlisti),atomic_number(i))*dafrho(nlisti) &
-               )/r
-
-
-          !! fp is (1/r)*(force on atom i from atom j)
-          fp = fpp + fcp
-
+      !! evaluate (-1/r)*(derivative of  potential),
+         fp=-fp*r_recip
           !! calculate spatial separation components from dx
           rxij=b0(1,1)*dx+b0(1,2)*dy+b0(1,3)*dz
           ryij=b0(2,1)*dx+b0(2,2)*dy+b0(2,3)*dz
@@ -349,14 +348,25 @@ contains
           fz(nlisti)=fz(nlisti)-dz*fp
 
           !! update force of particle
-          fx(i)=fx(i)+dx*fp
-          fy(i)=fy(i)+dy*fp
-          fz(i)=fz(i)+dz*fp
-
-       end do
+          fx(iatom)=fx(iatom)+dx*fp
+          fy(iatom)=fy(iatom)+dy*fp
+          fz(iatom)=fz(iatom)+dz*fp
+      enddo fjloop
 
 
     end do mainloop
+
+! Update mu
+    do iatom=1,simparam%nm
+    AMU(IATOM)=GETAMU(IATOM)
+    enddo
+
+
+      PE = 0.0d0
+      do iatom=1,simparam%nm
+      energy(IATOM) = en_atom(IATOM)
+      PE = PE + energy(IATOM)
+      enddo
 
 
     !! start calculating the inverse of b0
@@ -373,7 +383,6 @@ contains
 
     !! evaluate d(pe)/d(s) from generalised force (fx,fy,fz)
     do i=1,simparam%nm
-    energy(i)=energy(i) - emb(rho(i),atomic_number(i))
        i31=3*i-2
        i32=i31+1
        i33=i32+1
@@ -397,19 +406,21 @@ contains
           end do
        end do
     endif
-    write(unit_stdout,1359)pe/simparam%nm,vol/simparam%nm
-1359 format(' COHESIVE ENERGY ',d16.8, 'VOLUME',d16.8 )
+    write(unit_stdout,1359)pe/simparam%nm,vol/simparam%nm,amu(1)
+1359 format(' COHESIVE ENERGY ',d16.8, 'VOLUME',d16.8, 'AMU(1)', d12.4 )
+!!    write(*,*)ws(1),wd(1),sumj(1)/2,dNo2*sump(1)/4, "WS, WD, Sj, Sp "
     !! write stress
     do i=1,3
         write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*tp(i,k),k=1,3)/))/vol*press_to_gpa,j=1,3)
  99    format("STRESS I=",I2, 3e14.6," GPa")       
     end do
-
-
-
     f = pe + simparam%press*vol
-
     return
+
+    CONTAINS
+
+include 'magen.inc'
+
   end subroutine derivs
 
 

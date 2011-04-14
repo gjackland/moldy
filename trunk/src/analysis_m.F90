@@ -18,7 +18,7 @@
 !! Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 !!
 !! You can contact the authors by email on g.j.ackland@ed.ac.uk
-!! or by writing to Prof. G Ackland, School of Physics, JCMB,
+!! or by writing to Prof. GJ Ackland, School of Physics, JCMB,
 !! University of Edinburgh, Edinburgh, EH9 3JZ, UK.
 !!
 !!========================================================================
@@ -54,6 +54,7 @@ module analysis_m
   public :: update_thermodynamic_sums
   public :: set_thermodynamic_sums
   public :: get_thermodynamic_sums
+  public :: zero_thermodynamic_sums
   public :: runavs, rdf, auto, posavs
   public :: thermodynamic_sums
 
@@ -75,6 +76,7 @@ module analysis_m
      real(kind_wp) :: SVOLSQ=0._kind_wp
      real(kind_wp) :: SVOLPE=0._kind_wp
      real(kind_wp) :: SB0(nmat,nmat)=0._kind_wp
+     integer :: numsum
   end type thermodynamic_sums
 
   !! private data
@@ -94,6 +96,27 @@ contains
     type(thermodynamic_sums) :: ths
     thermsums=ths
   end subroutine set_thermodynamic_sums
+
+  subroutine zero_thermodynamic_sums()
+ thermsums%SPE=0._kind_wp
+ thermsums%SKE=0._kind_wp
+ thermsums%STE=0._kind_wp
+ thermsums%SH=0._kind_wp
+ thermsums%STH=0._kind_wp
+ thermsums%SF2=0._kind_wp
+ thermsums%SVOL=0._kind_wp
+ thermsums%SPESQ=0._kind_wp
+ thermsums%SKESQ=0._kind_wp
+ thermsums%STESQ=0._kind_wp
+ thermsums%SHSQ=0._kind_wp
+ thermsums%STHSQ=0._kind_wp
+ thermsums%SF2SQ=0._kind_wp
+ thermsums%SVOLSQ=0._kind_wp
+ thermsums%SVOLPE=0._kind_wp
+ thermsums%SB0(nmat,nmat)=0._kind_wp
+ thermsums%numsum=0
+  end subroutine zero_thermodynamic_sums
+
   function get_thermodynamic_sums()
     type(thermodynamic_sums) :: get_thermodynamic_sums
     get_thermodynamic_sums=thermsums
@@ -122,6 +145,7 @@ contains
     thermsums%svolsq   = thermsums%svolsq   + vol*vol
     thermsums%svolpe   = thermsums%svolpe   + vol*pe
     thermsums%sb0(:,:) = thermsums%sb0(:,:) + b0(:,:)
+    thermsums%numsum = thermsums%numsum + 1
   end subroutine update_thermodynamic_sums
   
 
@@ -211,9 +235,7 @@ contains
     ! 
     type(simparameters) :: simparam
     simparam=get_params()
-    n2 =  n1/simparam%nprint
-
-    rt = 1.0d0/float(n2)
+    rt = 1.d0/thermsums%numsum
     if(simparam%iquen.ne.1)then
        ate=rt*thermsums%ste
        ake=rt*thermsums%ske
@@ -231,7 +253,7 @@ contains
        dth=sqrt(abs(rt*thermsums%sthsq-ath*ath))
 
        !! write header
-       write(unit_stdout,1)n1,n2
+       write(unit_stdout,1)n1,thermsums%numsum
 1      format(' RUNNING AVERAGES AT STEP NO.',I6/ &
             & ' AVERAGED OVER ',I6,' STEPS'///)
 
