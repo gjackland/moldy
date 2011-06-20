@@ -37,14 +37,14 @@ BUILD_DIR=../build
 #
 ######################################################
 # Material Choice and Location of Executable
-#MATERIAL= -DIRON_CARBON
-MATERIAL= -DZIRCONIUM
+MATERIAL= -DIRON_CARBON
+#MATERIAL= -DZIRCONIUM
 #MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
- EXE=    ../build/moldy.Zr
+ EXE=    ../build/moldy.fec
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -58,7 +58,7 @@ MATERIAL= -DZIRCONIUM
 #
 ######################################################
 #FC=     pgf90
-FC=     pgf90 -fast -O4
+#FC=     pgf90 -fast -O4
 #FC=     pgf90 -fast -O4 -Minline=levels:1 -Minfo=inline
 #FC=     pgf90 -fast -Mipa=fast,inline -Minfo=inline -tp core2-64
 #FC=     pgf90 -fast -Mipa=fast,inline -Minfo=inline -tp x64
@@ -71,7 +71,7 @@ FC=     pgf90 -fast -O4
 #FC=     ifort -O2
 #FC=     f95 -O2
 #FC=     gfortran -fbounds-check
-#FC=     gfortran -O4
+FC=     gfortran -O4
 
 # C Preprocessing Directives 
 CPPFLAGS= $(MATERIAL) $(DEBUG)
@@ -79,8 +79,8 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OpenMP flags
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
-OMPFLAGS= -mp
-#OMPFLAGS = -fopenmp # For gfortran
+#OMPFLAGS= -mp
+OMPFLAGS = -fopenmp # For gfortran
 #OMPFLAGS -openmp # For ifort
 
 #Debugging
@@ -184,9 +184,9 @@ clean:
 #
 ######################################################
 moldin.o: timers_m.o thermostat_m.o random_m.o potential_m.o params_m.o  system_m.o  \
-	 constants_m.o analysis_m.o parinellorahman_m.o  dynamics_m_magnet.o \
+	 constants_m.o analysis_m.o parinellorahman_m.o  dynamics_m.o \
 	neighbourlist_m.o  particles_m.o linkcell_m.o \
-	quench_m_magnet.o io_m.o
+	quench_m.o io_m.o
 
 thermostat_m.o: random_m.o potential_m.o params_m.o  system_m.o  constants_m.o \
 	 parinellorahman_m.o  particles_m.o
@@ -195,14 +195,14 @@ analysis_m.o: thermostat_m.o
 
 random_m.o: debug_m.o particles_m.o
 
-dynamics_m_magnet.o: debug_m.o particles_m.o  system_m.o matrix_m.o parinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
+dynamics_m.o: debug_m.o particles_m.o  system_m.o matrix_m.o parinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
 
 io_m.o: params_m.o random_m.o particles_m.o parinellorahman_m.o utilityfns_m.o analysis_m.o
 
 params_m.o: constants_m.o utilityfns_m.o
 
-quench_m_magnet.o: params_m.o  system_m.o  constants_m.o \
-	analysis_m.o parinellorahman_m.o dynamics_m_magnet.o neighbourlist_m.o  \
+quench_m.o: params_m.o  system_m.o  constants_m.o \
+	analysis_m.o parinellorahman_m.o dynamics_m.o neighbourlist_m.o  \
 	linkcell_m.o particles_m.o potential_m.o
 
 neighbourlist_m.o:  linkcell_m.o parinellorahman_m.o
@@ -215,7 +215,7 @@ lookup_m.o: constants_m.o generic_atvf.o iron_carbon.o zirconium.o
 
 parinellorahman_m.o analysis_m.o particles_m.o linkcell_m.o: constants_m.o params_m.o
 
-analysis_m.o: parinellorahman_m.o system_m.o dynamics_m_magnet.o
+analysis_m.o: parinellorahman_m.o system_m.o dynamics_m.o
 
 parinellorahman_m.o: matrix_m.o lookup_m.o
 

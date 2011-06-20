@@ -1,7 +1,7 @@
 !!========================================================================
 !!
 !! MOLDY - Short Range Molecular Dynamics
-!! Copyright (C) 2009 G.Ackland, K.D'Mellow, University of Edinburgh.
+!! Copyright (C) 2009 G.J Ackland, K.D'Mellow, University of Edinburgh.
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -263,9 +263,9 @@ contains
             ke,ake,dke, &
             te,ate,dte, &
             get_temp(),atemp,dtemp
-2      format(' PE:',E15.6,T25,'APE:',E15.6,' +/-',E13.4,' eV'/ &
-            & ' KE:',E15.6,T25,'AKE:',E15.6,' +/-',E13.4,' eV'/ &
-            & ' TE:',E15.6,T25,'ATE:',E15.6,' +/-',E13.4,' eV'/ &
+2      format(' PE:',E16.8,T25,'APE:',E15.6,' +/-',E13.4,' eV'/ &
+            & ' KE:',E16.8,T25,'AKE:',E15.6,' +/-',E13.4,' eV'/ &
+            & ' TE:',E16.8,T25,'ATE:',E15.6,' +/-',E13.4,' eV'/ &
             & '  T:',F11.4,T25,' AT:',F11.4,5X,'+/-',F9.4,' K')
 
        !! write h, th, volume

@@ -1,7 +1,7 @@
 !!========================================================================
 !!
 !! MOLDY - Short Range Molecular Dynamics
-!! Copyright (C) 2009 G.Ackland, K.D'Mellow, University of Edinburgh.
+!! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 !! Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 !!
 !! You can contact the authors by email on g.j.ackland@ed.ac.uk
-!! or by writing to Prof. G Ackland, School of Physics, JCMB,
+!! or by writing to Prof. G.J. Ackland, School of Physics, JCMB,
 !! University of Edinburgh, Edinburgh, EH9 3JZ, UK.
 !!
 !!========================================================================
@@ -307,7 +307,7 @@ contains
          
           !!close file
           close(iunit)
-          write(*,*)"Read in ",iunit
+          write(*,*)"Read in ",iunit, a3_na1,a3_na2 
 
           if(ierror.eq.2)then
              write(stderr,*) "Inconsistencies in file: ","morse_"//a3_na1//"_"//a3_na2//".in"
@@ -322,7 +322,7 @@ contains
     allocate(a_0(species_number,species_number))
     allocate(eps(species_number,species_number))
     allocate(alpha(species_number,species_number))
-    allocate(rmax(species_number,species_number))
+!! already done?    allocate(rmax(species_number,species_number))
     allocate(vee_rmax(species_number,species_number))
 
     !! initialise data

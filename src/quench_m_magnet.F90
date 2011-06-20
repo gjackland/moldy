@@ -79,6 +79,7 @@ contains
 
     !! set quantities required for the two-band potential
  iunit=newunit()
+   RHigh=0.0
   open(unit=iunit,file="magpot.in",status='old',action='read')
    read(iunit,*)RHigh
    read(iunit,*) Dcut
@@ -95,6 +96,7 @@ contains
  read(iunit,*)bc
  read(iunit,*)snumber
    close(iunit)
+ 255 if (rhigh.eq.0.0) write(*,*) "No magnetic potential data found"
   end subroutine init_quench_m
 
 

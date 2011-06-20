@@ -129,7 +129,7 @@ contains
 
     !! Harwell subroutine library's VA14CD
     dfn = 0.1d0
-    acc= 5.0e-8*simparam%NM !! accuracy depends on number of atoms 
+    acc= 5.0e-9*simparam%NM !! accuracy depends on number of atoms 
     call va14cd(derivs,nvari,f,dfn,acc)
     pe = f
 

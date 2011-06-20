@@ -1,7 +1,7 @@
 !!========================================================================
 !!
 !! MOLDY - Short Range Molecular Dynamics
-!! Copyright (C) 2009 G.Ackland, K.D'Mellow, University of Edinburgh.
+!! Copyright (C) 2009 G.j.Ackland, K.D'Mellow, University of Edinburgh.
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 !! Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 !!
 !! You can contact the authors by email on g.j.ackland@ed.ac.uk
-!! or by writing to Prof. G Ackland, School of Physics, JCMB,
+!! or by writing to Prof. GJ Ackland, School of Physics, JCMB,
 !! University of Edinburgh, Edinburgh, EH9 3JZ, UK.
 !!
 !!========================================================================
