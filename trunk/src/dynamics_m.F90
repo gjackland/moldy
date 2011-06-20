@@ -1,7 +1,7 @@
 !!========================================================================
 !!
 !! MOLDY - Short Range Molecular Dynamics
-!! Copyright (C) 2009 G.Ackland, K.D'Mellow, University of Edinburgh.
+!! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 !! Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 !!
 !! You can contact the authors by email on g.j.ackland@ed.ac.uk
-!! or by writing to Prof. G Ackland, School of Physics, JCMB,
+!! or by writing to Prof. GJ Ackland, School of Physics, JCMB,
 !! University of Edinburgh, Edinburgh, EH9 3JZ, UK.
 !!
 !!========================================================================
@@ -482,11 +482,11 @@ contains
     y0=y0+y1_dt2
     z0=z0+z1_dt2
     if(simparam%ivol.eq.4) then !! in z only
-      b1(3,3) = b1(3,3) + b2(3,3)*0.5d0 
+      b1(3,3) = b1(3,3) + b2(3,3)!  why was this here?  *0.5d0 
       b0(3,3)=b0(3,3)+b1(3,3)
     endif 
     if(simparam%ivol.lt.1) then 
-      b1 = b1 + b2*0.5d0 
+      b1 = b1 + b2!  why was this here?  *0.5d0 
       b0 = b0 + b1
     endif
 
@@ -498,11 +498,11 @@ contains
 
      if(simparam%ivol.lt.1) then 
       b2=simparam%bdel2*fb
-      b1=b1+b2*0.5d0
+      b1=b1+b2!  why was this here?  *0.5d0
     endif
     if(simparam%ivol.eq.4) then !! in z only 
        b2(3,3)=simparam%bdel2*fb(3,3)
-       b1=b1+b2*0.5d0
+       b1=b1+b2!  why was this here?  *0.5d0
     endif
 
 
