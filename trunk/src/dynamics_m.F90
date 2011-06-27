@@ -70,11 +70,13 @@ module dynamics_m
   public :: energy_calc
   public :: update_neighbourlist
   public :: rhoset  
-  public :: predic, correc
-  public :: velocityverlet  
   public :: write_energy_forces_stress
   public :: write_stress
   public :: update_therm_avs
+  public :: predic
+  public :: correc
+  public :: velocityverlet
+  
 
   !! public module data
   real(kind_wp), allocatable, public :: fx(:),fy(:),fz(:) !< forces are public
@@ -454,279 +456,6 @@ contains
   end subroutine energy_calc 
   
 
-  !---------------------------------------------------------------------
-  !
-  ! subroutine velocityverlet
-  !
-  ! update a physical system using the verlet algorithm
-  !
-  !---------------------------------------------------------------------
-  subroutine velocityverlet(dt)
-
-    real(kind_wp) :: dt, sxi,syi,szi
-    integer :: i
-    
-    !! half time step on velocities
-    !! v(t+dt/2) = v(t) + a(t) dt/2
-    simparam=get_params()
- 	sxi = 0d0 
- 	syi = 0d0 
- 	szi = 0d0 
- 
-    x1_dt2=x1+x2
-    y1_dt2=y1+y2
-    z1_dt2=z1+z2
-    !! time step on positions
-    !! x(t+dt) = x(t) + v(t+dt/2) * dt
-    x0=x0+x1_dt2
-    y0=y0+y1_dt2
-    z0=z0+z1_dt2
-    if(simparam%ivol.eq.4) then !! in z only
-      b1(3,3) = b1(3,3) + b2(3,3)!  why was this here?  *0.5d0 
-      b0(3,3)=b0(3,3)+b1(3,3)
-    endif 
-    if(simparam%ivol.lt.1) then 
-      b1 = b1 + b2!  why was this here?  *0.5d0 
-      b0 = b0 + b1
-    endif
-
-    !! second half time step on velocities (with updated forces)
-    !! v(t+dt) = v(t+dt/2) + a(t+dt) dt/2
-      call force
-
-     tgid=get_tgid()
-
-     if(simparam%ivol.lt.1) then 
-      b2=simparam%bdel2*fb
-      b1=b1+b2!  why was this here?  *0.5d0
-    endif
-    if(simparam%ivol.eq.4) then !! in z only 
-       b2(3,3)=simparam%bdel2*fb(3,3)
-       b1=b1+b2!  why was this here?  *0.5d0
-    endif
-
-
-
-    do i=1,simparam%nm
-if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle      
-     if(simparam%ivol.eq.0) then
-        sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
-        syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
-        szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
-      endif
-      if(simparam%ivol.eq.4) szi=tgid(3,3)*z1(i)
-
-      x2(i)=del2(i)*fx(i)-0.5d0*sxi
-      y2(i)=del2(i)*fy(i)-0.5d0*syi
-      z2(i)=del2(i)*fz(i)-0.5d0*szi
-    enddo
-
-    x1=x1_dt2+x2
-    y1=y1_dt2+y2
-    z1=z1_dt2+z2
-
-  end subroutine velocityverlet
-
-
-
-  !---------------------------------------------------------------------
-  !
-  ! subroutine predic
-  !
-  ! update a physical system using the predictor-corrector algorithm
-  ! (to be used in conjunction with correc)
-  !
-  !---------------------------------------------------------------------
-  subroutine predic
-
-    integer :: i, j         !< loop variables
-
-!    simparam=get_params()
-
-    !!particle position, velocity, acceleration
-    do i=1,simparam%nm
-       x0(i)=x0(i)+x1(i)+x2(i)+x3(i)
-       y0(i)=y0(i)+y1(i)+y2(i)+y3(i)
-       z0(i)=z0(i)+z1(i)+z2(i)+z3(i)
-       x1(i)=x1(i)+2.0d0*x2(i)+3.0d0*x3(i)
-       y1(i)=y1(i)+2.0d0*y2(i)+3.0d0*y3(i)
-       z1(i)=z1(i)+2.0d0*z2(i)+3.0d0*z3(i)
-       x2(i)=x2(i)+3.0d0*x3(i)
-       y2(i)=y2(i)+3.0d0*y3(i)
-       z2(i)=z2(i)+3.0d0*z3(i)
-    end do
-
-    !! also update box if not constant volume
-    if(simparam%ivol.eq.0)then !!all directions
-       do i=1,nmat
-          do j=1,nmat
-             b0(i,j)=b0(i,j)+b1(i,j)+b2(i,j)+b3(i,j)
-             b1(i,j)=b1(i,j)+2.0d0*b2(i,j)+3.0d0*b3(i,j)
-             b2(i,j)=b2(i,j)+3.0d0*b3(i,j)
-          end do
-       end do
-    endif
-    if(simparam%ivol.eq.4)then !!in z only
-       b0(3,3)=b0(3,3)+b1(3,3)+b2(3,3)+b3(3,3)
-       b1(3,3)=b1(3,3)+2.0d0*b2(3,3)+3.0d0*b3(3,3)
-       b2(3,3)=b2(3,3)+3.0d0*b3(3,3)
-    endif
-    return
-  end subroutine predic
-
-
-  !---------------------------------------------------------------------
-  !
-  ! subroutine correc
-  !
-  ! update a physical system using the predictor-corrector algorithm
-  ! (to be used in conjunction with predic)
-  !
-  !---------------------------------------------------------------------
-  subroutine correc
-
-    !! local declarations
-    integer :: i, j, k             !< loop variables
-    real(kind_wp) :: ccx, ccy, ccz !< correction coefficients
-    real(kind_wp) :: sxi, syi, szi !< local variables
-    real(kind_wp), parameter :: ct0=0.166666666666666667
-    real(kind_wp), parameter :: ct1=0.833333333333333333
-    real(kind_wp), parameter :: ct2=1.000000000000000000
-    real(kind_wp), parameter :: ct3=0.333333333333333333
-
-
-
-    simparam=get_params()
-
-    !! determine box changes if not constant volume (ccx used here for the box)
-    if(simparam%ivol.lt.1) then 
-       do i=1,nmat
-          do j=1,nmat
-             ccx=simparam%bdel2*fb(i,j)-b2(i,j)
-             b0(i,j)=b0(i,j)+ct0*ccx
-             b1(i,j)=b1(i,j)+ct1*ccx
-             b2(i,j)=b2(i,j)+ct2*ccx
-             b3(i,j)=b3(i,j)+ct3*ccx
-          end do
-       end do
-    endif
-    if(simparam%ivol.eq.4) then !! in z only 
-       ccx=simparam%bdel2*fb(3,3)-b2(3,3)
-       b0(3,3)=b0(3,3)+ct0*ccx
-       b1(3,3)=b1(3,3)+ct1*ccx
-       b2(3,3)=b2(3,3)+ct2*ccx
-       b3(3,3)=b3(3,3)+ct3*ccx
-    endif
-
-
-    !!get initial tgid before recalculating
-    tgid=get_tgid()
-
-
-    !! update 
-    do i=1,simparam%nm
-
-       !! cycle if vacancy
-       if ( atomic_number(i).eq.0 ) cycle
-
-       !! extra forces due to movement of the box tgid
-       !! use the initial value of tgid to calculate sxi
-
-       sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
-       syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
-       szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
-
-       !! cc[xyz] correction coefficients to correct [xyz][0123] etc.
-       ccx=del2(i)*fx(i)-0.5d0*sxi-x2(i)
-       ccy=del2(i)*fy(i)-0.5d0*syi-y2(i)
-       ccz=del2(i)*fz(i)-0.5d0*szi-z2(i)
-
-       !! correction applied to particles [xyz][0123]
-       x0(i)=x0(i)+ccx*ct0
-       y0(i)=y0(i)+ccy*ct0
-       z0(i)=z0(i)+ccz*ct0
-       !!
-       x1(i)=x1(i)+ccx*ct1
-       y1(i)=y1(i)+ccy*ct1
-       z1(i)=z1(i)+ccz*ct1
-       !!
-       x2(i)=x2(i)+ccx*ct2
-       y2(i)=y2(i)+ccy*ct2
-       z2(i)=z2(i)+ccz*ct2
-       !!
-       x3(i)=x3(i)+ccx*ct3
-       y3(i)=y3(i)+ccy*ct3
-       z3(i)=z3(i)+ccz*ct3
-    end do
-
-
-!!$    !! initialise tensors to zero
-!!$    tg(:,:)=0.0d0
-!!$    tgdot(:,:)=0.0d0
-!!$
-!!$    !! calculate tg and tgdot (accumulate over k)
-!!$    do i=1,nmat
-!!$       do k=1,nmat
-!!$          do j=1,nmat
-!!$             tg(i,j)=tg(i,j)+b0(k,i)*b0(k,j)
-!!$             tgdot(i,j)=tgdot(i,j)+ b1(k,i)*b0(k,j)+b0(k,i)*b1(k,j)
-!!$          end do
-!!$       end do
-!!$    end do
-!!$    
-!!$    !! recalculate tgid here
-!!$    call pr_get_tgid
-!!$    
-!!$    !! update box volume
-!!$    call pr_get_metric_tensor
-!!$
-!!$
-!!$
-!!$    do i=1,simparam%nm
-!!$
-!!$       !! cycle if vacancy
-!!$       if ( atomic_number(i).eq.0 ) cycle
-!!$
-!!$       sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
-!!$       syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
-!!$       szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
-!!$
-!!$       fxip=2.0d0*x2(i)+sxi
-!!$       fyip=2.0d0*y2(i)+syi
-!!$       fzip=2.0d0*z2(i)+szi
-!!$
-!!$       !! vol*inv(b0)
-!!$       b0_xxdet=(b0(2,2)*b0(3,3)-b0(2,3)*b0(3,2))/vol
-!!$       b0_xydet=(b0(2,3)*b0(3,1)-b0(3,3)*b0(2,1))/vol
-!!$       b0_xzdet=(b0(2,1)*b0(3,2)-b0(3,1)*b0(2,2))/vol
-!!$       b0_yxdet=(b0(3,2)*b0(1,3)-b0(1,2)*b0(3,3))/vol
-!!$       b0_yydet=(b0(1,1)*b0(3,3)-b0(1,3)*b0(3,1))/vol
-!!$       b0_yzdet=(b0(3,1)*b0(1,2)-b0(1,1)*b0(3,2))/vol
-!!$       b0_zxdet=(b0(1,2)*b0(2,3)-b0(2,2)*b0(1,3))/vol
-!!$       b0_zydet=(b0(1,3)*b0(2,1)-b0(1,1)*b0(2,3))/vol
-!!$       b0_zzdet=(b0(1,1)*b0(2,2)-b0(1,2)*b0(2,1))/vol
-!!$
-!!$       !! force components
-!!$       fxi=b0_xxdet*fxip+b0_xydet*fyip+b0_xzdet*fzip
-!!$       fyi=b0_yxdet*fxip+b0_yydet*fyip+b0_yzdet*fzip
-!!$       fzi=b0_zxdet*fxip+b0_zydet*fyip+b0_zzdet*fzip
-!!$
-!!$       !! calculate and accumulate total force and its square
-!!$       f2=fxi*fxi+fyi*fyi+fzi*fzi
-!!$       s1=s1+f2
-!!$       s2=s2+f2*f2
-!!$
-!!$       !! s3 is accumulated kinetic energy
-!!$       rxi=b0(1,1)*x1(i)+b0(1,2)*y1(i)+b0(1,3)*z1(i)
-!!$       ryi=b0(2,1)*x1(i)+b0(2,2)*y1(i)+b0(2,3)*z1(i)
-!!$       rzi=b0(3,1)*x1(i)+b0(3,2)*y1(i)+b0(3,3)*z1(i)
-!!$       s3=s3+atomic_mass(i)*(rxi*rxi+ryi*ryi+rzi*rzi)
-!!$    end do
-
-    return
-  end subroutine correc
-
-
 
   !---------------------------------------------------------------------
   !
@@ -921,7 +650,7 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
        do k=1,nmat
           do j=1,nmat
              tg(i,j)=tg(i,j)+b0(k,i)*b0(k,j)
-             tgdot(i,j)=tgdot(i,j)+ b1(k,i)*b0(k,j)+b0(k,i)*b1(k,j)
+       if(simparam%ivol.ne.1) tgdot(i,j)=tgdot(i,j)+ b1(k,i)*b0(k,j)+b0(k,i)*b1(k,j)
           end do
        end do
     end do
@@ -974,5 +703,214 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
     end do
 
   end subroutine update_therm_avs
+
+
+  !---------------------------------------------------------------------
+  !
+  ! subroutine velocityverlet
+  !
+  ! update a physical system using the verlet algorithm
+  !
+  !---------------------------------------------------------------------
+  subroutine velocityverlet(dt)
+
+    real(kind_wp) :: dt, sxi,syi,szi
+    integer :: i
+    
+    !! half time step on velocities
+    !! v(t+dt/2) = v(t) + a(t) dt/2
+    simparam=get_params()
+ 	sxi = 0d0 
+ 	syi = 0d0 
+ 	szi = 0d0 
+ 
+    x1_dt2=x1+x2
+    y1_dt2=y1+y2
+    z1_dt2=z1+z2
+    !! time step on positions
+    !! x(t+dt) = x(t) + v(t+dt/2) * dt
+    x0=x0+x1_dt2
+    y0=y0+y1_dt2
+    z0=z0+z1_dt2
+    if(simparam%ivol.eq.4) then !! in z only
+      b1(3,3) = b1(3,3) + b2(3,3)
+      b0(3,3)=b0(3,3)+b1(3,3)
+    endif 
+    if(simparam%ivol.lt.1) then 
+      b1 = b1 + b2
+      b0 = b0 + b1
+    endif
+
+    !! second half time step on velocities (with updated forces)
+    !! v(t+dt) = v(t+dt/2) + a(t+dt) dt/2
+      call force
+
+     tgid=get_tgid()
+
+     if(simparam%ivol.lt.1) then 
+      b2=simparam%bdel2*fb
+      b1=b1+b2
+    endif
+    if(simparam%ivol.eq.4) then !! in z only 
+       b2(3,3)=simparam%bdel2*fb(3,3)
+       b1=b1+b2
+    endif
+
+    do i=1,simparam%nm
+if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle      
+     if(simparam%ivol.eq.0) then
+        sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
+        syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
+        szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
+      endif
+      if(simparam%ivol.eq.4) szi=tgid(3,3)*z1(i)
+
+      x2(i)=del2(i)*fx(i)-0.5d0*sxi
+      y2(i)=del2(i)*fy(i)-0.5d0*syi
+      z2(i)=del2(i)*fz(i)-0.5d0*szi
+    enddo
+
+    x1=x1_dt2+x2
+    y1=y1_dt2+y2
+    z1=z1_dt2+z2
+
+  end subroutine velocityverlet
+
+
+
+  !---------------------------------------------------------------------
+  !
+  ! subroutine predic
+  !
+  ! update a physical system using the predictor-corrector algorithm
+  ! (to be used in conjunction with correc)
+  !
+  !---------------------------------------------------------------------
+  subroutine predic
+
+    integer :: i, j         !< loop variables
+
+!    simparam=get_params()
+
+    !!particle position, velocity, acceleration
+    do i=1,simparam%nm
+       x0(i)=x0(i)+x1(i)+x2(i)+x3(i)
+       y0(i)=y0(i)+y1(i)+y2(i)+y3(i)
+       z0(i)=z0(i)+z1(i)+z2(i)+z3(i)
+       x1(i)=x1(i)+2.0d0*x2(i)+3.0d0*x3(i)
+       y1(i)=y1(i)+2.0d0*y2(i)+3.0d0*y3(i)
+       z1(i)=z1(i)+2.0d0*z2(i)+3.0d0*z3(i)
+       x2(i)=x2(i)+3.0d0*x3(i)
+       y2(i)=y2(i)+3.0d0*y3(i)
+       z2(i)=z2(i)+3.0d0*z3(i)
+    end do
+
+    !! also update box if not constant volume
+    if(simparam%ivol.eq.0)then !!all directions
+       do i=1,nmat
+          do j=1,nmat
+             b0(i,j)=b0(i,j)+b1(i,j)+b2(i,j)+b3(i,j)
+             b1(i,j)=b1(i,j)+2.0d0*b2(i,j)+3.0d0*b3(i,j)
+             b2(i,j)=b2(i,j)+3.0d0*b3(i,j)
+          end do
+       end do
+    endif
+    if(simparam%ivol.eq.4)then !!in z only
+       b0(3,3)=b0(3,3)+b1(3,3)+b2(3,3)+b3(3,3)
+       b1(3,3)=b1(3,3)+2.0d0*b2(3,3)+3.0d0*b3(3,3)
+       b2(3,3)=b2(3,3)+3.0d0*b3(3,3)
+    endif
+    return
+  end subroutine predic
+
+
+  !---------------------------------------------------------------------
+  !
+  ! subroutine correc
+  !
+  ! update a physical system using the predictor-corrector algorithm
+  ! (to be used in conjunction with predic)
+  !
+  !---------------------------------------------------------------------
+  subroutine correc
+
+    !! local declarations
+    integer :: i, j, k             !< loop variables
+    real(kind_wp) :: ccx, ccy, ccz !< correction coefficients
+    real(kind_wp) :: sxi, syi, szi !< local variables
+    real(kind_wp), parameter :: ct0=0.166666666666666667
+    real(kind_wp), parameter :: ct1=0.833333333333333333
+    real(kind_wp), parameter :: ct2=1.000000000000000000
+    real(kind_wp), parameter :: ct3=0.333333333333333333
+
+
+
+    simparam=get_params()
+
+    !! determine box changes if not constant volume (ccx used here for the box)
+    if(simparam%ivol.lt.1) then 
+       do i=1,nmat
+          do j=1,nmat
+             ccx=simparam%bdel2*fb(i,j)-b2(i,j)
+             b0(i,j)=b0(i,j)+ct0*ccx
+             b1(i,j)=b1(i,j)+ct1*ccx
+             b2(i,j)=b2(i,j)+ct2*ccx
+             b3(i,j)=b3(i,j)+ct3*ccx
+          end do
+       end do
+    endif
+    if(simparam%ivol.eq.4) then !! in z only 
+       ccx=simparam%bdel2*fb(3,3)-b2(3,3)
+       b0(3,3)=b0(3,3)+ct0*ccx
+       b1(3,3)=b1(3,3)+ct1*ccx
+       b2(3,3)=b2(3,3)+ct2*ccx
+       b3(3,3)=b3(3,3)+ct3*ccx
+    endif
+
+
+    !!get initial tgid before recalculating
+    tgid=get_tgid()
+
+    !! update 
+    do i=1,simparam%nm
+
+       !! cycle if vacancy
+       if ( atomic_number(i).eq.0 ) cycle
+
+       !! extra forces due to movement of the box tgid
+       !! use the initial value of tgid to calculate sxi
+
+       sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
+       syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
+       szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
+
+       !! cc[xyz] correction coefficients to correct [xyz][0123] etc.
+       ccx=del2(i)*fx(i)-0.5d0*sxi-x2(i)
+       ccy=del2(i)*fy(i)-0.5d0*syi-y2(i)
+       ccz=del2(i)*fz(i)-0.5d0*szi-z2(i)
+
+       !! correction applied to particles [xyz][0123]
+       x0(i)=x0(i)+ccx*ct0
+       y0(i)=y0(i)+ccy*ct0
+       z0(i)=z0(i)+ccz*ct0
+       !!
+       x1(i)=x1(i)+ccx*ct1
+       y1(i)=y1(i)+ccy*ct1
+       z1(i)=z1(i)+ccz*ct1
+       !!
+       x2(i)=x2(i)+ccx*ct2
+       y2(i)=y2(i)+ccy*ct2
+       z2(i)=z2(i)+ccz*ct2
+       !!
+       x3(i)=x3(i)+ccx*ct3
+       y3(i)=y3(i)+ccy*ct3
+       z3(i)=z3(i)+ccz*ct3
+    end do
+
+
+    return
+  end subroutine correc
+
+
 
 end module dynamics_m

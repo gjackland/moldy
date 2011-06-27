@@ -96,7 +96,6 @@ module parinellorahman_m
   public :: pr_get_realsep_from_dx
   public :: pr_get_realsep2_from_dx
 
-
   !! Public data
   real(kind_wp), public :: B0(nmat,nmat)=0.d0    !< Box size
   real(kind_wp), public :: B1(nmat,nmat)=0.d0    !< Box velocity
@@ -245,14 +244,12 @@ contains
   
   
   subroutine pr_get_tgid
+     !! invert tg
+       call matrix_invert(tg,tginv)
     
-    !! invert tg
-    call matrix_invert(tg,tginv)
-    
-    !! multiply tginv and tgdot
-    call matrix_multiply(nmat,tginv,tgdot,tgid)
+     !! multiply tginv and tgdot
+       call matrix_multiply(nmat,tginv,tgdot,tgid)
     
   end subroutine pr_get_tgid
-
     
 end module parinellorahman_m

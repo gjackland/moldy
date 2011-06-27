@@ -1,7 +1,7 @@
 !!========================================================================
 !!
 !! MOLDY - Short Range Molecular Dynamics
-!! Copyright (C) 2009 G.Ackland, K.D'Mellow, University of Edinburgh.
+!! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -23,16 +23,7 @@
 !!
 !!========================================================================
 
-!============================================================================
-!
-! params_m.F90
-!
-! This module holds all runtime parameters, and their access and read/write
-! routines
-!
-!============================================================================
-
-!< 
+!< This module holds all runtime parameters, and their access and read/write routines
 module params_m
 
   use constants_m
@@ -51,14 +42,13 @@ module params_m
 
   !! public type
   type simparameters
-     character*72 :: title1="It would have been nice"   !< Titles, used in moldin
-     character*72 :: title2="To give this run a title"  !< Titles, used in moldin
+     character*72 :: title1  !< Titles, used in moldin
+     character*72 :: title2  !< Titles, used in moldin
      integer :: ivol=-1      !< IVOL=0 -> Constant Pressure
                              !! IVOL=1 -> Constant Volume
-
                              !! IVOL=2 -> free-surface-on-z, constant-volume-on-x&y
                              !! IVOL=3 -> cluster
-                             !! IVOL=4 -> constant volume on xy, constant pressure on z
+                             !! IVOL=4 -> constant volume, atoms cannot cross cells
                              !! IVOL=5 -> pillar, free-surface-on-xy, constant-volume-on-z
                              !! IVOL=-1 -> UNSET
      integer :: iquen=-1     !< IQUEN=0 -> Molecular Dynamics
@@ -81,7 +71,6 @@ module params_m
      real(kind_wp) :: dsp=0._kind_wp  !< Amplitude of random position
                                       !! displacements, used when reading
                                       !! in particles positions
-      integer :: pka=0       !< Number of PKA for cascade simulations   
 
      real(kind_wp) :: rpad=0._kind_wp !< User specified, padding thickness around rcut
      real(kind_wp) :: rcut   !< Cutoff radius for potential
@@ -102,12 +91,13 @@ module params_m
      integer :: ntcm         !< Frequency of updating list of neighbours
      integer :: nchkpt=-1    !< Frequency of checkpointing
      integer :: nposav=0    !< Average positions over last nposav steps
-
      integer :: restart=0    !< Switch defining type of run
                              !!  0 => new coordinates
                              !! -1 => old coordinates, new velocities 
                              !!  1 => old coordinates, old velocities
      real(kind_wp) :: nose=0.0 !< Softness of damping force in the Nose thermostat 
+	 real(kind_wp) :: therm_con=0.0 !< thermal conductivity (in W k-1 m-1 )  used to rescale the nose thermostat
+     logical :: alternate_quench_md=.false. !< Alternate Quench and MD on successive loops
 
      !!SCHEDULED FOR REMOVAL
      integer :: nout=96     !< fortran unit to write restart file
@@ -140,14 +130,21 @@ module params_m
      integer :: lastchkpt=0       !< Number of timesteps since last checkpoint
      integer :: ntc=0       !< Number of timesteps since Neighbour list updated (cf ntcm above)
      real(kind_wp) :: strx(3,3)  !< Strain tensor
-     integer :: strainloops = 1  !< Loop over nsteps for strainloops, each time applying the strain tensor
-
+    integer :: strainloops = 1  !< Loop over nsteps for strainloops, each time applying the strain tensor
      logical :: uselookup=.false. !< Use lookup tables instead of exact potential fns
 
      !!These parameters below relate to the box
      real(kind_wp) :: BOXTEM !< Box temperature
      real(kind_wp) :: BDEL2  !< Box related timescale
      real(kind_wp) :: BMASS  !< Box mass
+     integer :: pka = 0 !< number of high KE pka (gg)
+     real :: pkavx=0 
+     real :: pkavy=0 
+     real :: pkavz=0
+	real :: EPKA =0 ! energy in eV of pka (gg)
+	logical :: adjustTimeStep !(gg) 
+
+
   end type simparameters
 
   !!Currently public file declarations (could ultimately change this to private/simparam equiv.)
@@ -160,12 +157,6 @@ module params_m
 
   !! private module data (where the simulation parameters are actually kept)
   type(simparameters), save :: simparam
-  
-  integer, parameter :: keylen = 50
-  
-  integer, parameter :: numdepkeys=2         !< number of deprecated keys
-  character(len=keylen) :: depkey(numdepkeys)!< array of registered keys (hardcoded)
-  integer :: depkeylength(numdepkeys)        !< array of registered deprecated key lengths
 
 contains
 
@@ -216,10 +207,9 @@ contains
     integer, intent(in) :: iunit            !< unit input file is open on
     integer, intent(out) :: ierror          !< -2=unrecognised,-1=malformed,1=EOF,0=ok
     !!routine parameters (saved)
-    integer, parameter :: numkeys=48  !< increase numkeys when adding keywords
+    integer, parameter :: numkeys=55 !< increase numkeys when adding keywords
     character(len=50), save  :: key(numkeys)!< array of registered keys (hardcoded)
     integer, save :: keylength(numkeys)     !< array of registered key lengths
-    
     logical, save :: initialised=.false.    !< flag to perform one-off initialisation
     !!local routine worker variables
     integer :: i
@@ -252,13 +242,13 @@ contains
        key(13)='lastchkpt'
        key(14)='ntc'
        key(15)='nchkpt'
-       key(16)='write_rdf'
+       key(16)='alternate_quench_md'
        key(17)='temprq'
        key(18)='press'
        key(19)='restart'
        key(20)='nsteps'
        key(21)='nprint'
-       key(22)='nose'
+       key(22)='therm_con'
        key(23)='tjob'
        key(24)='tfinalise'
        key(25)='iquen'
@@ -282,26 +272,25 @@ contains
        key(43)='file_dumpx1'
        key(44)='tempsp'
        key(45)='zlayer'
-       key(46)='pressstep'
-       key(47)='pka'
-       key(48)='nposav'
+       key(46)='write_rdf'
+       key(47)='pka' !primary knock on atom if 0 is ignored, else is the value of the atom to give additional velocity to 
+       key(48)='pkavx' !the velocity to give the pka atom in x,y,z co ords
+       key(49)='pkavy'
+       key(50)='pkavz'
+       
+		key(51) = 'EPKA'
+		key(52)='adjustTimeStep'
+		key(53)='nose'
+	       key(54)='nposav'	
+      key(55)='pressstep'	
+
        !!adjust, set lowercase, and measure the length of registered keys
+
        do i=1,numkeys
           key(i)=adjustl(key(i))
           call lcase(key(i))
           keylength(i)=len_trim(key(i))
           !write(0,'(a,x,i)')key(i)(:keylength(i))//"-EOS-",keylength(i)
-       end do
-       
-       ! Deprecated keys go here
-       depkey(1)='nloops'
-       depkey(2)='alternate_quench_md'
-       
-       !!adjust, set lowercase, and measure the length of registered keys
-       do i=1,numdepkeys
-          depkey(i)=adjustl(depkey(i))
-          call lcase(depkey(i))
-          depkeylength(i)=len_trim(depkey(i))
        end do
 
        !!flag up that this section has been done
@@ -354,15 +343,9 @@ contains
 
     !!throw an error if input key is not recognised
     if(.not.matchedkey)then
-        if( is_key_deprecated( keystring, keystringlength ) ) then
-            write(0,*)"Line", linenum, ": ERROR IN KEYVALUEPAIR: key is deprecated:", keystring, &
-                " please remove"
-            ierror=-3
-        else
-            write(0,*)"Line",linenum,": ERROR IN KEYVALUEPAIR: key is not recognised:"//keystring
-            ierror=-2
-         endif
-         return
+       write(0,*)"Line",linenum,": ERROR IN KEYVALUEPAIR: key is not recognised:"//keystring
+       ierror=-2
+       return
     end if
 
 
@@ -372,11 +355,11 @@ contains
     action: select case (inum)
     case(1) !'title1'
        read(inputstring(eqindex+1:),*) simparam%title1
-       write(0,*) simparam%title1
+       write(0,*) key(inum)(:keylength(inum))//" = "//simparam%title1
 
     case(2) !'title2'
        read(inputstring(eqindex+1:),*) simparam%title2
-       write(0,*) simparam%title2
+       write(0,*) key(inum)(:keylength(inum))//" = "//simparam%title2
 
     case(3) !'file_system'
        read(inputstring(eqindex+1:),*) file_system
@@ -432,9 +415,9 @@ contains
        read(inputstring(eqindex+1:),*) simparam%nchkpt
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nchkpt
 
-    case(16) !'write_rdf'
-       read(inputstring(eqindex+1:),*) simparam%write_rdf
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%write_rdf
+    case(16) !'alternate_quench_md'
+       read(inputstring(eqindex+1:),*) simparam%alternate_quench_md
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%alternate_quench_md
 
     case(17) !'temprq'
        read(inputstring(eqindex+1:),*) simparam%temprq
@@ -458,9 +441,9 @@ contains
        read(inputstring(eqindex+1:),*) simparam%nprint
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nprint
 
-    case(22) !'nose'
-       read(inputstring(eqindex+1:),*) simparam%nose
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nose
+    case(22) !'therm_con'
+       read(inputstring(eqindex+1:),*) simparam%therm_con
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%therm_con
 
     case(23) !'tjob'
        read(inputstring(eqindex+1:),*) simparam%tjob
@@ -554,17 +537,42 @@ contains
        read(inputstring(eqindex+1:),*)  simparam%zlayer
        write(0,*) "zlayer = ", simparam%zlayer
 
-    case(46) !'pressstep'
+    case(46) !'write_rdf'
+       read(inputstring(eqindex+1:),*) simparam%write_rdf
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%write_rdf
+   case(47) !'pka'
+       read(inputstring(eqindex+1:),*) simparam%pka
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pka
+   case(48) !'pkavx'
+       read(inputstring(eqindex+1:),*) simparam%pkavx
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavx
+   case(49) !'pkavy'
+       read(inputstring(eqindex+1:),*) simparam%pkavy
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavy
+   case(50) !'pkavz'
+       read(inputstring(eqindex+1:),*) simparam%pkavz
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavz
+case(51) !'EPKA'
+       read(inputstring(eqindex+1:),*) simparam%EPKA
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%EPKA
+       
+    case(52) !'adjustTimeStep'
+       read(inputstring(eqindex+1:),*) simparam%adjustTimeStep
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%adjustTimeStep
+       
+        case(53) !'nose'
+       read(inputstring(eqindex+1:),*) simparam%nose
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nose
+
+
+    case(54) !'nposav'
+       read(inputstring(eqindex+1:),*) simparam%nposav
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nposav
+
+    case(55) !'pressstep'
        read(inputstring(eqindex+1:),*) simparam%pressstep
        write(0,*) "pressstep = ", simparam%pressstep
 
-    case(47) !'pka'
-       read(inputstring(eqindex+1:),*) simparam%pka
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pka
-
-    case(48) !'nposav'
-       read(inputstring(eqindex+1:),*) simparam%nposav
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nposav
 
     case default
        write(0,*) "NOT RECOGNISED"
@@ -581,28 +589,5 @@ contains
 
 
   end subroutine readparam_keyvaluepair
-  
-  pure function is_key_deprecated( keystring, keystringlength )
-    logical :: is_key_deprecated
-    character( len = * ), intent( in ) :: keystring
-    integer, intent( in ) :: keystringlength
-    
-    logical :: matchedkey
-    integer :: inum
-  
-    !! match input keystring with registered keys
-    matchedkey=.false.
-    match:do inum=1,numdepkeys
-       if(keystringlength.eq.depkeylength(inum))then
-          if(keystring(:keystringlength).eq.depkey(inum)(:depkeylength(inum)))then
-             matchedkey=.true.
-             exit match
-          end if
-       end if
-    end do match
-    
-    is_key_deprecated = matchedkey
-  
-  end function is_key_deprecated
 
 end module params_m
