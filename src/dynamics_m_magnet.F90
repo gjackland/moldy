@@ -67,7 +67,6 @@ module dynamics_m
   public :: force
   public :: energy_calc
   public :: update_neighbourlist
-  public :: rhoset  
   public :: predic, correc
   public :: velocityverlet  
   public :: write_energy_forces_stress
@@ -408,7 +407,6 @@ contains
 !!$  !! Write out energy, forces and stress to file (sanity check)
 !!$  call write_energy_forces_stress()
 
-!    write(*,*)tp(1,1),EN_Atom(1),amu(1),sumj(1),vol
     return
 
 
@@ -565,11 +563,11 @@ include 'magen.inc'
     y0=y0+y1_dt2
     z0=z0+z1_dt2
     if(simparam%ivol.eq.4) then !! in z only
-      b1(3,3) = b1(3,3) + b2(3,3)*0.5d0 
+      b1(3,3) = b1(3,3) + b2(3,3)
       b0(3,3)=b0(3,3)+b1(3,3)
     endif 
     if(simparam%ivol.lt.1) then 
-      b1 = b1 + b2*0.5d0 
+      b1 = b1 + b2
       b0 = b0 + b1
     endif
 
@@ -581,11 +579,11 @@ include 'magen.inc'
 
      if(simparam%ivol.lt.1) then 
       b2=simparam%bdel2*fb
-      b1=b1+b2*0.5d0
+      b1=b1+b2
     endif
     if(simparam%ivol.eq.4) then !! in z only 
        b2(3,3)=simparam%bdel2*fb(3,3)
-       b1=b1+b2*0.5d0
+       b1=b1+b2
     endif
 
 
@@ -742,164 +740,9 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
        z3(i)=z3(i)+ccz*ct3
     end do
 
-
-!!$    !! initialise tensors to zero
-!!$    tg(:,:)=0.0d0
-!!$    tgdot(:,:)=0.0d0
-!!$
-!!$    !! calculate tg and tgdot (accumulate over k)
-!!$    do i=1,nmat
-!!$       do k=1,nmat
-!!$          do j=1,nmat
-!!$             tg(i,j)=tg(i,j)+b0(k,i)*b0(k,j)
-!!$             tgdot(i,j)=tgdot(i,j)+ b1(k,i)*b0(k,j)+b0(k,i)*b1(k,j)
-!!$          end do
-!!$       end do
-!!$    end do
-!!$    
-!!$    !! recalculate tgid here
-!!$    call pr_get_tgid
-!!$    
-!!$    !! update box volume
-!!$    call pr_get_metric_tensor
-!!$
-!!$
-!!$
-!!$    do i=1,simparam%nm
-!!$
-!!$       !! cycle if vacancy
-!!$       if ( atomic_number(i).eq.0 ) cycle
-!!$
-!!$       sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
-!!$       syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
-!!$       szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
-!!$
-!!$       fxip=2.0d0*x2(i)+sxi
-!!$       fyip=2.0d0*y2(i)+syi
-!!$       fzip=2.0d0*z2(i)+szi
-!!$
-!!$       !! vol*inv(b0)
-!!$       b0_xxdet=(b0(2,2)*b0(3,3)-b0(2,3)*b0(3,2))/vol
-!!$       b0_xydet=(b0(2,3)*b0(3,1)-b0(3,3)*b0(2,1))/vol
-!!$       b0_xzdet=(b0(2,1)*b0(3,2)-b0(3,1)*b0(2,2))/vol
-!!$       b0_yxdet=(b0(3,2)*b0(1,3)-b0(1,2)*b0(3,3))/vol
-!!$       b0_yydet=(b0(1,1)*b0(3,3)-b0(1,3)*b0(3,1))/vol
-!!$       b0_yzdet=(b0(3,1)*b0(1,2)-b0(1,1)*b0(3,2))/vol
-!!$       b0_zxdet=(b0(1,2)*b0(2,3)-b0(2,2)*b0(1,3))/vol
-!!$       b0_zydet=(b0(1,3)*b0(2,1)-b0(1,1)*b0(2,3))/vol
-!!$       b0_zzdet=(b0(1,1)*b0(2,2)-b0(1,2)*b0(2,1))/vol
-!!$
-!!$       !! force components
-!!$       fxi=b0_xxdet*fxip+b0_xydet*fyip+b0_xzdet*fzip
-!!$       fyi=b0_yxdet*fxip+b0_yydet*fyip+b0_yzdet*fzip
-!!$       fzi=b0_zxdet*fxip+b0_zydet*fyip+b0_zzdet*fzip
-!!$
-!!$       !! calculate and accumulate total force and its square
-!!$       f2=fxi*fxi+fyi*fyi+fzi*fzi
-!!$       s1=s1+f2
-!!$       s2=s2+f2*f2
-!!$
-!!$       !! s3 is accumulated kinetic energy
-!!$       rxi=b0(1,1)*x1(i)+b0(1,2)*y1(i)+b0(1,3)*z1(i)
-!!$       ryi=b0(2,1)*x1(i)+b0(2,2)*y1(i)+b0(2,3)*z1(i)
-!!$       rzi=b0(3,1)*x1(i)+b0(3,2)*y1(i)+b0(3,3)*z1(i)
-!!$       s3=s3+atomic_mass(i)*(rxi*rxi+ryi*ryi+rzi*rzi)
-!!$    end do
-
     return
   end subroutine correc
 
-
-
-  !---------------------------------------------------------------------
-  !
-  ! rhoset
-  !
-  ! set the density function f(rho(i)) for the Finnis-Sinclair potential
-  ! set the cohesive potential: sum of f(rho(i))
-  !
-  !---------------------------------------------------------------------
-  subroutine rhoset
-
-    integer :: i, j                   !< loop variables
-    integer ::  nlist_ji              !< scalar neighbour index
-    real(kind_wp) :: r                !< real spatial particle separation
-    real(kind_wp) :: dx, dy, dz       !< fractional separation components
-    real(kind_wp) :: rho_tmp          !< Temporary accumulator for rho
-    
-!$  !!OpenMP reqd (local declarations)
-!$  integer :: neighlc             !< link cell index of the current neighbour
-
-    !get params
-    simparam=get_params()
-
-    !! set rho to zero
-    rho(:)=0.0d0
-
-    !! calculate rho
-    
-!$OMP PARALLEL PRIVATE( neighlc, i, j, nlist_ji, r, dx, dy, dz, rho_tmp ), &
-!$OMP DEFAULT(NONE), &
-!$OMP SHARED(nlist, atomic_number, ic, simparam, numn, x0, y0, z0, lc_lock, rho )
-
-!$  neighlc = 0
-
-!$OMP do
-    rhocalc: do i=1,simparam%nm
-       
-       ! Reset my temporary rho accumulator
-       rho_tmp = 0.d0
-
-       !!loop through neighbours of i     
-       do j=1,numn(i)        
-
-          !! index
-          nlist_ji  = nlist(j,i)
-
-          !! real spatial separation of particles i and j
-          dx=x0(i)-x0(nlist_ji)
-          dy=y0(i)-y0(nlist_ji)
-          dz=z0(i)-z0(nlist_ji)
-
-          call pr_get_realsep_from_dx(r,dx,dy,dz)
-          
-!$ !! set/reset region locks when changing neighbour link cell
-!$ if (ic(nlist_ji).ne.neighlc)then
-!$   if(neighlc.gt.0)then !!unset old neighbour link-cell
-!$     call omp_unset_lock(lc_lock(neighlc))
-!$   end if
-!$   neighlc=ic(nlist_ji)  !!set neighlc to the current link-cell
-!$   call omp_set_lock(lc_lock(neighlc))
-!$ end if
-          
-          rho(nlist_ji) =  rho(nlist_ji) + phi(r,atomic_number(nlist_ji),atomic_number(i))
-          
-          ! Update my own temporary accumulator
-          rho_tmp = rho_tmp + phi(r,atomic_number(i),atomic_number(nlist_ji))
-       
-       end do
-          
-!$ !! set/reset region locks when updating own particle
-!$ if (ic(i).ne.neighlc)then
-!$  call omp_unset_lock(lc_lock(neighlc))
-!$  neighlc=ic(i)  !!set neighlc to the current link-cell
-!$  call omp_set_lock(lc_lock(neighlc))
-!$ end if
-
-        !! cohesive potential phi at r
-        rho(i) =  rho(i) + rho_tmp
-
-    end do rhocalc
-!$OMP END DO NOWAIT
-
-!$  !! release all locks
-!$  call omp_unset_lock(lc_lock(neighlc))
-!$OMP END PARALLEL
-
-
-    return
-
-  end subroutine rhoset
 
 
 

@@ -118,14 +118,14 @@ F90SRC= \
 	debug_m.F90 \
 	system_m.F90 \
 	neighbourlist_m.F90 \
-	dynamics_m_magnet.F90 \
+	dynamics_m.F90 \
 	io_m.F90 \
 	linkcell_m.F90 \
 	lookup_m.F90 \
 	matrix_m.F90 \
 	moldin.F90\
 	params_m.F90 \
-	quench_m_magnet.F90 \
+	quench_m.F90 \
 	random_m.F90 \
 	analysis_m.F90 \
 	parinellorahman_m.F90 \

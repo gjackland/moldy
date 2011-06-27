@@ -109,13 +109,26 @@ program moldyv2
   logical :: showcalculationprogress=.false.!< write calculation progress to stderr
   integer :: istat                          !< memory allocation status
   integer :: ierror                         !< general error return flag
+!! New variables for variable timestep
 
-#if DEBUG_TIMING
+  integer :: file_counter = 0 !used to number the outpfiles
+  integer :: time_update_counter =1 !counter to control when the time step clculation is done
+  real(kind_wp) :: lastTimeStep!stores the time value used for the previous step
+  real(kind_wp) :: initialEnergy,kineticEnergy,timeUnit,calc_time,highestE
+  real(kind_wp) :: fs = 0.098227 !one femtosecond in simulation unitsm used to output real times
+  integer :: lastTimeUpdate = 0
+  real(kind_wp) :: pka_init_x, pka_init_y, pka_init_z,deepest ! initial location of pka, and variable to store its deepest z direction
+ 
+  	integer :: velsamples = 0
+	real(kind_wp) :: velmean = 0.0 	
+
+
+!! #if DEBUG_TIMING
   !! MD loop timing variables (nsteps)
-#  real(kind_wp) :: g_time, g_starttime      !< Global simulation timing variables
+!!#  real(kind_wp) :: g_time, g_starttime      !< Global simulation timing variables
   !! Simulation loop timing (nloops)
-#  real(kind_wp) :: loops_starttime, loops_endtime
-#endif
+!!#  real(kind_wp) :: loops_starttime, loops_endtime
+!!#endif
 
   !! Timing declarations
   real(kind_wp) ::time,starttime            !< code timing variables
@@ -134,6 +147,10 @@ program moldyv2
 
   !! Declarations to check the validity of a potential
   real(kind_wp) :: rmin,rcut                !< min and cutoff radii
+
+
+  real(kind_wp) ::modelruntime =0 ! the time that the code has simulated the system for
+	real(kind_wp) :: localTimeStep, thermotimer ! stores the time adjusted by the simulation, overrides deltat
 
 
   !! start timing the code
@@ -326,9 +343,9 @@ program moldyv2
      write(unit_stdout,36)
 36   format(10X,' SET UP LINK CELLS'///)
 
-#if DEBUG_TIMING
-#    loops_starttime = wtime()
-#endif
+!! #if DEBUG_TIMING
+!! #    loops_starttime = wtime()
+!! #endif
 
   !! Loops through iterations of the whole simulation 
   !!  This is now to apply constant strain rate
@@ -399,9 +416,9 @@ program moldyv2
      !! *****     MD-LOOP     ***** !!
      !! *****     =======     ***** !!
         
-#if DEBUG_TIMING
-#  g_starttime = wtime()
-#endif
+!! #if DEBUG_TIMING
+!! #  g_starttime = wtime()
+!! #endif
 
         !! either quench, or perform MD.
         if (simparam%iquen.eq.1) then
@@ -528,10 +545,10 @@ program moldyv2
  
      simparam%prevsteps = simparam%currentstep
      
-#if DEBUG_TIMING
-        g_time = wtime()
-#        write(*,*)"MDloop runtime: ", g_time - g_starttime
-#endif
+!! #if DEBUG_TIMING
+!!         g_time = wtime()
+!! #        write(*,*)"MDloop runtime: ", g_time - g_starttime
+!! #endif
 
      call linkup
 
@@ -568,10 +585,10 @@ program moldyv2
 
 
 
-#if DEBUG_TIMING
-#        loops_endtime = wtime()
-#        write(*,*)"Simulationloops runtime: ", loops_endtime - loops_starttime
-#endif
+!! #if DEBUG_TIMING
+!! #        loops_endtime = wtime()
+!! #        write(*,*)"Simulationloops runtime: ", loops_endtime - loops_starttime
+!! #endif
 
   !! if lookup tables have been used, clean them up before exit
   if(simparam%uselookup) call cleanup_potential_lookups
