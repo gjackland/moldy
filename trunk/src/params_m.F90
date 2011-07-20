@@ -142,7 +142,7 @@ module params_m
      real :: pkavy=0 
      real :: pkavz=0
 	real :: EPKA =0 ! energy in eV of pka (gg)
-	logical :: adjustTimeStep !(gg) 
+	logical :: adjustTimeStep=.false. !(gg) 
 
 
   end type simparameters
@@ -153,7 +153,7 @@ module params_m
   character*72, public :: file_dumpx1                !< data dump file - every iteration
   character*9, parameter  :: file_params="params.in" !< Main input - name hardcoded
   character*72, public :: file_system="system.in"    !< System input file (particles etc - "system.in" is default value)
-  character*72, public :: file_textout="moldin.out"  !< Default text output file ("moldin.out" is default value)
+  character*72, public :: file_textout="system.out"  !< Default text output file
 
   !! private module data (where the simulation parameters are actually kept)
   type(simparameters), save :: simparam

@@ -37,14 +37,14 @@ BUILD_DIR=../build
 #
 ######################################################
 # Material Choice and Location of Executable
-MATERIAL= -DIRON_CARBON
+#MATERIAL= -DIRON_CARBON
 #MATERIAL= -DZIRCONIUM
-#MATERIAL= -DGENERIC_ATVF
+MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
- EXE=    ../build/moldy.fec
+ EXE=    ../build/moldy.atvf
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -128,7 +128,7 @@ F90SRC= \
 	quench_m.F90 \
 	random_m.F90 \
 	analysis_m.F90 \
-	parinellorahman_m.F90 \
+	parrinellorahman_m.F90 \
 	thermostat_m.F90 \
 	timers_m.F90 \
 	utilityfns_m.F90 \
@@ -184,41 +184,41 @@ clean:
 #
 ######################################################
 moldin.o: timers_m.o thermostat_m.o random_m.o potential_m.o params_m.o  system_m.o  \
-	 constants_m.o analysis_m.o parinellorahman_m.o  dynamics_m.o \
+	 constants_m.o analysis_m.o parrinellorahman_m.o  dynamics_m.o \
 	neighbourlist_m.o  particles_m.o linkcell_m.o \
 	quench_m.o io_m.o
 
 thermostat_m.o: random_m.o potential_m.o params_m.o  system_m.o  constants_m.o \
-	 parinellorahman_m.o  particles_m.o
+	 parrinellorahman_m.o  particles_m.o
 
 analysis_m.o: thermostat_m.o
 
 random_m.o: debug_m.o particles_m.o
 
-dynamics_m.o: debug_m.o particles_m.o  system_m.o matrix_m.o parinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
+dynamics_m.o: debug_m.o particles_m.o  system_m.o matrix_m.o parrinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
 
-io_m.o: params_m.o random_m.o particles_m.o parinellorahman_m.o utilityfns_m.o analysis_m.o
+io_m.o: params_m.o random_m.o particles_m.o parrinellorahman_m.o utilityfns_m.o analysis_m.o
 
 params_m.o: constants_m.o utilityfns_m.o
 
 quench_m.o: params_m.o  system_m.o  constants_m.o \
-	analysis_m.o parinellorahman_m.o dynamics_m.o neighbourlist_m.o  \
+	analysis_m.o parrinellorahman_m.o dynamics_m.o neighbourlist_m.o  \
 	linkcell_m.o particles_m.o potential_m.o
 
-neighbourlist_m.o:  linkcell_m.o parinellorahman_m.o
+neighbourlist_m.o:  linkcell_m.o parrinellorahman_m.o
 
-potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o generic_atvf.o  
+potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o generic_atvf.o  
 
 timers_m.o: debug_m.o constants_m.o
 
 lookup_m.o: constants_m.o generic_atvf.o iron_carbon.o zirconium.o
 
-parinellorahman_m.o analysis_m.o particles_m.o linkcell_m.o: constants_m.o params_m.o
+parrinellorahman_m.o analysis_m.o particles_m.o linkcell_m.o: constants_m.o params_m.o
 
-analysis_m.o: parinellorahman_m.o system_m.o dynamics_m.o
+analysis_m.o: parrinellorahman_m.o system_m.o dynamics_m.o
 
-parinellorahman_m.o: matrix_m.o lookup_m.o
+parrinellorahman_m.o: matrix_m.o lookup_m.o
 
-linkcell_m.o: parinellorahman_m.o
+linkcell_m.o: parrinellorahman_m.o
 
 matrix_m.o: utilityfns_m.o

@@ -42,7 +42,7 @@ module analysis_m
   use utilityfns_m
   use particles_m
   use neighbourlist_m
-  use parinellorahman_m
+  use parrinellorahman_m
   use system_m
   use thermostat_m
 
@@ -57,7 +57,7 @@ module analysis_m
   public :: zero_thermodynamic_sums
   public :: runavs, rdf, auto, posavs
   public :: thermodynamic_sums
-
+  public :: crysdiff
   !! derived type used to hold all running sums of thermodynamic quantities
   type thermodynamic_sums
      real(kind_wp) :: SPE=0._kind_wp
@@ -462,13 +462,8 @@ contains
   !
   !  subroutine rdf
   !
-  !  evaluates radial distribution functions
+  !  also evaluates Ackland-Jones heuristics
   !
-  !! note that this is currently insufficient for more than
-  !! two distinct species (see assignment of the ipick index)
-  !! One day, could rewrite with 3d RDF array nbin, to allow two indices
-  !
-  !  Also, does not use link cells, so can be very slow
   !--------------------------------------------------------------
   subroutine rdf(maxbin,binsperangstrom)
     !! argument variables
@@ -476,25 +471,43 @@ contains
     integer :: binsperangstrom        !< number of bins per Angstrom
 
     !!local variables
-    integer :: i, j, ineigh           !< loop variables
+    integer :: i, j, k, isp,jsp, jneigh, kneigh !< loop variables
     integer :: istat                  !< allocation status
-    integer :: ipick                  !< index of different RDFs
+    integer :: irdf,icount,nn         !< index of different RDFs, counters
     integer :: ibin                   !< bin index
-    integer :: nbins                  !< reported unmber of particles in a bin
-    integer, allocatable :: nbin(:,:) !< RDF bin array
+    integer :: nbins                  !< reported number of particles in a bin
+    integer :: chi(8)                 ! Bond Angle distribution
+    integer :: dbcc,dfcc,dhcp         ! Difference from ideal
+    integer, allocatable :: nbin(:,:,:)!< RDF bin array
+    integer ::  aj_atom   !< Local crystal assignment
+    integer, allocatable :: natoms(:) !< Number of atoms of each type
+    integer, allocatable :: numfull(:), nfull(:,:) !! Complete neighbour lists
+    real(kind_wp), allocatable :: rn(:,:) !< Near neighbour for atoms
+    real(kind_wp), allocatable :: rnatoms(:,:) !< Near neighbour for atoms
+    real(kind_wp) :: bccscore, fcchcp, fccscore, hcpscore, icoscore  ! Ackland-Jones parameters
+    real(kind_wp) :: ctheta,rsqj, rsqk       !< lengths and angles
     real(kind_wp) :: dx, dy, dz       !< fractional separations
-    real(kind_wp) :: r, rsq           !< physical pair separation
+    real(kind_wp) :: r, rsq, rneighbour!< physical pair separation
     real(kind_wp) :: minrad, rsqmax   !< minimum radius before warning, maximum in rdf
-    integer :: unit_rdf               !< io unit number for RDF
+         integer, dimension(8)   :: ibcc = (/ 7,0,0,36,12,0,36,0 /)
+         integer, dimension(8)   :: ifcc = (/6,0,0,24,12,0,24,0  /)
+         integer, dimension(8)   :: ihcp = (/3,0,6,21,12,0,24,0  /)
+    
+    integer :: unit_rdf, unit_aj      !< io unit number for RDF and AJ
     type(simparameters) :: simparam   !< local copy of simulation parameters
     simparam=get_params()
 
     !! allocate the RDF array
-    allocate(nbin(maxbin,2*simparam%nspec-1),stat=istat)
+    allocate(nbin(maxbin,simparam%nspec,simparam%nspec),stat=istat)
+    allocate(natoms(simparam%nspec),stat=istat)
+    allocate(rnatoms(simparam%nspec,simparam%nspec),stat=istat)
+    allocate(nfull(simparam%nnbrs,simparam%nm),stat=istat)
+    allocate(numfull(simparam%nm),stat=istat)
     if(istat.ne.0)stop 'ALLOCATION ERROR (rdf) - Possibly out of memory.'
-    nbin(:,:)=0
-
-
+    nbin(:,:,:)=0
+    natoms(:)=0
+    numfull(:)=0
+    nfull(:,:)=0
     !! initialisation of some parameters
 
      minrad=2.0d0
@@ -507,59 +520,210 @@ contains
      minrad = 0.9d0
 #endif
 
+     numfull=numn
+
+!! Generate complete neighbour lists
+!  copy from linked list
+
+    do i=1,simparam%nm
+    do jneigh=1,numn(i)
+      nfull(jneigh,i)= nlist(jneigh,i)
+    enddo
+    enddo
+
+! append others.  
+
+    do i=1,simparam%nm
+    do jneigh=1,numn(i)
+      j=nlist(jneigh,i)
+      numfull(j)=numfull(j)+1
+      nfull(numfull(j),j) = i
+    enddo
+    enddo
     rsqmax=(maxbin/binsperangstrom)**2 
     !!loop over particles
     particleloop: do i=1,simparam%nm
        if(ispec(atomic_index(i)).eq.0) cycle particleloop !don't calculate vacancies
-
-
+       natoms(atomic_index(i)) =  natoms(atomic_index(i))+1
        !! loop over pairs, indexed up to particle i  was      pairloop: do j=1,i-1
 
-       neighbourloop: do ineigh=1,numn(i)
-                       j  = nlist(ineigh,i)
+       neighbourloop: do jneigh=1,numn(i)
+                       j  = nlist(jneigh,i)
           if(Ispec(atomic_index(J)).EQ.0) cycle neighbourloop !don't calculate vacancies
-
 
           !! Separation in fractional coordinates
           DX=(X0(I)-X0(J))
           DY=(Y0(I)-Y0(J))
           DZ=(Z0(I)-Z0(J))
 
-
           !! get real spatial separation from fractional components dx/y/z
           call pr_get_realsep2_from_dx(rsq,dx,dy,dz)
           if(rsq.gt.rsqmax) cycle neighbourloop
           r=sqrt(rsq)
-          !! ipick is the index of the RDF to contibute to
-          !! note that this is insufficient for more than two distinct species
-          ipick = atomic_index(i) + atomic_index(j) - 1
-
 
           !! calculate bin and increment its count
           ibin = int(r*binsperangstrom)
           if(r.le.minrad)write(unit_stdout,*) 'RDF: too close < ', minrad, 'A ', i,j,r
           if(ibin.gt.maxbin)cycle neighbourloop
-          nbin(ibin,ipick) = nbin(ibin,ipick)+1
-
-
+       nbin(ibin,atomic_index(I),atomic_index(J)) = nbin(ibin,atomic_index(I),atomic_index(J))+1
        end do neighbourloop
     end do particleloop
-
 
     !! write out rdf
     unit_rdf=newunit()
     open (unit=unit_rdf,file='rdf.dat',status='unknown',position='rewind')
+    unit_aj=newunit()
+    open (unit=unit_aj,file='aj_atom.dat',status='unknown',position='rewind')
+       write(unit_aj,*)"atom ", "       atomic number", " crystal structure",  "coordination"
     do ibin=1,maxbin
-       nbins = sum(nbin(ibin,:))
-       write(unit_rdf,'(" BIN, NO IN BINS ",I5,3I8)') ibin,nbins
+       nbins = sum(nbin(ibin,:,:))
+       write(unit_rdf,'(" TOTAL RDF 0 0",F13.7,3I8)') float(ibin)/binsperangstrom,nbins
     end do
+    
+    do isp=1,simparam%nspec
+    do jsp=isp,simparam%nspec
+     icount=0
+    binloop:  do ibin=1,maxbin
+     if (isp.ne.jsp) then
+      irdf =  nbin(ibin,isp,jsp)+nbin(ibin,jsp,isp)
+     else 
+      irdf =  nbin(ibin,isp,jsp)
+     endif
+!   Partial rdfs
+     write(unit_rdf,'(" PART PDF ",2I4,F13.7,I8)') atomic_index(isp),atomic_index(jsp), float(ibin)/binsperangstrom,irdf
+
+
+!! Evaluate local crystal structure G. J. Ackland and A. P. Jones PRB 73, 054104 2006
+
+
+!  Estimate neighbour radius as mean position of 4th neighbour
+     
+     if(icount.lt.min(natoms(isp),natoms(jsp))*4) then
+      icount=icount+irdf
+      rneighbour =  float(ibin)/binsperangstrom
+     end if
+     end do binloop
+      rnatoms(isp,jsp) = rneighbour
+    end do
+    end do
+
+     close(unit=unit_rdf)
+
+!!  Run over triplets of atoms
+
+     !!loop over particles
+       neighloopi: do i=1,simparam%nm
+           chi(:)=0
+           nn=0
+       neighloopj: do jneigh=1,numfull(i)
+            j  = nfull(jneigh,i)
+          DX=(X0(I)-X0(J))
+          DY=(Y0(I)-Y0(J))
+          DZ=(Z0(I)-Z0(J))
+         call pr_get_realsep2_from_dx(rsqj,dx,dy,dz)
+         if(rsqj.gt.1.45*rnatoms(atomic_index(i),atomic_index(j))**2) then
+         cycle neighloopj     
+         endif
+         nn=nn+1
+         if(jneigh.eq.numfull(i))         cycle neighloopj 
+       neighloopk: do kneigh=jneigh+1,numfull(i)
+            k  = nfull(kneigh,i)
+          DX=(X0(I)-X0(k))
+          DY=(Y0(I)-Y0(k))
+          DZ=(Z0(I)-Z0(k))
+         call pr_get_realsep2_from_dx(rsqk,dx,dy,dz)
+        if(rsqk.gt.1.45*rnatoms(atomic_index(i),atomic_index(k))**2) cycle neighloopk 
+          DX=(X0(k)-X0(J))
+          DY=(Y0(k)-Y0(J))
+          DZ=(Z0(k)-Z0(J))
+         call pr_get_realsep2_from_dx(rsq,dx,dy,dz)
+          ctheta = (rsqj + rsqk - rsq)/2.0/sqrt(rsqj*rsqk)
+          if(ctheta.lt.-0.945) then 
+                  chi(1)=chi(1)+1
+           else if(ctheta.lt.-0.915) then 
+                     chi(2)=chi(2)+1
+           else if(ctheta.lt.-0.755) then
+                     chi(3)=chi(3)+1
+           else if(ctheta.lt.-0.705) then
+                     chi(4)=chi(4)+1
+           else if(ctheta.lt.-0.195) then
+!!  Do nothing !!  Angular data here not useful
+           else if(ctheta.lt.0.195) then 
+                     chi(5)=chi(5)+1
+           else if(ctheta.lt.0.245)  then
+                     chi(6)=chi(6)+1
+           else if(ctheta.lt.0.795)  then
+                     chi(7)=chi(7)+1
+           else if(ctheta.lt.1.0)    then
+                     chi(8)=chi(8)+1
+          endif
+       end do neighloopk
+       end do neighloopj
+
+         dbcc=crysdiff(ibcc,chi)
+         dfcc=crysdiff(ifcc,chi)
+         dhcp=crysdiff(ihcp,chi)
+
+!! compare with BallViewer chi(1) =  pr ; chi(2) = c1  ; chi(3) = c2 ;  ; chi(4) = c3
+!!  ; chi(5) = ctr  ; chi(6) = xt ; ; chi(7) = big ; chi(8) = layer2
+!! pr1 = chi(1) + chi(2) ; chcp=chi(2)+chi(3)+chi(4) ; bigx=chi(6)+chi(7)
+
+        bccscore = 0.35*chi(5)/(chi(6)+chi(7)+chi(8)-chi(5))
+        fcchcp = abs(24.0-chi(7))/24.0
+        fccscore = 0.61* (abs(chi(1)+chi(2)-6) + chi(3))/6.0
+        hcpscore =    ( abs(chi(1)-3.0) + abs(chi(1)+chi(2)+chi(3)+chi(4)-9.0))/12.0
+        icoscore = chi(5)
+!!        write(*,'(14I5)')i,nn,chi,sum(chi)
+!1        write(*,'(2I5,4f12.4)')i,nn,bccscore,fcchcp,fccscore,hcpscore
+
+
+! alternate preliminary assignments based on inversion
+       if(nn.gt.11) then
+         if(chi(1).eq.7) bccscore = 0
+         if(chi(1).eq.6) fccscore = 0
+         if(chi(1).eq.3) hcpscore = 0
+       endif
+
+!  Assign via Andrew Jones heuristic
+	if (chi(8) >0) then
+                  aj_atom=0 
+        	else if (icoscore.lt.3) then 
+       		  aj_atom = 4
+       		  if (nn.ne.12) aj_atom = 0 
+		else if (bccscore.le.fcchcp) then 
+	 	  aj_atom = 1
+		  if (nn<11) aj_atom = 0 
+		else if (nn.ne.12) then
+                      aj_atom = 0
+		else if (fccscore<hcpscore) then 
+                        aj_atom = 2 
+		else 
+                	aj_atom = 3
+       	endif
+    !! write out crystal type 0=unknown, 1=bcc 2=fcc 3=hcp
+
+       write(unit_aj,*)i,ispec(atomic_index(i)),aj_atom,nn
+
+       end do neighloopi
 
 
     !! clean and return
-    deallocate(nbin)
-    close(unit_rdf)
+    deallocate(nbin,nfull,numfull)
+    close(unit_aj)
     return
 
-  end subroutine rdf
+  end subroutine rdf 
+
+   pure function crysdiff(chi_ideal,chi)
+  real (kind_wp) :: crysdiff
+   integer, intent(in) :: chi_ideal(8)           ! Bond Angle distribution
+   integer, intent(in) :: chi(8)                 ! Bond Angle distribution
+   integer :: i
+    crysdiff=0
+    do i=1,8
+     crysdiff = (chi(i)-chi_ideal(i))**2
+    enddo
+    return
+    end function crysdiff
 
 end module analysis_m
