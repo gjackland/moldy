@@ -91,7 +91,7 @@ program moldyv2
   use thermostat_m
   use system_m
   use analysis_m
-  use parinellorahman_m
+  use parrinellorahman_m
   use dynamics_m
   use neighbourlist_m
   use quench_m
@@ -143,7 +143,7 @@ program moldyv2
   real(kind_wp):: boxke
 
   !! Declarations that need moving (todo: revisit and factor into p-r)
-  real(kind_wp) :: a1,a2,a3                 !< parinello-rahman variables
+  real(kind_wp) :: a1,a2,a3                 !< parrinello-rahman variables
 
   !! Declarations to check the validity of a potential
   real(kind_wp) :: rmin,rcut                !< min and cutoff radii
@@ -169,7 +169,7 @@ program moldyv2
   call init_neighbourlist_m
   call init_quench_m
   call init_thermostat_m
-  call init_parinellorahman_m
+  call init_parrinellorahman_m
 
 
   !! Read initial configuration and velocities
@@ -388,7 +388,7 @@ program moldyv2
            j=atomic_index(i)
            if (j.eq.0) cycle !don't consider vacancies
            
-           !! calculation of parinellorahman term (a1,a2,a3)
+           !! calculation of parrinellorahman term (a1,a2,a3)
            a1=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
            a2=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
            a3=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
@@ -634,7 +634,7 @@ program moldyv2
 !!  call cleanup_dynamics_m
 !!  call cleanup_quench_m
 !!  call cleanup_thermostat_m
-!!  call cleanup_parinellorahman_m
+!!  call cleanup_parrinellorahman_m
 
   !! Fin
   close(unit_stdout)

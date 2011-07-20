@@ -47,7 +47,7 @@ module dynamics_m
   use potential_m
   use system_m
   use thermostat_m
-  use parinellorahman_m
+  use parrinellorahman_m
   use neighbourlist_m
 
 !$  !! extended functional dependencies for compilation with OpenMP

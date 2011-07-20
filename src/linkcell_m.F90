@@ -37,7 +37,7 @@ module linkcell_m
 
   !! problem dependencies
   use particles_m
-  use parinellorahman_m
+  use parrinellorahman_m
 
   !! low level dependencies
   use constants_m

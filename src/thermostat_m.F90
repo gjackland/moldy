@@ -44,7 +44,7 @@ module thermostat_m
 
   !!functional dependencies
   use particles_m
-  use parinellorahman_m
+  use parrinellorahman_m
 
   implicit none
   

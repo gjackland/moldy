@@ -37,7 +37,7 @@ module neighbourlist_m
   !! Functional dependencies
   use linkcell_m
   use particles_m
-  use parinellorahman_m
+  use parrinellorahman_m
 
   !! Bottom level (utility module) dependencies
   use constants_m

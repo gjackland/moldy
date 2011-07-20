@@ -36,7 +36,7 @@ module io_m
   use constants_m
   use utilityfns_m
   use params_m
-  use parinellorahman_m
+  use parrinellorahman_m
   use particles_m
   use random_m
   use matrix_m

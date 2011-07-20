@@ -46,7 +46,7 @@ module quench_m
   use dynamics_m
   use system_m
   use potential_m
-  use parinellorahman_m
+  use parrinellorahman_m
   use neighbourlist_m
   use linkcell_m
 

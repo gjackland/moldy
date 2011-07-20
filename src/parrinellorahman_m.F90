@@ -25,10 +25,10 @@
 
 !==========================================================================
 !
-!  parinelloraman_m.F90
+!  parrinelloraman_m.F90
 !
 !  This module holds the metric quantities associated with
-!  the Lagrangian formulation of Parinello and Rahman
+!  the Lagrangian formulation of Parrinello and Rahman
 !  [notation follows J. Appl. Phys. 52, 7182--7190 (1982)].
 !
 !  Interface
@@ -70,7 +70,7 @@
 !
 !  function pr_get_volume()
 !--------------------------------------------------------------------------
-module parinellorahman_m
+module parrinellorahman_m
 
   !! standard dependencies
   use constants_m
@@ -87,8 +87,8 @@ module parinellorahman_m
 
 !!$  public :: pr_get_h
 
-  public :: init_parinellorahman_m
-  public :: cleanup_parinellorahman_m
+  public :: init_parrinellorahman_m
+  public :: cleanup_parrinellorahman_m
   public :: pr_get_metric_tensor
   public :: get_tgid
   public :: pr_get_tgid
@@ -125,14 +125,14 @@ contains
 
   !-------------------------------------------------------------
   !
-  ! initialisation and cleanup routines for parinellorahman_m
+  ! initialisation and cleanup routines for parrinellorahman_m
   !
   !-------------------------------------------------------------
-  subroutine init_parinellorahman_m
+  subroutine init_parrinellorahman_m
     simparam=get_params()
-  end subroutine init_parinellorahman_m
-  subroutine cleanup_parinellorahman_m
-  end subroutine cleanup_parinellorahman_m
+  end subroutine init_parrinellorahman_m
+  subroutine cleanup_parrinellorahman_m
+  end subroutine cleanup_parrinellorahman_m
 
 
   !-------------------------------------------------------------
@@ -252,4 +252,4 @@ contains
     
   end subroutine pr_get_tgid
     
-end module parinellorahman_m
+end module parrinellorahman_m
