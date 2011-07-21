@@ -50,6 +50,8 @@ module analysis_m
   implicit none
   private
 
+
+
   !! public interface
   public :: update_thermodynamic_sums
   public :: set_thermodynamic_sums
@@ -325,6 +327,8 @@ contains
     write(unit_stdout,9)x0(simparam%pka),y0(1),z0(1),x1(1),y1(1),z1(1)
 9   format('Atom 1 Trace: ',6E17.8)
     endif
+    
+   
 
   end subroutine runavs
   !--------------------------------------------------------------

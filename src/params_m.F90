@@ -95,8 +95,10 @@ module params_m
                              !!  0 => new coordinates
                              !! -1 => old coordinates, new velocities 
                              !!  1 => old coordinates, old velocities
+     logical :: reset = .false. !only has effect when restart is non-zero, resets prevsteps throwing previous data
+     							! but keeping the position/velocity data.   
      real(kind_wp) :: nose=0.0 !< Softness of damping force in the Nose thermostat 
-	 real(kind_wp) :: therm_con=0.0 !< thermal conductivity (in W k-1 m-1 )  used to rescale the nose thermostat
+	 real(kind_wp) :: therm_con=-1.0 !< thermal conductivity (in W k-1 m-1 )  used to rescale the nose thermostat
      logical :: alternate_quench_md=.false. !< Alternate Quench and MD on successive loops
 
      !!SCHEDULED FOR REMOVAL
@@ -123,7 +125,7 @@ module params_m
      !!the course of the simulation.
      !!Note also that these are initialised (currently to zero) to avoid any
      !!arbitrary runtime behaviour if the input isn't read correctly.
-     integer :: prevsteps=0       !< Number of timesteps done already
+    integer :: prevsteps=0       !< Number of timesteps done already
      integer :: currentstep=0     !< Number of the current timestep
      integer :: laststep=0        !< Number of last timestep to be calculated
      integer :: lastprint=0       !< Number of timesteps since last printing of run averages
@@ -137,12 +139,12 @@ module params_m
      real(kind_wp) :: BOXTEM !< Box temperature
      real(kind_wp) :: BDEL2  !< Box related timescale
      real(kind_wp) :: BMASS  !< Box mass
-     integer :: pka = 0 !< number of high KE pka (gg)
-     real :: pkavx=0 
+     integer :: pka = 0 !<particle number of the primary knock on atom (PKA) for radiation damage, 0 is none (gg)
+     real :: pkavx=0 !initial direction of the pka in cartesian
      real :: pkavy=0 
      real :: pkavz=0
 	real :: EPKA =0 ! energy in eV of pka (gg)
-	logical :: adjustTimeStep=.false. !(gg) 
+
 
 
   end type simparameters
@@ -207,7 +209,7 @@ contains
     integer, intent(in) :: iunit            !< unit input file is open on
     integer, intent(out) :: ierror          !< -2=unrecognised,-1=malformed,1=EOF,0=ok
     !!routine parameters (saved)
-    integer, parameter :: numkeys=55 !< increase numkeys when adding keywords
+    integer, parameter :: numkeys=52 !< increase numkeys when adding keywords
     character(len=50), save  :: key(numkeys)!< array of registered keys (hardcoded)
     integer, save :: keylength(numkeys)     !< array of registered key lengths
     logical, save :: initialised=.false.    !< flag to perform one-off initialisation
@@ -237,9 +239,9 @@ contains
        key(8)='rpad'
        key(9)='nbrupdate'
        key(10)='strainloops'
-       key(11)='prevsteps'
-       key(12)='lastprint'
-       key(13)='lastchkpt'
+       key(11)='pkavx' !the velocity to give the pka atom in x,y,z co ords
+       key(12)='pkavy'
+       key(13)='pkavz'
        key(14)='ntc'
        key(15)='nchkpt'
        key(16)='alternate_quench_md'
@@ -274,15 +276,14 @@ contains
        key(45)='zlayer'
        key(46)='write_rdf'
        key(47)='pka' !primary knock on atom if 0 is ignored, else is the value of the atom to give additional velocity to 
-       key(48)='pkavx' !the velocity to give the pka atom in x,y,z co ords
-       key(49)='pkavy'
-       key(50)='pkavz'
+   
        
-		key(51) = 'EPKA'
-		key(52)='adjustTimeStep'
-		key(53)='nose'
-	       key(54)='nposav'	
-      key(55)='pressstep'	
+		key(48) = 'EPKA'
+	 	key(49)='pressstep'	
+		key(50)='nose'
+	    key(51)='nposav'	
+	     key(52)='reset'	
+    
 
        !!adjust, set lowercase, and measure the length of registered keys
 
@@ -394,19 +395,14 @@ contains
     case(10) !'strainloops'
        read(inputstring(eqindex+1:),*) simparam%strainloops
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%strainloops
-
-    case(11) !'prevsteps'
-       read(inputstring(eqindex+1:),*) simparam%prevsteps
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%prevsteps
-
-    case(12) !'lastprint'
-       read(inputstring(eqindex+1:),*) simparam%lastprint
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%lastprint
-
-    case(13) !'lastchkpt'
-       read(inputstring(eqindex+1:),*) simparam%lastchkpt
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%lastchkpt
-
+	case(11) !'pkavx'
+       read(inputstring(eqindex+1:),*) simparam%pkavx
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavx
+   case(12) !'pkavy'
+       read(inputstring(eqindex+1:),*) simparam%pkavy
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavy
+   case(13) !'pkavz'
+  
     case(14) !'ntc'
        read(inputstring(eqindex+1:),*) simparam%ntc
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%ntc
@@ -543,35 +539,30 @@ contains
    case(47) !'pka'
        read(inputstring(eqindex+1:),*) simparam%pka
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pka
-   case(48) !'pkavx'
-       read(inputstring(eqindex+1:),*) simparam%pkavx
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavx
-   case(49) !'pkavy'
-       read(inputstring(eqindex+1:),*) simparam%pkavy
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavy
-   case(50) !'pkavz'
+ 
        read(inputstring(eqindex+1:),*) simparam%pkavz
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavz
-case(51) !'EPKA'
+	case(48) !'EPKA'
        read(inputstring(eqindex+1:),*) simparam%EPKA
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%EPKA
        
-    case(52) !'adjustTimeStep'
-       read(inputstring(eqindex+1:),*) simparam%adjustTimeStep
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%adjustTimeStep
+   case(49) !'pressstep'
+       read(inputstring(eqindex+1:),*) simparam%pressstep
+       write(0,*) "pressstep = ", simparam%pressstep
        
-        case(53) !'nose'
+        case(50) !'nose'
        read(inputstring(eqindex+1:),*) simparam%nose
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nose
 
 
-    case(54) !'nposav'
+    case(51) !'nposav'
        read(inputstring(eqindex+1:),*) simparam%nposav
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nposav
-
-    case(55) !'pressstep'
-       read(inputstring(eqindex+1:),*) simparam%pressstep
-       write(0,*) "pressstep = ", simparam%pressstep
+	
+	 case(52) !'reset'
+       read(inputstring(eqindex+1:),*) simparam%reset
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%reset
+   
 
 
     case default

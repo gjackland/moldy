@@ -76,17 +76,22 @@ module dynamics_m
   public :: predic
   public :: correc
   public :: velocityverlet
+  public :: write_atomic_stress
   
 
   !! public module data
   real(kind_wp), allocatable, public :: fx(:),fy(:),fz(:) !< forces are public
-
+ 
 
   !! private module data
   real(kind_wp), allocatable :: x1_dt2(:), y1_dt2(:), z1_dt2(:) !< verlet half-step
+  real(kind_wp), allocatable :: stressx(:), stressy(:), stressz(:) !< strees diagonal components
+  
   type(simparameters), save :: simparam  !< module local copy of simulation parameters
 !!  to Parinelloraman  real(kind_wp) :: tp(nmat,nmat)   !< module local copy of temporary stress/force
   integer :: istat                  !< allocation status
+  	logical :: stress_calc = .true.
+
 
 !$  !! OpenMP reqd (locks on the link cells)
 !$  integer(kind=omp_lock_kind), allocatable :: lc_lock(:)  !< locks
@@ -110,6 +115,7 @@ contains
 !$  end do
     allocate(fx(simparam%nm),fy(simparam%nm),fz(simparam%nm),stat=istat) 
     allocate(x1_dt2(simparam%nm), y1_dt2(simparam%nm), z1_dt2(simparam%nm),stat=istat)
+    allocate(stressx(simparam%nm), stressy(simparam%nm), stressz(simparam%nm),stat=istat)
     if(istat.ne.0)stop 'ALLOCATION ERROR (init_dynamics_m) - Possibly out of memory.'
   end subroutine init_dynamics_m
   subroutine cleanup_dynamics_m
@@ -121,6 +127,7 @@ contains
 !$  deallocate(lc_lock)
     deallocate(FX,FY,FZ)
     deallocate(x1_dt2,y1_dt2,z1_dt2)
+    deallocate(stressx,stressy,stressz)
   end subroutine cleanup_dynamics_m
 
 
@@ -171,6 +178,10 @@ contains
     tp(:,:)=0.0d0
     tg(:,:)=0.0d0
     
+    stressx(:) = 0.0
+    stressy(:) = 0.0
+    stressz(:) = 0.0
+    
      !! initialise forces
     do i=1,simparam%nm
        fx(i)=0.0!!pr term here
@@ -208,12 +219,14 @@ contains
        end do
     end do
 
-!$OMP PARALLEL PRIVATE(neighlc,i,j,fxi,fyi,fzi,nlist_ji,dx,dy,dz,r,pp,fpp,fcp,fp,rxij,ryij,rzij,ddfx,ddfy,ddfz,r_recip), &
+!$OMP PARALLEL PRIVATE(neighlc, i, j, fxi, fyi, fzi, nlist_ji, dx, dy, dz, r, pp, fpp, fcp, fp,&
+!$OMP rxij, ryij, rzij, ddfx, ddfy, ddfz, r_recip), &
 #if DEBUG_OMP_TIMING
 !$OMP PRIVATE( thread_num, start_time ), &
 #endif
 !$OMP DEFAULT(NONE), &
-!$OMP SHARED( simparam, numn, nlist, x0, y0, z0, atomic_number, atomic_mass , dafrho, b0, ic, lc_lock, fx, fy, fz, tc ), &
+!$OMP SHARED( simparam, numn, nlist, x0, y0, z0, atomic_number, atomic_mass, dafrho, b0, ic, lc_lock,&
+!$OMP fx, fy, fz, tc, stressx, stressy, stressz, stress_calc ), &
 #if DEBUG_OMP_LOCKS
 !$OMP REDUCTION(+:num_locks), &
 #endif
@@ -271,7 +284,12 @@ contains
           ryij=b0(2,1)*dx+b0(2,2)*dy+b0(2,3)*dz
           rzij=b0(3,1)*dx+b0(3,2)*dy+b0(3,3)*dz
 
-          
+          	
+		  if (stress_calc) then	
+		  	stressx(i) = stressx(i) + rxij*fp	
+		  	stressy(i) = stressy(i) + ryij*fp	
+		 	stressz(i) = stressz(i) + rzij*fp	
+		  endif
           !! apply fp componentwise to tp
           !! don't include stress due to forces between fixed atoms
           !! kinetic term doesn't matter because fixed atoms dont contribute
@@ -417,12 +435,24 @@ contains
 !$  integer :: neighlc             !< link cell index of the current neighbour
     !! update module copy of simulation parameters
     simparam=get_params()
-    
-
+   
+!$OMP PARALLEL PRIVATE( i, j, nlist_ji, dx, dy, dz, r, pp,&
+!$OMP rxij, ryij, rzij), &
+#if DEBUG_OMP_TIMING
+!$OMP PRIVATE( thread_num, start_time ), &
+#endif
+!$OMP DEFAULT(NONE), &
+!$OMP SHARED( simparam,x0,y0,z0,atomic_number,afrho,en_atom,numn,nlist )
+ 
+!$OMP DO
    do i=1,simparam%nm
        en_atom(I)=afrho(i) 
     end do
+    !$OMP END DO
+   
     !! calculate energy on particles and their neighbours
+    !$OMP DO
+    
     particleloop: do i=1,simparam%nm
        !! loop through a particle's neighbour list
        neighbourloop: do j=1,numn(i)
@@ -447,11 +477,16 @@ contains
 
 
     end do particleloop
+        
+        !$OMP  END DO
     
+!$OMP END PARALLEL
+
+
 !!$  !! Optional for debug purposes (efs.out)
 !!$  !! Write out energy, forces and stress to file (sanity check)
 !!$  call write_energy_forces_stress()
-    
+ 
     return
   end subroutine energy_calc 
   
@@ -910,7 +945,64 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
 
     return
   end subroutine correc
+  
+  !-------------------------------------------------------------
+  !routine to calculate stress on an atomic scale using eq 6 from Modelling and  Simulation in Mater. Sci. Eng. 1 (1993) 315-333.
+  !is called automatically jusst after force calculation for effiecncy, calling it at other times may result in the force part being 
+  !-------------------------------------------------------------
+  !half a step out from the velocity part.
+  subroutine atomic_stress_calc
+		real(kind_wp) :: atomic_vol,vx,vy,vz
+		integer :: i
+		!subtract kinetic enrgy of each term
+		do i=1,simparam%nm
+		   !need component wise KE
+		    vx=b0(1,1)*x1(i)
+		    vy=b0(2,2)*y1(i)
+            vz=b0(3,3)*z1(i)
+            stressx(i) = stressx(i) - atomic_mass(i)*(vx*vx)/((simparam%deltat**2)*2)
+            stressy(i) = stressy(i) - atomic_mass(i)*(vy*vy)/((simparam%deltat**2)*2)
+            stressz(i) = stressz(i) - atomic_mass(i)*(vz*vz)/((simparam%deltat**2)*2)
+            
+		end do
+		!strictly only true for an entirly filled box with no off diagonal terms.
+		atomic_vol = B0(1,1)*B0(2,2)*B0(3,3)/simparam%nm
+		!normalise by volume and a factor of 2  
+		 stressx(:) = stressx(:)/(2*atomic_vol)
+		 stressy(:) = stressy(:)/(2*atomic_vol)
+		 stressz(:) = stressz(:)/(2*atomic_vol)
+  end subroutine atomic_stress_calc
+  !-------------------------------------------------------------
+  !write atomic stress data 
+  !-------------------------------------------------------------
+  subroutine write_atomic_stress(file_counter)
+  integer :: i
+    integer file_counter
+character(len=34) :: ci
+character(len =3) :: pad
+write(ci,'(i0)') file_counter
 
+!ci = trim(ci)
+!ci = adjustr(ci)
+
+
+if (file_counter<10)then
+ pad = '0'
+else
+pad = ''
+end if
+ci = 'atomicStress'//trim(pad)//trim(ci)//'.out'
+if(file_counter .eq. -1) then
+ci = 'lastAtomicStress.out'
+end if
+  	  open(5473,file=ci,status='unknown')
+
+    !! write energy
+    do i=1,simparam%nm
+    write(5473,*)  stressx(i),stressy(i),stressz(i),x0(i),y0(i),z0(i)
+    end do
+    close(5473)
+  end subroutine write_atomic_stress
 
 
 end module dynamics_m
