@@ -155,7 +155,7 @@ module params_m
   character*72, public :: file_dumpx1                !< data dump file - every iteration
   character*9, parameter  :: file_params="params.in" !< Main input - name hardcoded
   character*72, public :: file_system="system.in"    !< System input file (particles etc - "system.in" is default value)
-  character*72, public :: file_textout="system.out"  !< Default text output file
+  character*72, public :: file_textout="output.txt"  !< Default text output file
 
   !! private module data (where the simulation parameters are actually kept)
   type(simparameters), save :: simparam

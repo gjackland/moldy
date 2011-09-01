@@ -581,7 +581,7 @@ contains
        write(unit_aj,*)"atom ", "       atomic number", " crystal structure",  "coordination"
     do ibin=1,maxbin
        nbins = sum(nbin(ibin,:,:))
-       write(unit_rdf,'(" TOTAL RDF 0 0",F13.7,3I8)') float(ibin)/binsperangstrom,nbins
+       write(unit_rdf,'(" TOTAL RDF 0 0",F13.7,I8,F13.7)') float(ibin)/binsperangstrom,nbins,nbins/(float(ibin)/binsperangstrom)**2
     end do
     
     do isp=1,simparam%nspec
