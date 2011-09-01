@@ -428,7 +428,7 @@ contains
 
     !! open a file to write potential
     ounit=newunit()
-    open(ounit,file="potential.55",status='unknown')
+    open(ounit,file="potential.dat",status='unknown')
 
     !! loop over species pairs (to plot single- and cross-species potentials)
     species1: do i=1,simparam%nspec

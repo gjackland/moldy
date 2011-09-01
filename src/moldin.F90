@@ -439,7 +439,7 @@ program moldyv2
         call force
         
         !! write out to energy_forces_stress file (default test)
-        call write_energy_forces_stress
+        !! call write_energy_forces_stress
         
         !! invert tg
         call matrix_invert(tg,tginv)

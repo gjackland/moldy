@@ -126,7 +126,7 @@ contains
             xH0(r_v_(coeff_index(na1),coeff_index(na2),i)-r)
      end do
     elseif(r.gt.bier_cut1.and.r.lt.bier_cut2)then
-      vee_src = line(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
+      vee_src = expjoin(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
                        bier_cut2,bier_v2(coeff_index(na1),coeff_index(na2)),bier_dv2(coeff_index(na1),coeff_index(na2)),r)
     elseif(r.lt.bier_cut1)then
       vee_src= biersack(r, na1, na2)
@@ -157,7 +157,7 @@ contains
             xH0(r_v_(coeff_index(na1),coeff_index(na2),i)-r)
       end do
     elseif(r.gt.bier_cut1)then
-      dvee_src = dline(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
+      dvee_src = dexpjoin(bier_cut1,bier_v1(coeff_index(na1),coeff_index(na2)),bier_dv1(coeff_index(na1),coeff_index(na2)),  &
                        bier_cut2,bier_v2(coeff_index(na1),coeff_index(na2)),bier_dv2(coeff_index(na1),coeff_index(na2)),r)
     elseif(r.lt.bier_cut1)then
       dvee_src= dvee_biersack(r, na1, na2)
@@ -335,9 +335,9 @@ function spline(a1,x1,v1,a2,x2,v2,r)
         t = (r-a1)/(a2-a1)
 
       spline = (2d0*t*t*t-3d0*t*t+1)*x1         &
-        + (t*t*t-2d0*t*t+t)*v1            &
+        + (t*t*t-2d0*t*t+t)*v1*(a2-a1)            &
         + (-2*t*t*t+3d0*t*t)*x2           &
-        + (t*t*t-t*t)*v2                  
+        + (t*t*t-t*t)*v2*(a2-a1)                  
     return
 end function spline
 
@@ -349,9 +349,9 @@ function dspline(a1,x1,v1,a2,x2,v2,r)
         t = (r-a1)/(a2-a1)
 
       dspline = (6d0*t*t-6d0*t)*x1         &
-        + (3.d0*t*t-4d0*t+1)*v1            &
+        + (3.d0*t*t-4d0*t+1)*v1 *(a2-a1)           &
         + (-6.d0*t*t+6d0*t)*x2           &
-        + (3.d0*t*t-2.d0*t)*v2                  
+        + (3.d0*t*t-2.d0*t)*v2 *(a2-a1)                 
       dspline = dspline/(a2-a1)
     return
   end function dspline
@@ -374,6 +374,51 @@ function dline(a1,x1,v1,a2,x2,v2,r)
       dline = (x2-x1)/(a2-a1)
     return
   end function dline
+ 
+ function expjoin(a1,x1,v1,a2,x2,v2,r)
+     real (kind_wp) :: expjoin,spline ! result 
+     real (kind_wp) :: a1,x1,v1,a2,x2,v2,r ! inputs
+     real (kind_wp) :: vv1,xx1,vv2,xx2 ! lhs 
+     real (kind_wp) :: t
+      vv1 = v1/x1 
+      xx1 = log(x1) 
+      vv2 = v2/x2 
+      xx2 = log(x2)
+
+        t = (r-a1)/(a2-a1)
+      spline = (2d0*t*t*t-3d0*t*t+1)*xx1         &
+        + (t*t*t-2d0*t*t+t)*vv1*(a2-a1)            &
+        + (-2*t*t*t+3d0*t*t)*xx2           &
+        + (t*t*t-t*t)*vv2*(a2-a1)                  
+     expjoin = exp(spline)
+    return
+end function expjoin
+
+function dexpjoin(a1,x1,v1,a2,x2,v2,r)
+     real (kind_wp) :: dexpjoin,dspline,spline ! result 
+     real (kind_wp) :: a1,x1,v1,a2,x2,v2,r ! inputs
+     real (kind_wp) :: vv1,xx1,vv2,xx2 ! lhs 
+     real (kind_wp) :: t
+      vv1 = v1/x1 
+      xx1 = log(x1) 
+      vv2 = v2/x2 
+      xx2 = log(x2) 
+        t = (r-a1)/(a2-a1)
+      dspline = (6d0*t*t-6d0*t)*xx1         &
+        + (3.d0*t*t-4d0*t+1)*vv1 *(a2-a1)           &
+        + (-6.d0*t*t+6d0*t)*xx2           &
+        + (3.d0*t*t-2.d0*t)*vv2 *(a2-a1)                 
+      dspline = dspline/(a2-a1)
+      spline = (2d0*t*t*t-3d0*t*t+1)*xx1         &
+        + (t*t*t-2d0*t*t+t)*vv1*(a2-a1)            &
+        + (-2*t*t*t+3d0*t*t)*xx2           &
+        + (t*t*t-t*t)*vv2*(a2-a1)                  
+      dexpjoin = dspline * exp(spline)
+    return
+  end function dexpjoin
+
+
+
 
   function dvee_biersack(r, na1, na2)
     use constants_m
@@ -490,8 +535,7 @@ function dline(a1,x1,v1,a2,x2,v2,r)
           if(input_na.ne.spna(j))ierror=2
           read(iunit,*,err=102,iostat=ierror)ncoeffv(coeff_index(spna(i)),coeff_index(spna(j)))
           read(iunit,*,err=102,iostat=ierror)ncoeffp(coeff_index(spna(i)),coeff_index(spna(j)))
-
-          !!close file
+         !!close file
           close(iunit)
 
           if(ierror.eq.2)then
@@ -511,6 +555,8 @@ function dline(a1,x1,v1,a2,x2,v2,r)
     !! initialise data
     a_v_=0._kind_wp ; r_v_=0._kind_wp
     a_p_=0._kind_wp ; r_p_=0._kind_wp
+          bier_cut1= -1._kind_wp
+          bier_cut2= -1._kind_wp
 
     allocate(bier_v1(species_number,species_number))
     allocate(bier_v2(species_number,species_number))
@@ -554,7 +600,10 @@ function dline(a1,x1,v1,a2,x2,v2,r)
                a_p_(coeff_index(spna(i)),coeff_index(spna(j)),:ncoeffp(coeff_index(spna(i)),coeff_index(spna(j))))
           read(iunit,*,err=102,iostat=ierror) &
                r_p_(coeff_index(spna(i)),coeff_index(spna(j)),:ncoeffp(coeff_index(spna(i)),coeff_index(spna(j))))
-
+          read(iunit,*,err=103)  bier_cut1,  bier_cut2
+          goto 104
+103       write(stderr,*) "No Biersack cutoff, assume default ","pot_"//a3_na1//"_"//a3_na2//".in"
+ 104      continue         
           !! close file
           close(iunit)
       
@@ -562,13 +611,15 @@ function dline(a1,x1,v1,a2,x2,v2,r)
     end do
 
     !! Evaluate Biersack and join function limits between 1 Angstroms and 
-    !! 25% inside near neighbour (i.e. first spline)
+    !! 25% inside near neighbour (i.e. first spline) if not specified
     do i=1,species_number
        do j=1,species_number
      na1 = spna(i)
      na2 = spna(j)
-     bier_cut1 = r_v_(coeff_index(na1),coeff_index(na2),ncoeffv(coeff_index(na1),coeff_index(na2)))*0.5
-     bier_cut2 = r_v_(coeff_index(na1),coeff_index(na2),ncoeffv(coeff_index(na1),coeff_index(na2)))*0.75
+     if(bier_cut1.lt.0.0) then
+      bier_cut1 = r_v_(coeff_index(na1),coeff_index(na2),ncoeffv(coeff_index(na1),coeff_index(na2)))*0.5
+      bier_cut2 = r_v_(coeff_index(na1),coeff_index(na2),ncoeffv(coeff_index(na1),coeff_index(na2)))*0.75
+     endif
       bier_v1(i,j) = biersack( bier_cut1, na1, na2)
       bier_dv1(i,j) = dvee_biersack( bier_cut1, na1, na2)  
        bier_v2(i,j) =0d0
@@ -582,7 +633,8 @@ function dline(a1,x1,v1,a2,x2,v2,r)
             (r_v_(coeff_index(na1),coeff_index(na2),ii)-bier_cut2)**2*     &
             xH0(r_v_(coeff_index(na1),coeff_index(na2),ii)- bier_cut2)
       end do
-      write(*,*)"Biersack core", na1,na2, " between ", bier_cut1, bier_cut2
+      write(*,1104)na1,na2, bier_cut1, bier_cut2
+ 1104  format('Biersack core spline ',2I6, ' between '  , 2F10.6)
      end do
     end do
 
@@ -599,7 +651,6 @@ function dline(a1,x1,v1,a2,x2,v2,r)
     return
 102 write(stderr,*) "Error reading file: ","pot_"//a3_na1//"_"//a3_na2//".in"
     return
-
   end subroutine check_supported_atomic_numbers
 
 
