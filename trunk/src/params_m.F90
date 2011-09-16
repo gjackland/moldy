@@ -402,7 +402,8 @@ contains
        read(inputstring(eqindex+1:),*) simparam%pkavy
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavy
    case(13) !'pkavz'
-  
+  	  read(inputstring(eqindex+1:),*) simparam%pkavz
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavz
     case(14) !'ntc'
        read(inputstring(eqindex+1:),*) simparam%ntc
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%ntc
@@ -540,8 +541,7 @@ contains
        read(inputstring(eqindex+1:),*) simparam%pka
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pka
  
-       read(inputstring(eqindex+1:),*) simparam%pkavz
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%pkavz
+     
 	case(48) !'EPKA'
        read(inputstring(eqindex+1:),*) simparam%EPKA
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%EPKA
