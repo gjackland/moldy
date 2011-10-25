@@ -283,12 +283,12 @@ contains
     !! write_stress
     do i=1,3
        do j=1,3
-          sigma(i,j)=-1.d0*sum((/(b0(j,k)*tp(i,k),k=1,3)/))/vol
+          sigma(i,j)=-1.d0*sum((/(b0(j,k)*(tp(i,k)+tk(i,k)),k=1,3)/))/vol
        end do
     end do
     do i=1,3
         write(unit_stdout,99) i,(sigma(i,j)*160.2176487,j=1,3)
- 99    format("STRESS I=",I2, 3e14.6," GPa")       
+ 99    format("TP+TK STRESS I=",I2, 3e14.6," GPa")       
     end do
 
          
@@ -497,7 +497,7 @@ contains
          integer, dimension(8)   :: ifcc = (/6,0,0,24,12,0,24,0  /)
          integer, dimension(8)   :: ihcp = (/3,0,6,21,12,0,24,0  /)
     
-    integer :: unit_rdf, unit_aj      !< io unit number for RDF and AJ
+    integer :: unit_rdf,unit_prdf, unit_aj      !< io unit number for RDF and AJ
     type(simparameters) :: simparam   !< local copy of simulation parameters
     simparam=get_params()
 
@@ -576,12 +576,14 @@ contains
     !! write out rdf
     unit_rdf=newunit()
     open (unit=unit_rdf,file='rdf.dat',status='unknown',position='rewind')
+    unit_prdf=newunit()
+    open (unit=unit_prdf,file='prdf.dat',status='unknown',position='rewind')
     unit_aj=newunit()
     open (unit=unit_aj,file='aj_atom.dat',status='unknown',position='rewind')
        write(unit_aj,*)"atom ", "       atomic number", " crystal structure",  "coordination"
     do ibin=1,maxbin
        nbins = sum(nbin(ibin,:,:))
-       write(unit_rdf,'(" TOTAL RDF 0 0",F13.7,I8,F13.7)') float(ibin)/binsperangstrom,nbins,nbins/(float(ibin)/binsperangstrom)**2
+       write(unit_rdf,'(F13.7,F13.7)') float(ibin)/binsperangstrom,nbins/(float(ibin)/binsperangstrom)**2
     end do
     
     do isp=1,simparam%nspec
@@ -594,7 +596,8 @@ contains
       irdf =  nbin(ibin,isp,jsp)
      endif
 !   Partial rdfs
-     write(unit_rdf,'(" PART PDF ",2I4,F13.7,I8)') atomic_index(isp),atomic_index(jsp), float(ibin)/binsperangstrom,irdf
+     write(unit_prdf,'(2F13.7,2I4)')float(ibin)/binsperangstrom, &
+     & float(irdf)/(float(ibin)/binsperangstrom)**2, atomic_index(isp),atomic_index(jsp)
 
 
 !! Evaluate local crystal structure G. J. Ackland and A. P. Jones PRB 73, 054104 2006
