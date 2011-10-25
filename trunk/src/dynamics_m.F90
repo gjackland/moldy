@@ -642,7 +642,7 @@ contains
     !! write stress
     do i=1,3
        do j=1,3
-          sigma(i,j)=-1.d0*sum((/(b0(j,k)*tp(i,k),k=1,3)/))/vol
+          sigma(i,j)=-1.d0*sum((/(b0(j,k)*(tp(i,k)+tk(i,k)),k=1,3)/))/vol
        end do
     end do
     do i=1,3

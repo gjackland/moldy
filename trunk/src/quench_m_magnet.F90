@@ -413,7 +413,7 @@ contains
 !!    write(*,*)ws(1),wd(1),sumj(1)/2,dNo2*sump(1)/4, "WS, WD, Sj, Sp "
     !! write stress
     do i=1,3
-        write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*tp(i,k),k=1,3)/))/vol*press_to_gpa,j=1,3)
+        write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*(tk(i,k)+tp(i,k),k=1,3)/))/vol*press_to_gpa,j=1,3)
  99    format("STRESS I=",I2, 3e14.6," GPa")       
     end do
     f = pe + simparam%press*vol

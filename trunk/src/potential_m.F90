@@ -411,7 +411,7 @@ contains
     real(kind_wp) :: vcc, vp1, vp2, vp3, vp4, vp5, vp6
     real(kind_wp) :: ECFCCB
     !! some plotting parameters
-    integer, parameter :: npoints=500                  !< number of points to plot
+    integer, parameter :: npoints=1000                  !< number of points to plot
     real(kind_wp), parameter :: rminplot=0.5_kind_wp   !< minimum plotting radius (overrides rmin)
     integer :: ounit
 
@@ -490,7 +490,7 @@ contains
              write(ounit,55) x2b,&
        vee(x2b,ni,nj),dvee(x2b,ni,nj),phi(x2b,ni,nj),dphi(x2b,ni,nj)
           !!, ecbccb,presbr,presbc,dembo
-55           format(9e12.4)
+55           format(9e15.7)
           enddo
           
 !!$          !<  Evaluate perfect b.c.c. energy for Zr
