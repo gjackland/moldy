@@ -2,6 +2,7 @@
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
+!! Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604 
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -28,7 +29,6 @@ module params_m
 
   use constants_m
   use utilityfns_m
-
   implicit none
 
   private
@@ -76,7 +76,7 @@ module params_m
      real(kind_wp) :: rcut   !< Cutoff radius for potential
      real(kind_wp) :: rnear  !< Cutoff radius for calculation of neighbours
                              !! (derived from potential rcut + rpad)
-
+     logical :: lsomer=.false.  !! Logical switch for T-dependent potential   
      real(kind_wp) :: deltat !< Simulation timestep
      real(kind_wp) :: temprq !< Required temperature (read in at runtime)
      real(kind_wp) :: tempsp=0._kind_wp !< Difference in Temperatures for Thermal gradient

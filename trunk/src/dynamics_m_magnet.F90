@@ -2,6 +2,7 @@
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
+!! Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604 
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -72,17 +73,20 @@ module dynamics_m
   public :: write_energy_forces_stress
   public :: write_stress
   public :: update_therm_avs
+  public :: write_atomic_stress
   public :: fcut,xcorr,dxcorr,pauli,dpauli,dphisl,slater  
 
   !! public module data
   real(kind_wp), allocatable, public :: fx(:),fy(:),fz(:) !< forces are public
-  real(kind_wp), allocatable, public :: amu(:)  !<  Moments are public too.
-
+  real(kind_wp), allocatable, public :: amu(:),wd(:),ws(:)  !<  Moments are public too.
   !! private module data
 real(kind_wp), allocatable :: x1_dt2(:), y1_dt2(:), z1_dt2(:) !< verlet half-step
+  real(kind_wp), allocatable :: stressx(:), stressy(:), stressz(:) !< stress diagonal components
 type(simparameters), save :: simparam  !< module local copy of simulation parameters
 !!  to Parinelloraman  real(kind_wp) :: tp(nmat,nmat)   !< module local copy of temporary stress/force
   integer :: istat                  !< allocation status
+ 	logical :: stress_calc = .false.
+
 !! Potential parameters
   real(kind_wp) :: Etrans,zeffs,zeffd,adcoh,ascoh,adrep,asrep,ac,bc,afd,r1,r2,w,Efree,apk,bpk,ap,RHigh,Dcut,snumber 
 
@@ -109,7 +113,7 @@ contains
 !$    call omp_init_lock(lc_lock(i))
 !$  end do
     allocate(fx(simparam%nm),fy(simparam%nm),fz(simparam%nm),stat=istat)
-    allocate(amu(simparam%nm),stat=istat) 
+    allocate(amu(simparam%nm),wd(simparam%nm),ws(simparam%nm),stat=istat) 
     allocate(x1_dt2(simparam%nm), y1_dt2(simparam%nm), z1_dt2(simparam%nm),stat=istat)
     if(istat.ne.0)stop 'ALLOCATION ERROR (init_dynamics_m) - Possibly out of memory.'
 
@@ -227,7 +231,7 @@ contains
 
     IF (simparam%ntc.eq.simparam%ntcm) then
        simparam%ntc = 0
-       call set_params(simparam)
+    call set_params(simparam)
     end if
     
 
@@ -266,8 +270,6 @@ contains
 
     particleloop: do iatom=1,simparam%nm
        
-       !!temporary force accumulator for particle i
-       !! not used fxi=0.d0 ; fyi=0.d0 ; fzi=0.d0
 
        !! loop through a particle's neighbour list
        neighbourloop: do jatom=1,numn(iatom)
@@ -290,8 +292,6 @@ contains
 
       !! evaluate (-1/r)*(derivative of  potential),
          fp=-fp*r_recip
-
-
 
           !! calculate spatial separation components from dx
           rxij=b0(1,1)*dx+b0(1,2)*dy+b0(1,3)*dz
@@ -368,8 +368,8 @@ contains
 #endif
       PE = 0.0d0
       do iatom=1,simparam%nm
-       PE = PE + en_atom(IATOM)
        AMU(IATOM)=GETAMU(IATOM) 
+       PE = PE + en_atom(IATOM)
       enddo
  
     !! calculate tc
@@ -408,14 +408,22 @@ contains
 !!$  call write_energy_forces_stress()
 
     return
-
-
-    CONTAINS
-
+   CONTAINS
 include 'magen.inc'
+  end subroutine force 
+ 
 
-  end subroutine force
-
+  !---------------------------------------------------------------------
+  !
+  ! subroutine energy_calc
+  !
+  ! computes energy of the particles
+  !
+  !---------------------------------------------------------------------
+  subroutine energy_calc
+  integer i
+       return
+  end subroutine energy_calc 
 
 
  
@@ -438,15 +446,20 @@ include 'magen.inc'
 !  Normalised quantity is slater(r,4,Zeff)**2*r*r
       integer :: n
       real(kind_wp) :: zeff,r,sl
-      real(kind_wp) :: zeta, DSL
-      sl =  SLATER(R,N,Zeff)
-      zeta = ZEff/N
-      DSL =  (N-1)/r -zeta
-      DSL = FCUT(R)  * DSL * SL
-      DPHISL =  2d0*DSL*SL
-      IF(R.LT.RHIGH.AND.R.GT.( Rhigh - Dcut))THEN
-        DPHISL= DPHISL+DFCUT(R)*2.0*(SL*SL/FCUT(R))
-      ENDIF
+      real(kind_wp) :: zeta, DSL, fcutr
+      fcutr=fcut(r)
+      If(Fcutr.le.0.0d0) then
+        DPHISL=0.0
+      Else 
+       sl =  SLATER(R,N,Zeff)
+       zeta = ZEff/N
+       DSL =  (N-1)/r -zeta
+       DSL = FCUTR  * DSL * SL
+       DPHISL =  2d0*DSL*SL
+       IF(R.LT.RHIGH.AND.R.GT.( Rhigh - Dcut))THEN
+         DPHISL= DPHISL+DFCUT(R)*2.0*(SL*SL/FCUTR)
+       ENDIF
+      Endif
       RETURN
       END    FUNCTION DPHISL
 
@@ -458,11 +471,18 @@ include 'magen.inc'
       END FUNCTION PAULI 
 
       real FUNCTION DPAULI (R)
-      real(kind_wp) :: r
-      dpauli =  ap*(-2*apk*apk/r**3-2*r/bpk/bpk)*exp(apk*apk/r/r-r*r/bpk/bpk)* FCUT(R)
-      IF(R.LT.RHIGH.AND.R.GT.( Rhigh - Dcut))THEN
+      real(kind_wp) :: r,fcutr
+
+      fcutr=fcut(r)
+      If(Fcutr.le.0.0d0) then
+        DPAULI=0.0
+      Else 
+       
+       dpauli =  ap*(-2*apk*apk/r**3-2*r/bpk/bpk)*exp(apk*apk/r/r-r*r/bpk/bpk)* FCUT(R)
+       IF(R.LT.RHIGH.AND.R.GT.( Rhigh - Dcut))THEN
         DPauli = DPauli+dfcut(R)*pauli(r)/fcut(R)
-      ENDIF
+       ENDIF
+      Endif
       RETURN 
       END   FUNCTION DPAULI
 
@@ -478,15 +498,20 @@ include 'magen.inc'
       END  FUNCTION XCORR
 
       real FUNCTION DXCORR(R)
-      real(kind_wp) :: r
-      DXCORR = -4*ac*r*R*R*exp(-BC*r)  +  ac*r*R*R*R*BC*exp(-BC*r)
-      DXCORR = DXCORR*FCUT(R)
+      real(kind_wp) :: r,fcutr
+      fcutr=FCUT(R)
+      if(FCUT(R).LE.0.0) then
+        dxcorr=0.0
+      else
+            DXCORR = -4*ac*r*R*R*exp(-BC*r)  +  ac*r*R*R*R*BC*exp(-BC*r)
+      DXCORR = DXCORR*FCUTR
 !!     & + 0.125* AFD*(-8*exp((r-r1)/w)/((1.0+exp((r-r1)/w))**2*w) &
 !!     & +6.928203228*exp((1.154700538*(r-r2))/w)/ &
 !!     & ((1.0+exp((1.154700538*(r-r2))/w))**2*w))
       IF(R.LT.RHIGH.AND.R.GT.( Rhigh - Dcut))THEN
-        DXCorr = DXCorr+dfcut(R)*XCorr(r)/fcut(r)
+        DXCorr = DXCorr+dfcut(R)*XCorr(r)/fcutr
       ENDIF
+      endif
       RETURN
       END  FUNCTION DXCORR
 
@@ -522,18 +547,6 @@ include 'magen.inc'
       RETURN
       END  FUNCTION DFCUT
   
-  !---------------------------------------------------------------------
-  !
-  ! subroutine energy_calc
-  !
-  ! computes energy of the particles
-  !
-  !---------------------------------------------------------------------
-  subroutine energy_calc
-    
-    return
-  end subroutine energy_calc 
-
 
   !---------------------------------------------------------------------
   !
@@ -744,8 +757,6 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
   end subroutine correc
 
 
-
-
   !-------------------------------------------------------------
   !
   ! subroutine write_energy_forces_stress
@@ -901,5 +912,41 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
     end do
 
   end subroutine update_therm_avs
+
+  !-------------------------------------------------------------
+  !routine to calculate stress on an atomic scale using eq 6 from Modelling and  Simulation in Mater. Sci. Eng. 1 (1993) 315-333.
+  !is called automatically just after force calculation for efficiency, calling it at other times may result in the force part being 
+  !-------------------------------------------------------------
+  !half a step out from the velocity part.
+  subroutine atomic_stress_calc
+		real(kind_wp) :: atomic_vol,vx,vy,vz
+		integer :: i
+		!subtract kinetic enrgy of each term
+		do i=1,simparam%nm
+		   !need component wise KE
+		    vx=b0(1,1)*x1(i)
+		    vy=b0(2,2)*y1(i)
+            vz=b0(3,3)*z1(i)
+            stressx(i) = stressx(i) - atomic_mass(i)*(vx*vx)/((simparam%deltat**2)*2)
+            stressy(i) = stressy(i) - atomic_mass(i)*(vy*vy)/((simparam%deltat**2)*2)
+            stressz(i) = stressz(i) - atomic_mass(i)*(vz*vz)/((simparam%deltat**2)*2)
+            
+		end do
+		!strictly only true for an entirly filled box with no off diagonal terms.
+		atomic_vol = B0(1,1)*B0(2,2)*B0(3,3)/simparam%nm
+		!normalise by volume and a factor of 2  
+		 stressx(:) = stressx(:)/(2*atomic_vol)
+		 stressy(:) = stressy(:)/(2*atomic_vol)
+		 stressz(:) = stressz(:)/(2*atomic_vol)
+  end subroutine atomic_stress_calc
+  !-------------------------------------------------------------
+  !write atomic stress data 
+  !-------------------------------------------------------------
+  subroutine write_atomic_stress(file_counter)
+	integer file_counter
+       write(*,*) " write_atomic_stress not implemented for magnetic pot"
+  end subroutine write_atomic_stress
+
+
 
 end module dynamics_m

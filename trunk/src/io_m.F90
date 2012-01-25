@@ -2,6 +2,7 @@
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
+!! Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604 
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -238,6 +239,7 @@ contains
     write(unit_stdout,*)"of Edinburgh. MOLDY comes with ABSOLUTELY NO WARRANTY; for details"
     write(unit_stdout,*)"see the LICENSE. This is free software, and you are welcome to"
     write(unit_stdout,*)"redistribute it under certain conditions; see the LICENCE for details."
+   write(unit_stdout,*) "Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604" 
 
     !! write output
     WRITE(unit_stdout,21)simparam%TITLE1,simparam%TITLE2,simparam%NM
@@ -271,8 +273,8 @@ contains
         & ' ',20X,'NTAPE',T50,I6///)
  
 !
-  WRITE(unit_stdout,26)(/(atomic_mass_reference(atomic_number(ispec(i))),i=1,simparam%nspec)/),simparam%bmass
-26 FORMAT(' ',20X,'MASSES',T38,2F10.2,' A.U.'/' ',20X,'BMASS',T50,F10.2,' A.U.'///)
+  WRITE(unit_stdout,26)simparam%bmass
+26 FORMAT(20X,'BOXMASS',T50,F10.2,' A.U. (input boxmass * NM)')
 
   WRITE(unit_stdout,27)simparam%TJOB,simparam%Tfinalise
 27 FORMAT(' ',20X,'JOB TIME',T50,F10.2,' SECONDS'/' ',20X, &

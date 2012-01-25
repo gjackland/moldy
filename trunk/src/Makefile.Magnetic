@@ -71,7 +71,7 @@ MATERIAL= -DGENERIC_ATVF
 #FC=     ifort -O2
 #FC=     f95 -O2
 #FC=     gfortran -fbounds-check
-FC=     gfortran -O4
+FC=     gfortran -O4 #-g -ffpe-trap=invalid,zero,overflow
 
 # C Preprocessing Directives 
 CPPFLAGS= $(MATERIAL) $(DEBUG)

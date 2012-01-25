@@ -2,6 +2,7 @@
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
+!! Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604 
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -401,7 +402,7 @@ contains
 1359 format(' COHESIVE ENERGY ',d16.8, 'VOLUME',d16.8 )
     !! write stress
     do i=1,3
-        write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*tp(i,k),k=1,3)/))/vol*press_to_gpa,j=1,3)
+        write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*(tk(i,k)+tp(i,k)),k=1,3)/))/vol*press_to_gpa,j=1,3)
  99    format("STRESS I=",I2, 3e14.6," GPa")       
     end do
 

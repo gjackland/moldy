@@ -2,6 +2,7 @@
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
+!! Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604 
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -63,9 +64,11 @@
 !============================================================================
 module generic_atvf
 
-
+  use params_m
   use constants_m
   use utilityfns_m
+  use thermostat_m
+
 
   implicit none
   private
@@ -80,7 +83,10 @@ module generic_atvf
   public :: demb_src !< derivative of Fe-C embedding function
   public :: get_supported_potential_range  !< returns the valid separation range
   public :: check_supported_atomic_numbers !< checks a given range of atomic numbers (and loads them (generics))
-
+  
+ !! Sommerfeld temperature dependent term
+  real(kind_wp)::ATT=-0.0,som_rcut,som_width
+  real(kind_wp)::ATTEMP=0.0
 
   !! User Attention: Specify the default number of points to use in lookup tables
   integer, parameter, public :: nlookup_default=5000
@@ -111,11 +117,16 @@ contains
   !
   !----------------------------------------------------------------------------
   function vee_src(r, na1, na2)
-    real (kind_wp) :: vee_src       !< result (eV)
+    real (kind_wp) :: vee_src,x       !< result (eV)
     real (kind_wp), intent(in) :: r !< separation (angstrom)
     integer, intent(in) :: na1      !< atomic number atom 1
     integer, intent(in) :: na2      !< atomic number atom 2
     integer :: i                    !< loop variable
+
+!!  Data for Sommerfeld correction
+   type(simparameters) :: simparam  !< simulation parameters
+   simparam=get_params()
+    ATTEMP = simparam%temprq !get_temp()   !
 
     !! compute the pairwise potential  
     vee_src=0.d0
@@ -131,7 +142,13 @@ contains
     elseif(r.lt.bier_cut1)then
       vee_src= biersack(r, na1, na2)
     endif
-    return
+
+      if(som_width.gt.0.0d0) X=(r-som_rcut)/som_width
+      IF(X.gt.0.0.and.x.lt.1.0) THEN
+       VEE_SRC=ATT*ATTEMP*ATTEMP*(X*(1d0-X))**2+VEE_SRC 
+      ENDIF
+
+   return
 
   end function vee_src
   
@@ -142,11 +159,15 @@ contains
   !
   !----------------------------------------------------------------------------
   function dvee_src(r, na1, na2)
-    real (kind_wp) :: dvee_src      !< result (eV)
+    real (kind_wp) :: dvee_src,x      !< result (eV)
     real (kind_wp), intent(in) :: r !< separation (angstrom)
     integer, intent(in) :: na1      !< atomic number atom 1
     integer, intent(in) :: na2      !< atomic number atom 2
     integer :: i                    !< loop variable
+!!  Data for Sommerfeld correction
+   type(simparameters) :: simparam  !< simulation parameters
+   simparam=get_params()
+     ATTEMP = simparam%temprq
 
     !! compute the pairwise potential derivative
     dvee_src=0.d0
@@ -162,8 +183,13 @@ contains
     elseif(r.lt.bier_cut1)then
       dvee_src= dvee_biersack(r, na1, na2)
     endif
-
-    
+!  Sommerfeld term
+      if(som_width.gt.0.0d0)then 
+       X=(r-som_rcut)/som_width
+      IF(X.gt.0.0.and.x.lt.1.0) THEN
+       DVEE_SRC=ATT*ATTEMP*ATTEMP*X*(2d0-6d0*x+4d0*x*x)/som_width+DVEE_SRC 
+      ENDIF
+     endif
     return
 
 
@@ -276,7 +302,7 @@ contains
     integer, intent(in) :: na1 ! atomic number atom 1
 
     !! compute the embedding function
-    emb_src=-1.d0*sqrt(rhoz)
+    emb_src=-1.d0*sqrt(max(rhoz,0.0d0))
     
     return
 
@@ -295,9 +321,9 @@ contains
     integer, intent(in) :: na1 ! atomic number atom 1
 
     !! compute the embedding function derivative
-    demb_src=-0.5d0/sqrt(rhoz)
-    
-    return
+    demb_src=0.0
+    if(rhoz.gt.0.0d0) demb_src=-0.5d0/sqrt(rhoz)
+        return
     
   end function demb_src
 
@@ -501,6 +527,9 @@ function dexpjoin(a1,x1,v1,a2,x2,v2,r)
     !!input parameters (consistency checking and allocation)
     integer :: input_na                         !< atomic number read from file (consistency)
     character(len=100) :: potentialtitle        !< title found at the top of all pot_XXX_YYY.in files
+    type(simparameters) :: simparam  !< simulation parameters
+    simparam=get_params()
+
     !! set default return value to success, find a spare io unit
     ierror=0    
     iunit=newunit()
@@ -606,7 +635,6 @@ function dexpjoin(a1,x1,v1,a2,x2,v2,r)
  104      continue         
           !! close file
           close(iunit)
-      
        end do
     end do
 
@@ -641,16 +669,25 @@ function dexpjoin(a1,x1,v1,a2,x2,v2,r)
 !!      write(*,*)"Ncoeff ", ncoeffv, ncoeffp
 !!      write(*,*)"Bier", bier_v1,bier_dv1, bier_v2,bier_dv2
 !!      write(*,*)"rmax/rmin", rmax,rmin
-
-
-    !! successful return point
+         iunit=newunit()
+          open(unit=iunit,file="sommerfeld.in",status='old',action='read',err=105)
+          read(iunit,*,err=105)som_rcut,som_width,ATT
+          simparam%lsomer = .true.
+          write(*,987)"Using Sommerfeld correction" ,som_rcut,som_width,ATT,simparam%temprq, simparam%lsomer 
+ 987    format(A30,2f8.4,e14.6,f14.2,l2)
+          close(iunit)
+    !! successful return points
     return
-
+105  write(stderr,*) "No Sommerfeld Correction: GJA 2011"
+    return 
     !! i/o error conditions
 101 write(stderr,*) "File not found: ","pot_"//a3_na1//"_"//a3_na2//".in"
+    stop
     return
 102 write(stderr,*) "Error reading file: ","pot_"//a3_na1//"_"//a3_na2//".in"
+    stop
     return
+
   end subroutine check_supported_atomic_numbers
 
 
