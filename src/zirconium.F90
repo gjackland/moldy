@@ -1,8 +1,8 @@
-!!========================================================================
+!========================================================================
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.j.Ackland, K.D'Mellow, University of Edinburgh.
-!!
+!! Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604 
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
 !! the Free Software Foundation; either version 2 of the License, or
@@ -33,19 +33,19 @@
 !
 !============================================================================
 module zirconium
-
+  use params_m
   use constants_m
+  use utilityfns_m
   implicit none
-  private
 
 
   !! Public interface to material module routines
-  public :: vee_src  !< Fe-C pair potenial
-  public :: dvee_src !< derivative of Fe-C pair potenial
-  public :: phi_src  !< Fe-C cohesive function
-  public :: dphi_src !< derivative of Fe-C cohesive function
-  public :: emb_src  !< Fe-C embedding function
-  public :: demb_src !< derivative of Fe-C embedding function
+  public :: vee_src  !<  pair potenial
+  public :: dvee_src !< derivative of  pair potenial
+  public :: phi_src  !<  cohesive function
+  public :: dphi_src !< derivative of  cohesive function
+  public :: emb_src  !<  embedding function
+  public :: demb_src !< derivative of  embedding function
   public :: get_supported_potential_range !< returns the valid separation range
   public :: check_supported_atomic_numbers !< checks a given range of atomic numbers
 
@@ -61,68 +61,78 @@ module zirconium
 
   !! User Attention: Specify the default number of points to use in lookup tables
   integer, parameter, public :: nlookup_default=50000
-
-
+ 
   !! User Attention: Specify the atomic numbers supported by this potential
   integer, parameter :: na_zirconium_ = 40
   integer, parameter :: supported_species_number=1
   integer, parameter :: supported_atomic_numbers(supported_species_number)= & 
        (/na_zirconium_/)
-  
+  !! temperature dependent term
+  real(kind_wp)::ATT=0.0,som_rcut=0.0,som_width=1.0
+  real(kind_wp)::ATTEMP=0.0
   real(kind_wp)::vcut1 = 2.3,vcut2 = 3.5,vcut3 = 6.0,vcut4 = 7.6,pcut = 5.6
 
- real(kind_wp)::v14 = -14.261501929757
- real(kind_wp)::v15=+15.850036758176
- real(kind_wp)::v16=-11.325102264291
- real(kind_wp)::v17=-4.0971114831366
- real(kind_wp)::v18=+3.6739378016909
- real(kind_wp)::v24=+1.3066813393823
- real(kind_wp)::v25=-0.60542710718094
- real(kind_wp)::v26=+1.0055527194350
- real(kind_wp)::v27=-0.14918186777562
- real(kind_wp)::v28=+0.032773112059590
- real(kind_wp)::v34=+0.011433120304691
- real(kind_wp)::v35=-0.021982172508973 
- real(kind_wp)::v36=-0.012542439692607 
- real(kind_wp)::v37=+0.025062673874258 
- real(kind_wp)::v38=-0.0075442887837418
- real(kind_wp)::splice1=12.333392307614d0
- real(kind_wp)::splice2=-10.847321969086d0
- real(kind_wp)::splice3=+4.5733524424508d0
- real(kind_wp)::splice4=-0.85266291445935d0
+ !real(kind_wp)::v14 = -14.261501929757
+ !real(kind_wp)::v15=+15.850036758176
+ !real(kind_wp)::v16=-11.325102264291
+ !real(kind_wp)::v17=-4.0971114831366
+ !real(kind_wp)::v18=+3.6739378016909
+ !real(kind_wp)::v24=+1.3066813393823
+ !real(kind_wp)::v25=-0.60542710718094
+ !real(kind_wp)::v26=+1.0055527194350
+! real(kind_wp)::v27=-0.14918186777562
+ !real(kind_wp)::v28=+0.032773112059590
+ !real(kind_wp)::v34=+0.011433120304691
+ !real(kind_wp)::v35=-0.021982172508973 
+ !real(kind_wp)::v36=-0.012542439692607 
+ !real(kind_wp)::v37=+0.025062673874258 
+ !real(kind_wp)::v38=-0.0075442887837418
+! real(kind_wp)::splice1=12.333392307614d0
+! real(kind_wp)::splice2=-10.847321969086d0
+! real(kind_wp)::splice3=+4.5733524424508d0
+! real(kind_wp)::splice4=-0.85266291445935d0
  real(kind_wp)::phicor4 = 0.77718711248373d0
  real(kind_wp)::phicor5 =  -0.48102928454986d0
  real(kind_wp)::phicor6 =  +0.14501312593993d0
  real(kind_wp)::phicor7 =  -0.021292226813959d0
  real(kind_wp)::phicor8 =  +0.0012209217625670d0
- real(kind_wp)::f1=-1.9162462126235d-7
- real(kind_wp)::f2=+4.6418727035037d-7 
- real(kind_wp)::f3=+6.6448294272955d-7 
- real(kind_wp)::f4=-2.0680252960229d-7
- real(kind_wp)::f5=+1.1387131464983d-7
+! real(kind_wp)::f1=-1.9162462126235d-7
+! real(kind_wp)::f2=+4.6418727035037d-7 
+! real(kind_wp)::f3=+6.6448294272955d-7 
+! real(kind_wp)::f4=-2.0680252960229d-7
+! real(kind_wp)::f5=+1.1387131464983d-7
 
 
 !  potential #3 - cutoffs and phicor coefficients are the same
-!v14 = 8.4670497139946,
-!v15 = -46.183472786003,
-!v16 = 79.633499844770,
-!v17=-64.847634731465,
-!v18=19.454623850774,
-!v24= -0.097845860135187, 
-!v25=-0.47537134413743,
-!v26=-0.00096806164225329, 
-!v27=-0.16355187497617,
-!v28=-0.00090914903435333,
-!v34=-0.022038480751134 ,
-!v35=-0.060955465943384,
-!v36=0.11573689045653,
-!v37=-0.062697675088029,
-!v38=0.011273545085049,
-!f1= 3.2283012597866d-7
-!f2= -1.1552813894483d-6
-!f3= +2.3747280268355d-6
-!f4= -2.0379550826523d-6
-!f5= +4.9758343293936d-7
+
+real(kind_wp)::      &
+& v14 = 8.4670497139946,&
+& v15 = -46.183472786003,&
+&v16 = 79.633499844770,&
+&v17=-64.847634731465,&
+&v18=19.454623850774,&
+&v24= -0.097845860135187,& 
+&v25=-0.47537134413743,&
+&v26=-0.00096806164225329,& 
+&v27=-0.16355187497617,&
+&v28=-0.00090914903435333,&
+&v34=-0.022038480751134 ,&
+&v35=-0.060955465943384,&
+&v36=0.11573689045653,&
+&v37=-0.062697675088029,&
+&v38=0.011273545085049,&
+&f1= 3.2283012597866d-7,&
+&f2= -1.1552813894483d-6,&
+&f3= +2.3747280268355d-6,&
+&f4= -2.0379550826523d-6,&
+&f5= +4.9758343293936d-7
+
+
+ real(kind_wp)::splice1=12.882230038192
+ real(kind_wp)::splice2=-12.183850157814
+ real(kind_wp)::splice3=+5.5998956281737
+ real(kind_wp)::splice4=-1.0915156420318
+
 
 contains
 
@@ -132,12 +142,16 @@ contains
   ! vee_src
   !
   !----------------------------------------------------------------------------
-  pure function vee_src(r, na1, na2)
-    real (kind_wp) :: vee_src ! result (eV)
-    real (kind_wp), intent(in) :: r ! separation (angstrom)
+  function vee_src(r, na1, na2)
+
+    real (kind_wp) :: vee_src,x ! result (eV)
+    real (kind_wp), intent(in) :: r  ! separation (angstrom)
     integer, intent(in) :: na1 ! atomic number atom 1
     integer, intent(in) :: na2 ! atomic number atom 2
-
+    type(simparameters) :: simparam  !< simulation parameters
+    simparam=get_params()
+   
+    ATTEMP = simparam%temprq
 
     ! Compute the pairwise potential
     if (na1 == na_zirconium_)then !na2 ignored as is only a single species module
@@ -167,8 +181,14 @@ contains
             &       +v37*(vcut4-r)**7                     &
             &       +v38*(vcut4-r)**8)                   &
             &                  *xH0(r-vcut1)*xH0(vcut4-r) 
-       VEE_SRC = VEE_SRC
     end if
+
+!!    add temperature dependent part
+       X=(r-som_rcut)/som_width
+      IF(X.gt.0.0.and.x.lt.1.0) THEN
+       VEE_SRC=ATT*ATTEMP*ATTEMP*(X*(1d0-X))**2+VEE_SRC 
+      ENDIF
+
     !!End of Zr-Zr
     
     return
@@ -181,12 +201,15 @@ contains
   ! dvee_src
   !
   !----------------------------------------------------------------------------
-  pure function dvee_src(r, na1, na2)
-    real (kind_wp) :: dvee_src ! result (eV)
+    function dvee_src(r, na1, na2)
+    real (kind_wp) :: dvee_src, x ! result (eV)
     real (kind_wp), intent(in) :: r ! separation (angstrom)
     integer, intent(in) :: na1 ! atomic number atom 1
     integer, intent(in) :: na2 ! atomic number atom 2
-
+    type(simparameters) :: simparam  !< simulation parameters
+    simparam=get_params()
+   
+    ATTEMP = simparam%temprq
     ! Compute the pairwise potential derivative
     ! Compute the pairwise potential
     if (na1 == na_zirconium_) then !na2 ignored as is only a single species module
@@ -222,7 +245,12 @@ contains
                &    +v38*(vcut4-r)**7*8)     &
                &               *xH0(vcut4-r)
        ENDIF
-       DVEE_SRC = DVEE_SRC
+
+!!    add temperature dependent part
+       X=(r-som_rcut)/som_width
+      IF(X.gt.0.0.and.x.lt.1.0) THEN
+       DVEE_SRC=ATT*ATTEMP*ATTEMP*X*(2d0-6d0*x+4d0*x*x)/som_width+DVEE_SRC 
+      ENDIF
     end if
     return
 
@@ -388,14 +416,17 @@ contains
   !
   !----------------------------------------------------------------------------
   subroutine check_supported_atomic_numbers(species_number,spna,ierror)
-    !!argument declarations
+    !!argument declarations 
     integer, intent(in) :: species_number       !< number of species (size of spna)
     integer, intent(in) :: spna(species_number) !< atomic numbers
     integer, intent(out) :: ierror              !< return error code
     !!local declarations
+    integer :: iunit                            !< file label
     integer :: i, j                             !< loop variable
     logical :: supported                        !< flag indicating supported status
-
+    character :: titlezr
+    type(simparameters) :: simparam  !< simulation parameters
+    simparam=get_params()
     !!initialisation
     ierror=0    
 
@@ -428,7 +459,33 @@ contains
        end if
 
     end do speciesloop
-    
+!!  Read in file
+         iunit=newunit()
+   open(unit=iunit,file="zirconium.in",status='old',action='read',err=103)
+  read(iunit,*) titlezr
+  read(iunit,*) vcut1,vcut2,vcut3,vcut4
+  read(iunit,*) pcut  
+   read(iunit,*) v14,v15,v16,v17,v18
+   read(iunit,*) v24,v25,v26,v27,v28
+   read(iunit,*) v34,v35,v36,v37,v38
+   read(iunit,*) splice1,splice2,splice3,splice4
+ read(iunit,*) phicor4,  phicor5, phicor6, phicor7, phicor8 
+read(iunit,*) f1,f2,f3,f4,f5
+write(*,*) titlezr
+
+          !! try opening file for SOMERFELD CORRECTION
+          iunit=newunit()
+   open(unit=iunit,file="sommerfeld.in",status='old',action='read',err=105)
+           read(iunit,*,err=105)som_rcut,som_width,ATT
+           simparam%lsomer = .true.
+           write(*,987)"Using Sommerfeld correction" ,som_rcut,som_width,ATT
+   987    format(A30,2f8.4,e14.6,f14.2)
+           close(iunit)
+          return
+  105   write(stderr,*) "No Sommerfeld Correction: GJA 2011"
+          return
+  103    write(stderr,*) "No Input file - using hardcode default #3"
+          return
   end subroutine check_supported_atomic_numbers
   
 end module zirconium

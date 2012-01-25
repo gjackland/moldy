@@ -2,6 +2,7 @@
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.Ackland, K.D'Mellow, University of Edinburgh.
+!! Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604 
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -399,8 +400,6 @@ contains
   !----------------------------------------------------------------------------
   subroutine potin
 
-    !! Note this currently outputs to units 30. Should replace this with something better.
-
     integer :: i, j, ix
     integer :: nbccit
     real(kind_wp) :: x1b, x2b, x3b, x4b, x5b, x6b
@@ -436,8 +435,7 @@ contains
           
           ! Set ni and nj to run through the relevant species each time through these loops
           ni=ispec(i)
-          nj=ispec(j)
-          
+          nj=ispec(j)          
 
           !! don't plot down to zero
           rmin=max(rmin,rminplot)
@@ -572,7 +570,7 @@ contains
   !  check_available_atomic_numbers
   !
   !  checks that the compiled material module can support the species found 
-  !
+  !  and reads in all the potential details
   !----------------------------------------------------------------------------
   subroutine check_available_atomic_numbers(spnum,spna,ierror)
     integer, intent(IN) :: spnum       !< number or entries in spna

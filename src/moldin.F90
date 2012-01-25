@@ -2,6 +2,7 @@
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
+!! Cite as: Computer Physics Communications Volume 182, Issue 12, 2011, Pages 2587-2604 
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -34,8 +35,7 @@
 !!  The program is a greatly modified and extended version of
 !!  code developed by G.J.Ackland and
 !!  M.W.Finnis to incorporate quenching and box-quenching options,
-!!  and optimised for use on a cray. Most recently, the code is currently being
-!!  modernised and refactored by K.J.D'Mellow.
+!!  and optimised for use on a cray. 
 !!
 !!   The original Link-Cell Method, or LCM (see /1/) was designed for
 !!  a large number N of particles, because using LCM the CPU scales as N.
@@ -189,26 +189,22 @@ program moldyv2
   !! Read initial configuration and velocities
   call read_system
 
-  !! Obtain local copy of parameters
+  !! Obtain local copy of parameters.  Set simulation temperature here for 
+  !! Somerfeld potential set up (removed for debug).
   simparam=get_params()
-  !KDM TEMP DEBUGGING
-  !  open(21,file="first.read.txt",status='unknown')
-  !  call write_params(21)
-  !  close(21)
-  
   
   !(gg)convert the nose parameter from a theramal conductivity to a time (assumes diffusion type heat passage).
   !that is that the electronic heat diffusion has a path length less than the system size.
-  !this is probably not ture, but is correct on the macroscopic scale
+  !this is probably correct on the macroscopic scale
   !does not take into account off diagonal box terms
   if (simparam%nose .ne. 0 .and. simparam%therm_con .gt. 0) then
    
-	  simparam%nose=(3.0*simparam%nm*1.38*10**(-23.0))&
-	  &/(2.0* simparam%therm_con*(b0(1,1)*10**(-10.0)+b0(2,2)*10**(-10.0)+b0(3,3)*10**(-10.0)))
+	  simparam%nose=(3.0*simparam%nm*boltzmann)&
+	  &/(2.0* simparam%therm_con*(b0(1,1)*angstrom+b0(2,2)*angstrom+b0(3,3)*angstrom))
 	 
-  	 simparam%nose= simparam%nose / (1.0*10**(-15.0))
+  	 simparam%nose= simparam%nose / 1.0d-15
 	 call set_params(simparam)
-	 write(*,*) "nose after convertion: ",simparam%nose
+	 write(*,*) "nose after conversion: ",simparam%nose
   end if
 
   !! Check the compiled material module can support the atomic numbers found by read_system
@@ -219,7 +215,6 @@ program moldyv2
   
   !store the user time incase it is overwritten by variable timestepping
   equilibrium_dt = simparam%deltat
-
   adjust_time_was_on =.false.
   if (simparam%iverlet .eq. 2) then 
  	 adjust_time_was_on =.true.
@@ -246,7 +241,6 @@ program moldyv2
   if(simparam%nlcx.lt.3) simparam%nlcx=3
   if(simparam%nlcy.lt.3) simparam%nlcy=3
   if(simparam%nlcz.lt.3) simparam%nlcz=3
-  write(0,*) "RNEAR, BOX",simparam%rnear, b0(1,1)/simparam%rnear, b0(2,2)/simparam%rnear, b0(3,3)/simparam%rnear
   write(0,*) "Link cells: ",simparam%nlcx,simparam%nlcy,simparam%nlcz
 
 
@@ -272,7 +266,7 @@ program moldyv2
 
      !! Initialise the potential and its parameters
      call potin
-
+     write(*,*) "got potential"
      
      !! Calculate the simulation volume (from B0)
      call pr_get_metric_tensor
@@ -298,7 +292,7 @@ program moldyv2
 
         if(simparam%iquen.ne.1) call setvel
         if(simparam%iquen.ne.1) call scalev
-          write(unit_stdout,31)ke/(1.5d0*BK*simparam%NM)
+         write(unit_stdout,31)ke/(1.5d0*BK*simparam%NM)
 31      format(' ',15X,'INITIAL TEMPERATURE',T40,F14.8,' K'///)
         
         write(unit_stdout,35)
@@ -322,7 +316,7 @@ program moldyv2
 
         !!write out some header
         write(unit_stdout,32)simparam%title1,simparam%title2
-32      format(' ',20X,'EQUILIBRATION STARTING FROM A PREVIOUS CONFIGURATION' &
+32      format(' ',20X,'STARTING FROM A PREVIOUS CONFIGURATION: NEW VELOCITIES' &
              & //' ',20X,'TITLE OF PREVIOUS RUN'/' ',20X,A72/' ',20X, &
              & A72///)
 
@@ -340,7 +334,6 @@ program moldyv2
         call set_params(simparam)
 
         !!write out some header
-        write(unit_stdout,31)get_temp(),simparam%boxtem
         write(unit_stdout,33) &
              simparam%restart,simparam%title1,simparam%title2
 33      format(10X,'CONTINUE EQUILIBRATION'/' ',10X,'RUN NO.',T50, &
@@ -351,8 +344,6 @@ program moldyv2
         !! read the checkpoint/restart file
         call read_checkpoint_file
         
-      
-
         !!update local copy of parameters
         simparam=get_params()
 
@@ -411,11 +402,12 @@ program moldyv2
 
   !! Loops through iterations of the whole simulation 
   !!  This is now to apply constant strain rate
-  !!  Ot to apply temperature increase
+  !!  Or to apply temperature increase
       strainloops: do iter=1,simparam%strainloops
-      if (simparam%restart .eq. 0) then  !! this statement seems problematic on restart, so i added an if to catch it
-      simparam%laststep =  simparam%currentstep+simparam%NSTEPS
-      end if
+      write(unit_stdout,*)"Strainloop - dT= ",simparam%tempsp," T-dependent Potential ", simparam%temprq
+        if (simparam%restart .eq. 0) then  !! this statement seems problematic on restart, so i added an if to catch it
+         simparam%laststep =  simparam%currentstep+simparam%NSTEPS
+        end if
         !! overwrite thermodynamic sums with zero
         call zero_thermodynamic_sums() !should these be put in if loop for when reset is .false.?
         thmsums=get_thermodynamic_sums()
@@ -423,18 +415,20 @@ program moldyv2
     if(simparam%ivol.ne.0)then
        b2=b0
        call matrix_multiply(3,simparam%strx,b2,b0)
-       write(0,37)"TEMPRQ =",simparam%temprq, "b0*strx:",b0
+       write(unit_stdout,37)"TEMPRQ =",simparam%temprq, "b0*strx:",b0
  37    format( 10x,a10,f10.2, 10x,a10/3d17.8/3d17.8/3d17.8/)
     endif
     !! change target pressure, temperature and target KE
       simparam%press=simparam%press+simparam%pressstep
       simparam%temprq=simparam%temprq+simparam%tempsp
       simparam%RQKE = 1.5d0*bk*simparam%TEMPRQ*(simparam%NM-3)
+!!  Reset T-dependent potential lookup table DOESNT SEEM TO WORK!?!?
+      if(simparam%lsomer.and.simparam%uselookup) then 
+         call potin
+         write(*,*) "reset potential"
+      endif
 
-     !!Complete initialisation of the system prior to MD.
-    !!   if(simparam%restart.eq.1.or.simparam%iquen.eq.1)then
-        !! nothing required here - but can't hurt 
-    !!  else
+
         !! calculate forces
         call force
         
@@ -672,7 +666,6 @@ program moldyv2
            ke=s3/simparam%deltat**2/2.d0
            call set_temp(ke/(1.5d0*BK*simparam%NM))
 
-
            !Box Temp
 
            simparam=get_params()
@@ -702,12 +695,14 @@ program moldyv2
            close(simparam%ntape)
         end if
 
+        if(simparam%nprint.ge.10) then
         if(mod(simparam%lastprint,simparam%nprint/10).eq.0)then
         !! calculate sums of thermodynamic quantities ten times between printouts
               call update_thermodynamic_sums
-           if(simparam%iquen.ne.1.and.mod(simparam%lastprint,simparam%nprint).eq.0) call runavs(istep-simparam%prevsteps)
+          if(simparam%iquen.ne.1.and.mod(simparam%lastprint,simparam%nprint).eq.0) call runavs(istep-simparam%prevsteps)
         endif
-
+        endif
+ 
         !! checkpoint if needed
         if(simparam%nchkpt.gt.0)then
            if(mod(simparam%lastchkpt,simparam%nchkpt).eq.0)then
@@ -753,7 +748,7 @@ program moldyv2
 
  !! position averages over last nposav steps
         ip = simparam%nposav+istep-simparam%laststep
-        if(ip.le.0)cycle mdloop
+        if(ip.le.0.or.simparam%iquen.eq.1)cycle mdloop
 !!  set up average counter
         if(ip.eq.1)then
         if(iter.eq.1)allocate(ax0(simparam%nm),ay0(simparam%nm),az0(simparam%nm))
@@ -776,7 +771,7 @@ program moldyv2
 
 	
        
-     call linkup
+!!     call linkup
 
 
      !! Consider optionally calling RDF repeatedly, every (param)#
@@ -821,22 +816,22 @@ program moldyv2
       call rdf(500,50)
     end if
 
-      write(*,*) "Doing energy calc"
-        
       call energy_calc
     
        !!write last checkpoint file
      if(simparam%nchkpt.gt.0)then
-        call write_checkpoint_file
+         call write_checkpoint_file
+        call write_atomic_stress(-1)
+     write(*,*) "Checkpointing complete"
      end if
     ! call write_out_file(-1)
-     call write_atomic_stress(-1)
+
      
      call write_system_out_file( 'system.out' )
      write(*,*) "Done write to system.out"
      
      IF (simparam%IQUEN.EQ.1)CALL RUNAVS(simparam%nprint)
-     IF (simparam%nposav.NE.0) then 
+     IF (simparam%nposav.NE.0.AND.simparam%IQUEN.NE.1) then 
        unit_posavs=newunit()
        open (unit=unit_posavs, file="sys_avs.out",FORM='FORMATTED')
        WRITE(unit_posavs,*) simparam%NM

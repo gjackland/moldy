@@ -44,7 +44,7 @@ MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
- EXE=    ../build/moldy.atvf
+ EXE=    ../build/moldy.mag
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -71,7 +71,7 @@ MATERIAL= -DGENERIC_ATVF
 #FC=     ifort -O2
 #FC=     f95 -O2
 #FC=     gfortran -fbounds-check
-FC=     gfortran -O4
+FC=     gfortran -O4 #-g -ffpe-trap=invalid,zero,overflow
 
 # C Preprocessing Directives 
 CPPFLAGS= $(MATERIAL) $(DEBUG)
@@ -80,8 +80,8 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
 #OMPFLAGS= -mp
-OMPFLAGS = -fopenmp # For gfortran
-#OMPFLAGS -openmp # For ifort
+#OMPFLAGS = -fopenmp # For gfortran
+#OMPFLAGS -openmp [1]
 
 #Debugging
 #DEBUGGING= -g
@@ -118,14 +118,14 @@ F90SRC= \
 	debug_m.F90 \
 	system_m.F90 \
 	neighbourlist_m.F90 \
-	dynamics_m.F90 \
+	dynamics_m_magnet.F90 \
 	io_m.F90 \
 	linkcell_m.F90 \
 	lookup_m.F90 \
 	matrix_m.F90 \
 	moldin.F90\
 	params_m.F90 \
-	quench_m.F90 \
+	quench_m_magnet.F90 \
 	random_m.F90 \
 	analysis_m.F90 \
 	parrinellorahman_m.F90 \
@@ -147,7 +147,7 @@ F90SRC= \
 #
 #######################################################
 .SUFFIXES:
-.SUFFIXES: .F90 .f .mod .o
+.SUFFIXES: .F90 .f .mod .o 
 
 OBJ=    $(F77SRC:.f=.o) $(F90SRC:.F90=.o)
 SRC=    $(F77SRC) $(F90SRC) $(INC)
@@ -184,9 +184,9 @@ clean:
 #
 ######################################################
 moldin.o: timers_m.o thermostat_m.o random_m.o potential_m.o params_m.o  system_m.o  \
-	 constants_m.o analysis_m.o parrinellorahman_m.o  dynamics_m.o \
+	 constants_m.o analysis_m.o parrinellorahman_m.o  dynamics_m_magnet.o \
 	neighbourlist_m.o  particles_m.o linkcell_m.o \
-	quench_m.o io_m.o
+	quench_m_magnet.o io_m.o
 
 thermostat_m.o: random_m.o potential_m.o params_m.o  system_m.o  constants_m.o \
 	 parrinellorahman_m.o  particles_m.o
@@ -195,14 +195,14 @@ analysis_m.o: thermostat_m.o
 
 random_m.o: debug_m.o particles_m.o
 
-dynamics_m.o: debug_m.o particles_m.o  system_m.o matrix_m.o parrinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
+dynamics_m_magnet.o: debug_m.o particles_m.o  system_m.o matrix_m.o parrinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
 
 io_m.o: params_m.o random_m.o particles_m.o parrinellorahman_m.o utilityfns_m.o analysis_m.o
 
 params_m.o: constants_m.o utilityfns_m.o
 
-quench_m.o: params_m.o  system_m.o  constants_m.o \
-	analysis_m.o parrinellorahman_m.o dynamics_m.o neighbourlist_m.o  \
+quench_m_magnet.o: params_m.o  system_m.o  constants_m.o \
+	analysis_m.o parrinellorahman_m.o dynamics_m_magnet.o neighbourlist_m.o  \
 	linkcell_m.o particles_m.o potential_m.o
 
 neighbourlist_m.o:  linkcell_m.o parrinellorahman_m.o
@@ -215,7 +215,7 @@ lookup_m.o: constants_m.o generic_atvf.o iron_carbon.o zirconium.o
 
 parrinellorahman_m.o analysis_m.o particles_m.o linkcell_m.o: constants_m.o params_m.o
 
-analysis_m.o: parrinellorahman_m.o system_m.o dynamics_m.o
+analysis_m.o: parrinellorahman_m.o system_m.o dynamics_m_magnet.o
 
 parrinellorahman_m.o: matrix_m.o lookup_m.o
 

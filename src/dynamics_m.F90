@@ -2,6 +2,7 @@
 !!
 !! MOLDY - Short Range Molecular Dynamics
 !! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
+!! Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604 
 !!
 !! This program is free software; you can redistribute it and/or modify
 !! it under the terms of the GNU General Public License as published by
@@ -466,8 +467,7 @@ contains
           !! get real spatial separation from fractional components dx/y/z
           call pr_get_realsep_from_dx(r,dx,dy,dz)
 
-          !! pair potential pp  Crashes with lookup table - segmentation fault, no idea why
-
+          !! pair potential pp  
           pp = vee_src(r,atomic_number(i),atomic_number(nlist_ji))
           !! accumulate the potential energy
           en_atom(i)=en_atom(i)+PP/2.d0          
@@ -948,7 +948,7 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
   
   !-------------------------------------------------------------
   !routine to calculate stress on an atomic scale using eq 6 from Modelling and  Simulation in Mater. Sci. Eng. 1 (1993) 315-333.
-  !is called automatically jusst after force calculation for effiecncy, calling it at other times may result in the force part being 
+  !is called automatically just after force calculation for efficiency, calling it at other times may result in the force part being 
   !-------------------------------------------------------------
   !half a step out from the velocity part.
   subroutine atomic_stress_calc
