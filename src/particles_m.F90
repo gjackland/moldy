@@ -61,6 +61,8 @@ module particles_m
   real(kind_wp), allocatable, public :: X3(:),Y3(:),Z3(:) !< Atomic jolt
   real(kind_wp), allocatable, public :: AFRHO(:),DAFRHO(:),RHO(:)
   real(kind_wp), allocatable, public :: EN_ATOM(:)
+  real(kind_wp), allocatable, public :: stressx(:), stressy(:), stressz(:) !< strees diagonal components
+
 
 contains
 
@@ -80,6 +82,7 @@ contains
     allocate(atomic_number(simparam%nm),atomic_mass(simparam%nm),atomic_index(simparam%nm),stat=istat)
     allocate(afrho(simparam%nm),dafrho(simparam%nm),rho(simparam%nm),stat=istat)
     allocate(en_atom(simparam%nm),stat=istat)
+    allocate(stressx(simparam%nm), stressy(simparam%nm), stressz(simparam%nm),stat=istat)
     if(istat.ne.0)stop 'ALLOCATION ERROR (init_particles_m) - Possibly out of memory.'
     !! Initialise the jolt to zero
     x3=0.0d0 ; y3=0.0d0 ; z3=0.0d0

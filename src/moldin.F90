@@ -159,7 +159,7 @@ program moldyv2
   real(kind_wp) :: a1,a2,a3                 !< parrinello-rahman variables
 
   !! Declarations to check the validity of a potential
-  real(kind_wp) :: rmin,rcut                !< min and cutoff radii
+  real(kind_wp) :: rmin,rmax               !< min and cutoff radii
 
 
   real(kind_wp) ::modelruntime =0 ! the time that the code has simulated the system for in simulation units
@@ -208,11 +208,12 @@ program moldyv2
   end if
 
   !! Check the compiled material module can support the atomic numbers found by read_system
-  call check_available_atomic_numbers(simparam%nspec,ispec(1:simparam%nspec),ierror)
+  call get_potential(simparam%nspec,ispec(1:simparam%nspec),rmax,ierror)
   if(ierror.ne.0)then
      write(*,*)ierror, "MOLDIN: Error when checking available atomic numbers."
   end if
-  
+  if(rmax.gt.simparam%rcut) simparam%rcut = rmax
+     write(*,*)  simparam%rcut, rmax, "MOLDIN: cutoff"
   !store the user time incase it is overwritten by variable timestepping
   equilibrium_dt = simparam%deltat
   adjust_time_was_on =.false.
@@ -228,11 +229,12 @@ program moldyv2
   end if
 
 
-  !! Calculate rnear from potential cutoff and pad thickness
-  call get_available_potential_range(rmin,rcut)
-  simparam%rcut=rcut
-  simparam%rnear=rcut+simparam%rpad
+  !! Calculate rnear from potential cutoff in potential and pad thickness
+!!  call get_available_potential_range(rmin,rcut)
+!!    call get_supported_potential_range(rmin,rcut)
 
+!!  simparam%rcut=rcut
+    simparam%rnear=simparam%rcut+simparam%rpad
 
   !! Check for sensible link cell numbers
   simparam%nlcx=int(b0(1,1)/simparam%rnear)

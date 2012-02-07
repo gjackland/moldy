@@ -261,11 +261,12 @@ contains
   !  checks the atomic numbers provided can be supported by this potential
   !
   !----------------------------------------------------------------------------
-  subroutine check_supported_atomic_numbers(species_number,spna,ierror)
+  subroutine check_supported_atomic_numbers(species_number,spna,range,ierror)
 
     !!argument declarations
     integer, intent(in) :: species_number       !< number of species (size of spna)
     integer, intent(in) :: spna(species_number) !< atomic numbers
+    real(kind_wp),  intent(OUT) :: range        !< potential range
     integer, intent(out) :: ierror              !< return error code
     !!local declarations
     integer :: i, j, ni, nj                     !< loop indices
@@ -279,6 +280,7 @@ contains
     !! set default return value to success, find a spare io unit
     ierror=0    
     iunit=newunit()
+    range=0.0
     !! fill coeff_index array
     do i=1,species_number
        coeff_index(spna(i))=i
@@ -323,7 +325,6 @@ contains
     allocate(a_0(species_number,species_number))
     allocate(eps(species_number,species_number))
     allocate(alpha(species_number,species_number))
-!! already done?    allocate(rmax(species_number,species_number))
     allocate(vee_rmax(species_number,species_number))
 
     !! initialise data
@@ -355,13 +356,13 @@ contains
           read(iunit,*,err=102,iostat=ierror)a_0(coeff_index(spna(i)),coeff_index(spna(j)))
           read(iunit,*,err=102,iostat=ierror)alpha(coeff_index(spna(i)),coeff_index(spna(j)))
           read(iunit,*,err=102,iostat=ierror)rmaxtemp
+         range=max(range,rmaxtemp)
         rmax(coeff_index(spna(i)),coeff_index(spna(j)))=rmaxtemp
           !! close file
           close(iunit)
        ni = coeff_index(spna(i))
        nj = coeff_index(spna(j))
        x = exp( alpha(ni,nj) *(a_0(ni,nj)-rmax(ni,nj)))
-
        vee_rmax(ni,nj) =  eps(ni,nj)*x*(2d0-x)
       write(*,*) vee_src( rmax(ni,nj), ni,nj ),x, VEE_RMAX(ni,nj), rmax(ni,nj)
        end do

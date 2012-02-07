@@ -103,7 +103,7 @@ module potential_m
 
   !! Public interface to the potential inquiry routines
   public :: get_available_potential_range !< returns range supported by the materials
-  public :: check_available_atomic_numbers !< checks a given set of atomic numbers
+  public :: get_potential ! formerly check_available_atomic_numberschecks a given set of atomic numbers and reads potentials
 
   !! Private data
   type(simparameters), save :: simparam
@@ -491,7 +491,7 @@ contains
 55           format(9e15.7)
           enddo
           
-!!$          !<  Evaluate perfect b.c.c. energy for Zr
+!!$          !<  Evaluate perfect b.c.c. energy 
 !!$          x1b = sqrt(3.0d0)/2.0
 !!$          nbccit = 0
 !!$          do
@@ -567,17 +567,18 @@ contains
 
   !----------------------------------------------------------------------------
   !
-  !  check_available_atomic_numbers
+  !  get_potential
   !
   !  checks that the compiled material module can support the species found 
   !  and reads in all the potential details
+  !  generic call: keep separation between moldin and the specific read functions 
   !----------------------------------------------------------------------------
-  subroutine check_available_atomic_numbers(spnum,spna,ierror)
+  subroutine get_potential(spnum,spna,range,ierror)
     integer, intent(IN) :: spnum       !< number or entries in spna
-    integer, intent(IN) :: spna(spnum) !< atomic numbers
+    integer, intent(IN) :: spna(spnum) !< cross reference to atomic numbers
     integer, intent(OUT) :: ierror
-    call check_supported_atomic_numbers(spnum,spna,ierror)
-  end subroutine check_available_atomic_numbers
-
-  
+    real(kind_wp),  intent(OUT) :: range  ! potential range
+    call check_supported_atomic_numbers(spnum,spna,range,ierror)
+  end subroutine get_potential
+ 
 end module potential_m

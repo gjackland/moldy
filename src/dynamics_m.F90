@@ -74,32 +74,26 @@ module dynamics_m
   public :: write_energy_forces_stress
   public :: write_stress
   public :: update_therm_avs
-  public :: predic
-  public :: correc
-  public :: velocityverlet
   public :: write_atomic_stress
   
 
   !! public module data
   real(kind_wp), allocatable, public :: fx(:),fy(:),fz(:) !< forces are public
+  real(kind_wp), allocatable, public :: x1_dt2(:), y1_dt2(:), z1_dt2(:) !< verlet half-step
  
-
   !! private module data
-  real(kind_wp), allocatable :: x1_dt2(:), y1_dt2(:), z1_dt2(:) !< verlet half-step
-  real(kind_wp), allocatable :: stressx(:), stressy(:), stressz(:) !< strees diagonal components
   
   type(simparameters), save :: simparam  !< module local copy of simulation parameters
 !!  to Parinelloraman  real(kind_wp) :: tp(nmat,nmat)   !< module local copy of temporary stress/force
   integer :: istat                  !< allocation status
   	logical :: stress_calc = .true.
 
-
 !$  !! OpenMP reqd (locks on the link cells)
 !$  integer(kind=omp_lock_kind), allocatable :: lc_lock(:)  !< locks
 !$  integer :: nlocks                     !< number of locks
 
-contains
 
+contains
   !---------------------------------------------------------------------
   !
   ! module initialisation and cleanup
@@ -116,7 +110,6 @@ contains
 !$  end do
     allocate(fx(simparam%nm),fy(simparam%nm),fz(simparam%nm),stat=istat) 
     allocate(x1_dt2(simparam%nm), y1_dt2(simparam%nm), z1_dt2(simparam%nm),stat=istat)
-    allocate(stressx(simparam%nm), stressy(simparam%nm), stressz(simparam%nm),stat=istat)
     if(istat.ne.0)stop 'ALLOCATION ERROR (init_dynamics_m) - Possibly out of memory.'
   end subroutine init_dynamics_m
   subroutine cleanup_dynamics_m
@@ -130,7 +123,6 @@ contains
     deallocate(x1_dt2,y1_dt2,z1_dt2)
     deallocate(stressx,stressy,stressz)
   end subroutine cleanup_dynamics_m
-
 
 
   !---------------------------------------------------------------------
@@ -208,7 +200,7 @@ contains
     end if
     
     !! set rho(i) and related quantities required for the finnis-sinclair potential
-    call rhoset
+    call rhoset(phi,rho)
      
     call embed(pe)    
     
@@ -492,36 +484,39 @@ contains
   
 
 
+
   !---------------------------------------------------------------------
   !
   ! rhoset
   !
   ! set the density function f(rho(i)) for the Finnis-Sinclair potential
   ! set the cohesive potential: sum of f(rho(i))
+  ! modified so that the "density function"
   !
   !---------------------------------------------------------------------
-  subroutine rhoset
+  subroutine rhoset(phi_local,rho_local)
 
+    integer :: nm    ! number of atoms in loop
     integer :: i, j                   !< loop variables
     integer ::  nlist_ji              !< scalar neighbour index
     real(kind_wp) :: r                !< real spatial particle separation
     real(kind_wp) :: dx, dy, dz       !< fractional separation components
     real(kind_wp) :: rho_tmp          !< Temporary accumulator for rho
-    
+     real(kind_wp) :: phi_local             ! declare the function to be summed
+     real(kind_wp) :: rho_local(:)     ! the sum of phi
 !$  !!OpenMP reqd (local declarations)
 !$  integer :: neighlc             !< link cell index of the current neighbour
 
     !get params
     simparam=get_params()
-
     !! set rho to zero
-    rho(:)=0.0d0
+    rho_local(:)=0.0d0
 
-    !! calculate rho
+    !! calculate rho_local
     
 !$OMP PARALLEL PRIVATE( neighlc, i, j, nlist_ji, r, dx, dy, dz, rho_tmp ), &
 !$OMP DEFAULT(NONE), &
-!$OMP SHARED(nlist, atomic_number, ic, simparam, numn, x0, y0, z0, lc_lock, rho )
+!$OMP SHARED(nlist, atomic_number, ic, simparam, numn, x0, y0, z0, lc_lock, rho_local )
 
 !$  neighlc = 0
 
@@ -553,10 +548,11 @@ contains
 !$   call omp_set_lock(lc_lock(neighlc))
 !$ end if
           
-          rho(nlist_ji) =  rho(nlist_ji) + phi(r,atomic_number(nlist_ji),atomic_number(i))
+           
+          rho_local(nlist_ji) =  rho_local(nlist_ji) + phi_local(r,atomic_number(nlist_ji),atomic_number(i))
           
           ! Update my own temporary accumulator
-          rho_tmp = rho_tmp + phi(r,atomic_number(i),atomic_number(nlist_ji))
+          rho_tmp = rho_tmp + phi_local(r,atomic_number(i),atomic_number(nlist_ji))
        
        end do
           
@@ -568,7 +564,7 @@ contains
 !$ end if
 
         !! cohesive potential phi at r
-        rho(i) =  rho(i) + rho_tmp
+        rho_local(i) =  rho_local(i) + rho_tmp
 
     end do rhocalc
 !$OMP END DO NOWAIT
@@ -581,8 +577,6 @@ contains
     return
 
   end subroutine rhoset
-
-
 
   !-------------------------------------------------------------
   !
@@ -738,213 +732,6 @@ contains
     end do
 
   end subroutine update_therm_avs
-
-
-  !---------------------------------------------------------------------
-  !
-  ! subroutine velocityverlet
-  !
-  ! update a physical system using the verlet algorithm
-  !
-  !---------------------------------------------------------------------
-  subroutine velocityverlet(dt)
-
-    real(kind_wp) :: dt, sxi,syi,szi
-    integer :: i
-    
-    !! half time step on velocities
-    !! v(t+dt/2) = v(t) + a(t) dt/2
-    simparam=get_params()
- 	sxi = 0d0 
- 	syi = 0d0 
- 	szi = 0d0 
- 
-    x1_dt2=x1+x2
-    y1_dt2=y1+y2
-    z1_dt2=z1+z2
-    !! time step on positions
-    !! x(t+dt) = x(t) + v(t+dt/2) * dt
-    x0=x0+x1_dt2
-    y0=y0+y1_dt2
-    z0=z0+z1_dt2
-    if(simparam%ivol.eq.4) then !! in z only
-      b1(3,3) = b1(3,3) + b2(3,3)
-      b0(3,3)=b0(3,3)+b1(3,3)
-    endif 
-    if(simparam%ivol.lt.1) then 
-      b1 = b1 + b2
-      b0 = b0 + b1
-    endif
-
-    !! second half time step on velocities (with updated forces)
-    !! v(t+dt) = v(t+dt/2) + a(t+dt) dt/2
-      call force
-
-     tgid=get_tgid()
-
-     if(simparam%ivol.lt.1) then 
-      b2=simparam%bdel2*fb
-      b1=b1+b2
-    endif
-    if(simparam%ivol.eq.4) then !! in z only 
-       b2(3,3)=simparam%bdel2*fb(3,3)
-       b1=b1+b2
-    endif
-
-    do i=1,simparam%nm
-if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle      
-     if(simparam%ivol.eq.0) then
-        sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
-        syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
-        szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
-      endif
-      if(simparam%ivol.eq.4) szi=tgid(3,3)*z1(i)
-
-      x2(i)=del2(i)*fx(i)-0.5d0*sxi
-      y2(i)=del2(i)*fy(i)-0.5d0*syi
-      z2(i)=del2(i)*fz(i)-0.5d0*szi
-    enddo
-
-    x1=x1_dt2+x2
-    y1=y1_dt2+y2
-    z1=z1_dt2+z2
-
-  end subroutine velocityverlet
-
-
-
-  !---------------------------------------------------------------------
-  !
-  ! subroutine predic
-  !
-  ! update a physical system using the predictor-corrector algorithm
-  ! (to be used in conjunction with correc)
-  !
-  !---------------------------------------------------------------------
-  subroutine predic
-
-    integer :: i, j         !< loop variables
-
-!    simparam=get_params()
-
-    !!particle position, velocity, acceleration
-    do i=1,simparam%nm
-       x0(i)=x0(i)+x1(i)+x2(i)+x3(i)
-       y0(i)=y0(i)+y1(i)+y2(i)+y3(i)
-       z0(i)=z0(i)+z1(i)+z2(i)+z3(i)
-       x1(i)=x1(i)+2.0d0*x2(i)+3.0d0*x3(i)
-       y1(i)=y1(i)+2.0d0*y2(i)+3.0d0*y3(i)
-       z1(i)=z1(i)+2.0d0*z2(i)+3.0d0*z3(i)
-       x2(i)=x2(i)+3.0d0*x3(i)
-       y2(i)=y2(i)+3.0d0*y3(i)
-       z2(i)=z2(i)+3.0d0*z3(i)
-    end do
-
-    !! also update box if not constant volume
-    if(simparam%ivol.eq.0)then !!all directions
-       do i=1,nmat
-          do j=1,nmat
-             b0(i,j)=b0(i,j)+b1(i,j)+b2(i,j)+b3(i,j)
-             b1(i,j)=b1(i,j)+2.0d0*b2(i,j)+3.0d0*b3(i,j)
-             b2(i,j)=b2(i,j)+3.0d0*b3(i,j)
-          end do
-       end do
-    endif
-    if(simparam%ivol.eq.4)then !!in z only
-       b0(3,3)=b0(3,3)+b1(3,3)+b2(3,3)+b3(3,3)
-       b1(3,3)=b1(3,3)+2.0d0*b2(3,3)+3.0d0*b3(3,3)
-       b2(3,3)=b2(3,3)+3.0d0*b3(3,3)
-    endif
-    return
-  end subroutine predic
-
-
-  !---------------------------------------------------------------------
-  !
-  ! subroutine correc
-  !
-  ! update a physical system using the predictor-corrector algorithm
-  ! (to be used in conjunction with predic)
-  !
-  !---------------------------------------------------------------------
-  subroutine correc
-
-    !! local declarations
-    integer :: i, j, k             !< loop variables
-    real(kind_wp) :: ccx, ccy, ccz !< correction coefficients
-    real(kind_wp) :: sxi, syi, szi !< local variables
-    real(kind_wp), parameter :: ct0=0.166666666666666667
-    real(kind_wp), parameter :: ct1=0.833333333333333333
-    real(kind_wp), parameter :: ct2=1.000000000000000000
-    real(kind_wp), parameter :: ct3=0.333333333333333333
-
-
-
-    simparam=get_params()
-
-    !! determine box changes if not constant volume (ccx used here for the box)
-    if(simparam%ivol.lt.1) then 
-       do i=1,nmat
-          do j=1,nmat
-             ccx=simparam%bdel2*fb(i,j)-b2(i,j)
-             b0(i,j)=b0(i,j)+ct0*ccx
-             b1(i,j)=b1(i,j)+ct1*ccx
-             b2(i,j)=b2(i,j)+ct2*ccx
-             b3(i,j)=b3(i,j)+ct3*ccx
-          end do
-       end do
-    endif
-    if(simparam%ivol.eq.4) then !! in z only 
-       ccx=simparam%bdel2*fb(3,3)-b2(3,3)
-       b0(3,3)=b0(3,3)+ct0*ccx
-       b1(3,3)=b1(3,3)+ct1*ccx
-       b2(3,3)=b2(3,3)+ct2*ccx
-       b3(3,3)=b3(3,3)+ct3*ccx
-    endif
-
-
-    !!get initial tgid before recalculating
-    tgid=get_tgid()
-
-    !! update 
-    do i=1,simparam%nm
-
-       !! cycle if vacancy
-       if ( atomic_number(i).eq.0 ) cycle
-
-       !! extra forces due to movement of the box tgid
-       !! use the initial value of tgid to calculate sxi
-
-       sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
-       syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
-       szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
-
-       !! cc[xyz] correction coefficients to correct [xyz][0123] etc.
-       ccx=del2(i)*fx(i)-0.5d0*sxi-x2(i)
-       ccy=del2(i)*fy(i)-0.5d0*syi-y2(i)
-       ccz=del2(i)*fz(i)-0.5d0*szi-z2(i)
-
-       !! correction applied to particles [xyz][0123]
-       x0(i)=x0(i)+ccx*ct0
-       y0(i)=y0(i)+ccy*ct0
-       z0(i)=z0(i)+ccz*ct0
-       !!
-       x1(i)=x1(i)+ccx*ct1
-       y1(i)=y1(i)+ccy*ct1
-       z1(i)=z1(i)+ccz*ct1
-       !!
-       x2(i)=x2(i)+ccx*ct2
-       y2(i)=y2(i)+ccy*ct2
-       z2(i)=z2(i)+ccz*ct2
-       !!
-       x3(i)=x3(i)+ccx*ct3
-       y3(i)=y3(i)+ccy*ct3
-       z3(i)=z3(i)+ccz*ct3
-    end do
-
-
-    return
-  end subroutine correc
   
   !-------------------------------------------------------------
   !routine to calculate stress on an atomic scale using eq 6 from Modelling and  Simulation in Mater. Sci. Eng. 1 (1993) 315-333.

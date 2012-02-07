@@ -28,8 +28,6 @@
 !
 !  MOLDY Dynamics module (dynamics_m)
 !
-!  Contains Predictor-Corrector routines, PREDIC and CORREC.
-!  Contains VELOCITY-VERLET routine.
 !  Contains FORCE routine and forces data.
 !
 !---------------------------------------------------------------------
@@ -68,8 +66,6 @@ module dynamics_m
   public :: force
   public :: energy_calc
   public :: update_neighbourlist
-  public :: predic, correc
-  public :: velocityverlet  
   public :: write_energy_forces_stress
   public :: write_stress
   public :: update_therm_avs
@@ -78,10 +74,9 @@ module dynamics_m
 
   !! public module data
   real(kind_wp), allocatable, public :: fx(:),fy(:),fz(:) !< forces are public
+  real(kind_wp), allocatable, public :: x1_dt2(:), y1_dt2(:), z1_dt2(:) !< verlet half-step
   real(kind_wp), allocatable, public :: amu(:),wd(:),ws(:)  !<  Moments are public too.
   !! private module data
-real(kind_wp), allocatable :: x1_dt2(:), y1_dt2(:), z1_dt2(:) !< verlet half-step
-  real(kind_wp), allocatable :: stressx(:), stressy(:), stressz(:) !< stress diagonal components
 type(simparameters), save :: simparam  !< module local copy of simulation parameters
 !!  to Parinelloraman  real(kind_wp) :: tp(nmat,nmat)   !< module local copy of temporary stress/force
   integer :: istat                  !< allocation status
@@ -139,7 +134,7 @@ contains
    write(*,*)" reading Magnetic Potential" 
   do ir =1,1200
    ri=2+ir*0.005
-   write(30,*)ri,slater(ri,4,4.8d0)**2,slater(ri,3,4.8d0)**2,xcorr(ri)+pauli(ri)/2,pauli(ri),xcorr(ri)
+   write(30,*)ri,slater(ri,4,4.8d0)**2,slater(ri,3,4.8d0)**2,xcorr(ri,26,26)+pauli(ri,26,26)/2,pauli(ri,26,26),xcorr(ri,26,26)
    enddo
 
    close(iunit) 
@@ -360,7 +355,7 @@ contains
 !$  write(*,*) "Thread ", thread_num, " time: ", omp_get_wtime() - start_time
 #endif
 
-! The fist thread to finish the loop above can get on with the next task
+! The first thread to finish the loop above can get on with the next task
 !$OMP SINGLE
 
 #if DEBUG_OMP_LOCKS
@@ -409,7 +404,7 @@ contains
 
     return
    CONTAINS
-include 'magen.inc'
+ include 'magen.inc'
   end subroutine force 
  
 
@@ -421,12 +416,31 @@ include 'magen.inc'
   !
   !---------------------------------------------------------------------
   subroutine energy_calc
-  integer i
        return
   end subroutine energy_calc 
 
 
- 
+
+      FUNCTION SLATER_S2(R,n,m)
+!  squared slated function
+      integer :: n,m  ! dummy
+      real(kind_wp) :: slater_s2
+      real(kind_wp) :: r
+       SLATER_s2 =  SLATER(R,4,ZeffS)
+       SLATER_s2 = SLATER_s2*SLATER_s2
+      return 
+      end   FUNCTION SLATER_S2
+
+      FUNCTION SLATER_D2(R,n,m)
+!  squared slated function
+      integer :: n,m
+      real(kind_wp) :: slater_d2
+      real(kind_wp) :: r
+       SLATER_d2 =  SLATER(R,3,ZeffD)
+       SLATER_d2 = SLATER_d2*SLATER_d2
+      return 
+      end   FUNCTION SLATER_D2
+
       real FUNCTION SLATER(R,N,Zeff)
 !  Normalised quantity is    slater(r,4,Zeff)**2*r*r
       integer :: n
@@ -463,8 +477,10 @@ include 'magen.inc'
       RETURN
       END    FUNCTION DPHISL
 
-      real FUNCTION PAULI (R)
+      FUNCTION PAULI (R,i,j)
+      real(kind_wp) :: pauli
       real(kind_wp) :: r
+      integer ::  i,j
       Pauli = ap*exp(apk*apk/r/r-r*r/bpk/bpk) * FCUT(R)
 !!      if(r.lt.2.5) Pauli = Pauli+0.3*(2.5-r)**3
       RETURN 
@@ -480,15 +496,17 @@ include 'magen.inc'
        
        dpauli =  ap*(-2*apk*apk/r**3-2*r/bpk/bpk)*exp(apk*apk/r/r-r*r/bpk/bpk)* FCUT(R)
        IF(R.LT.RHIGH.AND.R.GT.( Rhigh - Dcut))THEN
-        DPauli = DPauli+dfcut(R)*pauli(r)/fcut(R)
+        DPauli = DPauli+dfcut(R)*pauli(r,26,26)/fcut(R)
        ENDIF
       Endif
       RETURN 
       END   FUNCTION DPAULI
 
  
-      real FUNCTION XCORR (R)
+      FUNCTION XCORR (R,i,j)
+      real(kind_wp) :: xcorr
       real(kind_wp) :: r
+      integer :: i,j   !! Iron iron
 !!      XCORR = -ac*R*R*exp(-BC*R) * FCUT(R)
       XCORR = -ac*R*R*R*R*exp(-BC*R)  * FCUT(R)
 !!    & + AFD/8d0 * (
@@ -509,7 +527,7 @@ include 'magen.inc'
 !!     & +6.928203228*exp((1.154700538*(r-r2))/w)/ &
 !!     & ((1.0+exp((1.154700538*(r-r2))/w))**2*w))
       IF(R.LT.RHIGH.AND.R.GT.( Rhigh - Dcut))THEN
-        DXCorr = DXCorr+dfcut(R)*XCorr(r)/fcutr
+        DXCorr = DXCorr+dfcut(R)*XCorr(r,26,26)/fcutr
       ENDIF
       endif
       RETURN
@@ -946,6 +964,100 @@ if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle
 	integer file_counter
        write(*,*) " write_atomic_stress not implemented for magnetic pot"
   end subroutine write_atomic_stress
+
+
+
+  !---------------------------------------------------------------------
+  !
+  ! rhoset
+  !
+  ! make a sum of pair potentials over all atoms
+  ! sum is set in rho, potential function is phi
+  !
+  !---------------------------------------------------------------------
+  subroutine rhoset(phi_local,rho_local)
+
+    integer :: nm    ! number of atoms in loop
+    integer :: i, j                   !< loop variables
+    integer ::  nlist_ji              !< scalar neighbour index
+    real(kind_wp) :: r                !< real spatial particle separation
+    real(kind_wp) :: dx, dy, dz       !< fractional separation components
+    real(kind_wp) :: rho_tmp          !< Temporary accumulator for rho
+     real(kind_wp) :: phi_local             ! declare the function to be summed
+     real(kind_wp) :: rho_local(:)     ! the sum of phi
+!$  !!OpenMP reqd (local declarations)
+!$  integer :: neighlc             !< link cell index of the current neighbour
+
+    !get params
+    simparam=get_params()
+    !! set rho to zero
+    rho_local(:)=0.0d0
+
+    !! calculate rho_local
+    
+!$OMP PARALLEL PRIVATE( neighlc, i, j, nlist_ji, r, dx, dy, dz, rho_tmp ), &
+!$OMP DEFAULT(NONE), &
+!$OMP SHARED(nlist, atomic_number, ic, simparam, numn, x0, y0, z0, lc_lock, rho_local )
+
+!$  neighlc = 0
+
+!$OMP do
+    rhocalc: do i=1,simparam%nm
+       
+       ! Reset my temporary rho accumulator
+       rho_tmp = 0.d0
+
+       !!loop through neighbours of i     
+       do j=1,numn(i)        
+
+          !! index
+          nlist_ji  = nlist(j,i)
+
+          !! real spatial separation of particles i and j
+          dx=x0(i)-x0(nlist_ji)
+          dy=y0(i)-y0(nlist_ji)
+          dz=z0(i)-z0(nlist_ji)
+
+          call pr_get_realsep_from_dx(r,dx,dy,dz)
+          
+!$ !! set/reset region locks when changing neighbour link cell
+!$ if (ic(nlist_ji).ne.neighlc)then
+!$   if(neighlc.gt.0)then !!unset old neighbour link-cell
+!$     call omp_unset_lock(lc_lock(neighlc))
+!$   end if
+!$   neighlc=ic(nlist_ji)  !!set neighlc to the current link-cell
+!$   call omp_set_lock(lc_lock(neighlc))
+!$ end if
+          
+           
+          rho_local(nlist_ji) =  rho_local(nlist_ji) + phi_local(r,atomic_number(nlist_ji),atomic_number(i))
+          
+          ! Update my own temporary accumulator
+          rho_tmp = rho_tmp + phi_local(r,atomic_number(i),atomic_number(nlist_ji))
+       
+       end do
+          
+!$ !! set/reset region locks when updating own particle
+!$ if (ic(i).ne.neighlc)then
+!$  call omp_unset_lock(lc_lock(neighlc))
+!$  neighlc=ic(i)  !!set neighlc to the current link-cell
+!$  call omp_set_lock(lc_lock(neighlc))
+!$ end if
+
+        !! cohesive potential phi at r
+        rho_local(i) =  rho_local(i) + rho_tmp
+
+    end do rhocalc
+!$OMP END DO NOWAIT
+
+!$  !! release all locks
+!$  call omp_unset_lock(lc_lock(neighlc))
+!$OMP END PARALLEL
+
+
+    return
+
+  end subroutine rhoset
 
 
 

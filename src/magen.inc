@@ -8,6 +8,12 @@
     sumd(:)=0.d0    
     sumj(:)=0.d0    
 
+
+!!  Should be possible to do this in parallel with rhoset  
+!!  neater, but requires multiple calls of pr_get_realsep_from_dx(r,dx,dy,dz)
+!!  sumj can't be done because of the mu calls
+
+
     ! use the neighbour list
     getsums:do iatom=1,simparam%nm
        k=numn(iatom)
@@ -21,22 +27,26 @@
           !! evaluate r, the physical separation between atoms i and j
          call pr_get_realsep_from_dx(r,dx,dy,dz)
         if(r.gt.rhigh) cycle jloop
-        epauli=pauli(r)
-        excorr=xcorr(r)
-        eslaterS=slater(r,4,ZeffS)**2
-        eslaterD=slater(r,3,ZeffD)**2
-        sump(IATOM) = sump(IATOM)+epauli
-        sumx(IATOM) = sumx(IATOM)+ excorr
-        sumj(IATOM) = sumj(IATOM)+ (excorr+epauli/2d0)*amu(IATOM)*amu(NLISTI)
-        sumS(IATOM) = sumS(IATOM) +eslaterS
-        sumD(IATOM) = sumD(IATOM) +eslaterD
-        sump(nlisti) = sump(nlisti)+epauli
+!        epauli=pauli(r,26,26)
+!        excorr=xcorr(r,26,26)
+!       eslaterS=slater(r,4,ZeffS)
+!       eslaterD=slater(r,3,ZeffD)**2
+!      sump(IATOM) = sump(IATOM)+epauli
+!      sumx(IATOM) = sumx(IATOM)+ excorr
+       sumj(IATOM) = sumj(IATOM)+ (excorr+epauli/2d0)*amu(IATOM)*amu(NLISTI)
+!        sumS(IATOM) = sumS(IATOM) +eslaterS
+!        sumD(IATOM) = sumD(IATOM) +eslaterD
+!        sump(nlisti) = sump(nlisti)+epauli
+!        sumx(nlisti) = sumx(nlisti)+ excorr
         sumj(nlisti) = sumj(nlisti)+ (excorr+epauli/2d0)*amu(IATOM)*amu(NLISTI)
-        sumx(nlisti) = sumx(nlisti)+ excorr
-        sumS(nlisti) = sumS(nlisti) +eslaterS
-        sumD(nlisti) = sumD(nlisti) +eslaterD
+!        sumS(nlisti) = sumS(nlisti) +eslaterS
+!        sumD(nlisti) = sumD(nlisti) +eslaterD
        end do jloop
     end do getsums
+        call rhoset(xcorr,sumx)
+        call rhoset(pauli,sump)
+        call rhoset(slater_s2,sumS)
+        call rhoset(slater_d2,sumD)
    end subroutine setsum
 
    subroutine geten

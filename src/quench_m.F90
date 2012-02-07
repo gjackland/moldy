@@ -58,11 +58,13 @@ module quench_m
   !! public interfaces to this module
   public :: quench
   public :: init_quench_m, cleanup_quench_m
+  public :: predic
+  public :: correc
+  public :: velocityverlet
 
 
   !! module private variables
   integer :: nvari
-  real(kind_wp), allocatable :: energy(:)
   real(kind_wp), allocatable :: x(:), g(:)
   integer :: istat                         !< memory allocation status
   type(simparameters), save :: simparam    !< module copy of simulation parameters
@@ -124,8 +126,7 @@ contains
        end do
     end do
 
-    !! allocate energy for minimisation (used in derivs)
-    allocate(energy(simparam%nm),stat=istat)
+
     if(istat.ne.0)stop 'ALLOCATION ERROR (quench) - Possibly out of memory.'
 
     !! Harwell subroutine library's VA14CD
@@ -140,7 +141,7 @@ contains
     !! output results
     write(unit_stdout,*)'ATOM,  ENERGY'
     do i=1,simparam%nm
-!     write(unit_stdout,*)i,energy(i)
+!     write(unit_stdout,*)i,en_atom(i)
        i3=3*i-2
        i31=i3+1
        i32=i3+2
@@ -149,8 +150,6 @@ contains
        z0(i) = x(i32)
     end do
 
-    !! deallocate energy when finished with it (used in derivs)
-    deallocate(energy)
 
     !! extract b0 from 
     nm3=3*simparam%nm
@@ -230,7 +229,6 @@ contains
     real(kind_wp) :: xi, yi, zi
     real(kind_wp) :: dfx, dfy, dfz
     real(kind_wp) :: xnbr,ynbr,znbr !< positions between neighbours
-    real(kind_wp) :: tp(nmat,nmat)
 !    simparam=get_params()
 
     nm3=3*simparam%nm
@@ -240,141 +238,27 @@ contains
           b0(i,j) = x(nm3)
        end do
     end do
+
+!!  Map 3D positions and box to 1D vector
+
     do i=1,simparam%nm
-       energy(i)= 0.0d0
+       en_atom(i)= 0.0d0
        i31=3*i-2
        i32=i31+1
        i33=i32+1
        x0(i) = x(i31)
        y0(i) = x(i32)
        z0(i) = x(i33)
-       fx(i)=0.0d0
-       fy(i)=0.0d0
-       fz(i)=0.0d0
     end do
 
-    !! compute metric tensor
-    call pr_get_metric_tensor
-
-    !increment neighbour list update counter and update if necessary
-    simparam%ntc = simparam%ntc + 1
-    if(simparam%ntc.eq.1) then
-       call set_params(simparam)
-       call update_neighbourlist
-    end if
-
-    !! set rho(i) and related quantities required for the finnis-sinclair potential
-    call rhoset
-
-    call embed(pe)
-
-    !! compute h transposed * h  = g
-    do i=1,nmat
-       do j=1,nmat
-          tg(i,j)=0.0d0
-       end do
-       do k=1,nmat
-          do j=1,nmat
-             tg(i,j)=tg(i,j)+b0(k,i)*b0(k,j)
-          end do
-       end do
-    end do
-
-    tp(:,:)=0.0d0
-
-    ! use the neighbour list
-    mainloop:do i=1,simparam%nm
-       xi=x0(i)
-       yi=y0(i)
-       zi=z0(i)
-       k=numn(i)
-       if(k.eq.0) cycle mainloop
-
-       do j=1,k
-          nlisti  = nlist(j,i)
-
-          !! fractional position of the j neighbour of atom i
-          xnbr = x0(nlisti)
-          ynbr = y0(nlisti)
-          znbr = z0(nlisti)
-
-          !! fractional separation between atoms i and j
-          dx=xi-xnbr
-          dy=yi-ynbr
-          dz=zi-znbr
-
-          !! evaluate r, the physical separation between atoms i and j
-          call pr_get_realsep_from_dx(r,dx,dy,dz)
-
-
-          !! evaluate pair potential pp and (-1/r)*(derivative of pp), fpp:
-          !! ie   fpp  = (-1/r) d pp /d r
-          !!      r    = interatomic distance
-          !!      rsq  = r*r
-          pp  =   vee(r,atomic_number(i),atomic_number(nlisti))
-          fpp = -dvee(r,atomic_number(i),atomic_number(nlisti))/r
-          pe = pe+pp
-          energy(i) = energy(i)+pp/2.d0
-          energy(nlisti) = energy(nlisti)+pp/2.d0
-
-
-          !! evaluate (-1/r)*(derivative of cohesive potential), fcp
-          fcp = -1.d0*( &
-               dphi(r,atomic_number(i),atomic_number(nlisti))*dafrho(i) + &
-               dphi(r,atomic_number(nlisti),atomic_number(i))*dafrho(nlisti) &
-               )/r
-
-
-          !! fp is (1/r)*(force on atom i from atom j)
-          fp = fpp + fcp
-
-          !! calculate spatial separation components from dx
-          rxij=b0(1,1)*dx+b0(1,2)*dy+b0(1,3)*dz
-          ryij=b0(2,1)*dx+b0(2,2)*dy+b0(2,3)*dz
-          rzij=b0(3,1)*dx+b0(3,2)*dy+b0(3,3)*dz
-
-          !! apply fp componentwise to tp
-          tp(1,1)=tp(1,1)+dx*rxij*fp
-          tp(2,1)=tp(2,1)+dx*ryij*fp
-          tp(3,1)=tp(3,1)+dx*rzij*fp
-          tp(1,2)=tp(1,2)+dy*rxij*fp
-          tp(2,2)=tp(2,2)+dy*ryij*fp
-          tp(3,2)=tp(3,2)+dy*rzij*fp
-          tp(1,3)=tp(1,3)+dz*rxij*fp
-          tp(2,3)=tp(2,3)+dz*ryij*fp
-          tp(3,3)=tp(3,3)+dz*rzij*fp
-
-          !! update force of particle's neighbour
-          fx(nlisti)=fx(nlisti)-dx*fp
-          fy(nlisti)=fy(nlisti)-dy*fp
-          fz(nlisti)=fz(nlisti)-dz*fp
-
-          !! update force of particle
-          fx(i)=fx(i)+dx*fp
-          fy(i)=fy(i)+dy*fp
-          fz(i)=fz(i)+dz*fp
-
-       end do
-
-
-    end do mainloop
-
-
-    !! start calculating the inverse of b0
-    tc(1,1)=b0(2,2)*b0(3,3)-b0(2,3)*b0(3,2)
-    tc(2,1)=b0(3,2)*b0(1,3)-b0(1,2)*b0(3,3)
-    tc(3,1)=b0(1,2)*b0(2,3)-b0(2,2)*b0(1,3)
-    tc(1,2)=b0(2,3)*b0(3,1)-b0(3,3)*b0(2,1)
-    tc(2,2)=b0(3,3)*b0(1,1)-b0(1,3)*b0(3,1)
-    tc(3,2)=b0(1,3)*b0(2,1)-b0(1,1)*b0(2,3)
-    tc(1,3)=b0(2,1)*b0(3,2)-b0(3,1)*b0(2,2)
-    tc(2,3)=b0(3,1)*b0(1,2)-b0(1,1)*b0(3,2)
-    tc(3,3)=b0(1,1)*b0(2,2)-b0(2,1)*b0(1,2)
-
-
+    call force
+    call energy_calc
+     pe =0.0
+    do i=1,simparam%nm
+     pe = pe+en_atom(i)
+    enddo
     !! evaluate d(pe)/d(s) from generalised force (fx,fy,fz)
     do i=1,simparam%nm
-    energy(i)=energy(i) - emb(rho(i),atomic_number(i))
        i31=3*i-2
        i32=i31+1
        i33=i32+1
@@ -405,8 +289,6 @@ contains
         write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*(tk(i,k)+tp(i,k)),k=1,3)/))/vol*press_to_gpa,j=1,3)
  99    format("STRESS I=",I2, 3e14.6," GPa")       
     end do
-
-
 
     f = pe + simparam%press*vol
 
@@ -640,5 +522,216 @@ SUBROUTINE VA14CD(FUNCT,N,F,DFN,ACC)
   430 D(I)=-GG(I)+BETA*D(I)
       GO TO 30
       END SUBROUTINE
+
+
+
+  !---------------------------------------------------------------------
+  !
+  ! subroutine velocityverlet
+  !
+  ! update a physical system using the verlet algorithm
+  !
+  !---------------------------------------------------------------------
+  subroutine velocityverlet(dt)
+
+    real(kind_wp) :: dt, sxi,syi,szi
+    integer :: i
+    
+    !! half time step on velocities
+    !! v(t+dt/2) = v(t) + a(t) dt/2
+    simparam=get_params()
+ 	sxi = 0d0 
+ 	syi = 0d0 
+ 	szi = 0d0 
+ 
+    x1_dt2=x1+x2
+    y1_dt2=y1+y2
+    z1_dt2=z1+z2
+    !! time step on positions
+    !! x(t+dt) = x(t) + v(t+dt/2) * dt
+    x0=x0+x1_dt2
+    y0=y0+y1_dt2
+    z0=z0+z1_dt2
+    if(simparam%ivol.eq.4) then !! in z only
+      b1(3,3) = b1(3,3) + b2(3,3)
+      b0(3,3)=b0(3,3)+b1(3,3)
+    endif 
+    if(simparam%ivol.lt.1) then 
+      b1 = b1 + b2
+      b0 = b0 + b1
+    endif
+
+    !! second half time step on velocities (with updated forces)
+    !! v(t+dt) = v(t+dt/2) + a(t+dt) dt/2
+      call force
+
+     tgid=get_tgid()
+
+     if(simparam%ivol.lt.1) then 
+      b2=simparam%bdel2*fb
+      b1=b1+b2
+    endif
+    if(simparam%ivol.eq.4) then !! in z only 
+       b2(3,3)=simparam%bdel2*fb(3,3)
+       b1=b1+b2
+    endif
+
+    do i=1,simparam%nm
+if(atomic_number(i).eq.0.or.atomic_mass(I).lt.0.1) cycle      
+     if(simparam%ivol.eq.0) then
+        sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
+        syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
+        szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
+      endif
+      if(simparam%ivol.eq.4) szi=tgid(3,3)*z1(i)
+
+      x2(i)=del2(i)*fx(i)-0.5d0*sxi
+      y2(i)=del2(i)*fy(i)-0.5d0*syi
+      z2(i)=del2(i)*fz(i)-0.5d0*szi
+    enddo
+
+    x1=x1_dt2+x2
+    y1=y1_dt2+y2
+    z1=z1_dt2+z2
+
+  end subroutine velocityverlet
+
+
+
+  !---------------------------------------------------------------------
+  !
+  ! subroutine predic
+  !
+  ! update a physical system using the predictor-corrector algorithm
+  ! (to be used in conjunction with correc)
+  !
+  !---------------------------------------------------------------------
+  subroutine predic
+
+    integer :: i, j         !< loop variables
+
+!    simparam=get_params()
+
+    !!particle position, velocity, acceleration
+    do i=1,simparam%nm
+       x0(i)=x0(i)+x1(i)+x2(i)+x3(i)
+       y0(i)=y0(i)+y1(i)+y2(i)+y3(i)
+       z0(i)=z0(i)+z1(i)+z2(i)+z3(i)
+       x1(i)=x1(i)+2.0d0*x2(i)+3.0d0*x3(i)
+       y1(i)=y1(i)+2.0d0*y2(i)+3.0d0*y3(i)
+       z1(i)=z1(i)+2.0d0*z2(i)+3.0d0*z3(i)
+       x2(i)=x2(i)+3.0d0*x3(i)
+       y2(i)=y2(i)+3.0d0*y3(i)
+       z2(i)=z2(i)+3.0d0*z3(i)
+    end do
+
+    !! also update box if not constant volume
+    if(simparam%ivol.eq.0)then !!all directions
+       do i=1,nmat
+          do j=1,nmat
+             b0(i,j)=b0(i,j)+b1(i,j)+b2(i,j)+b3(i,j)
+             b1(i,j)=b1(i,j)+2.0d0*b2(i,j)+3.0d0*b3(i,j)
+             b2(i,j)=b2(i,j)+3.0d0*b3(i,j)
+          end do
+       end do
+    endif
+    if(simparam%ivol.eq.4)then !!in z only
+       b0(3,3)=b0(3,3)+b1(3,3)+b2(3,3)+b3(3,3)
+       b1(3,3)=b1(3,3)+2.0d0*b2(3,3)+3.0d0*b3(3,3)
+       b2(3,3)=b2(3,3)+3.0d0*b3(3,3)
+    endif
+    return
+  end subroutine predic
+
+
+  !---------------------------------------------------------------------
+  !
+  ! subroutine correc
+  !
+  ! update a physical system using the predictor-corrector algorithm
+  ! (to be used in conjunction with predic)
+  !
+  !---------------------------------------------------------------------
+  subroutine correc
+
+    !! local declarations
+    integer :: i, j, k             !< loop variables
+    real(kind_wp) :: ccx, ccy, ccz !< correction coefficients
+    real(kind_wp) :: sxi, syi, szi !< local variables
+    real(kind_wp), parameter :: ct0=0.166666666666666667
+    real(kind_wp), parameter :: ct1=0.833333333333333333
+    real(kind_wp), parameter :: ct2=1.000000000000000000
+    real(kind_wp), parameter :: ct3=0.333333333333333333
+
+
+
+    simparam=get_params()
+
+    !! determine box changes if not constant volume (ccx used here for the box)
+    if(simparam%ivol.lt.1) then 
+       do i=1,nmat
+          do j=1,nmat
+             ccx=simparam%bdel2*fb(i,j)-b2(i,j)
+             b0(i,j)=b0(i,j)+ct0*ccx
+             b1(i,j)=b1(i,j)+ct1*ccx
+             b2(i,j)=b2(i,j)+ct2*ccx
+             b3(i,j)=b3(i,j)+ct3*ccx
+          end do
+       end do
+    endif
+    if(simparam%ivol.eq.4) then !! in z only 
+       ccx=simparam%bdel2*fb(3,3)-b2(3,3)
+       b0(3,3)=b0(3,3)+ct0*ccx
+       b1(3,3)=b1(3,3)+ct1*ccx
+       b2(3,3)=b2(3,3)+ct2*ccx
+       b3(3,3)=b3(3,3)+ct3*ccx
+    endif
+
+
+    !!get initial tgid before recalculating
+    tgid=get_tgid()
+
+    !! update 
+    do i=1,simparam%nm
+
+       !! cycle if vacancy
+       if ( atomic_number(i).eq.0 ) cycle
+
+       !! extra forces due to movement of the box tgid
+       !! use the initial value of tgid to calculate sxi
+
+       sxi=tgid(1,1)*x1(i)+tgid(1,2)*y1(i)+tgid(1,3)*z1(i)
+       syi=tgid(2,1)*x1(i)+tgid(2,2)*y1(i)+tgid(2,3)*z1(i)
+       szi=tgid(3,1)*x1(i)+tgid(3,2)*y1(i)+tgid(3,3)*z1(i)
+
+       !! cc[xyz] correction coefficients to correct [xyz][0123] etc.
+       ccx=del2(i)*fx(i)-0.5d0*sxi-x2(i)
+       ccy=del2(i)*fy(i)-0.5d0*syi-y2(i)
+       ccz=del2(i)*fz(i)-0.5d0*szi-z2(i)
+
+       !! correction applied to particles [xyz][0123]
+       x0(i)=x0(i)+ccx*ct0
+       y0(i)=y0(i)+ccy*ct0
+       z0(i)=z0(i)+ccz*ct0
+       !!
+       x1(i)=x1(i)+ccx*ct1
+       y1(i)=y1(i)+ccy*ct1
+       z1(i)=z1(i)+ccz*ct1
+       !!
+       x2(i)=x2(i)+ccx*ct2
+       y2(i)=y2(i)+ccy*ct2
+       z2(i)=z2(i)+ccz*ct2
+       !!
+       x3(i)=x3(i)+ccx*ct3
+       y3(i)=y3(i)+ccy*ct3
+       z3(i)=z3(i)+ccz*ct3
+    end do
+
+
+    return
+  end subroutine correc
+
+
+
 
 end module quench_m
