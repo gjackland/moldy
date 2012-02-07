@@ -67,7 +67,6 @@ module generic_atvf
   use params_m
   use constants_m
   use utilityfns_m
-  use thermostat_m
 
 
   implicit none
@@ -513,11 +512,12 @@ function dexpjoin(a1,x1,v1,a2,x2,v2,r)
   !  checks the atomic numbers provided can be supported by this potential
   !
   !----------------------------------------------------------------------------
-  subroutine check_supported_atomic_numbers(species_number,spna,ierror)
+  subroutine check_supported_atomic_numbers(species_number,spna,range,ierror)
 
     !!argument declarations
     integer, intent(in) :: species_number       !< number of species (size of spna)
     integer, intent(in) :: spna(species_number) !< atomic numbers
+    real(kind_wp),  intent(OUT) :: range        ! potential range
     integer, intent(out) :: ierror              !< return error code
     !!local declarations
     integer :: i, j, ii                         !< loop indices
@@ -545,7 +545,7 @@ function dexpjoin(a1,x1,v1,a2,x2,v2,r)
     allocate(rmin(species_number,species_number))
     allocate(rmax(species_number,species_number))
 
-    !! test for the existence only of all generic potential files necessary
+    !! test for the existence-only of all generic potential files necessary
     do i=1,species_number
        do j=1,species_number
 
@@ -586,16 +586,16 @@ function dexpjoin(a1,x1,v1,a2,x2,v2,r)
     a_p_=0._kind_wp ; r_p_=0._kind_wp
           bier_cut1= -1._kind_wp
           bier_cut2= -1._kind_wp
-
+          range = 0.0
     allocate(bier_v1(species_number,species_number))
     allocate(bier_v2(species_number,species_number))
     allocate(bier_dv1(species_number,species_number))
     allocate(bier_dv2(species_number,species_number))
-    !! initialise data
+   
     bier_v1=0._kind_wp ; bier_v2=0._kind_wp
     bier_dv1=0._kind_wp ; bier_dv2=0._kind_wp
 
-
+!!_____________________________________________________________________
     !! reopen potential files and read coefficients
     write(stderr,*) "Reading potentials files..."
     do i=1,species_number
@@ -631,12 +631,17 @@ function dexpjoin(a1,x1,v1,a2,x2,v2,r)
                r_p_(coeff_index(spna(i)),coeff_index(spna(j)),:ncoeffp(coeff_index(spna(i)),coeff_index(spna(j))))
           read(iunit,*,err=103)  bier_cut1,  bier_cut2
           goto 104
-103       write(stderr,*) "No Biersack cutoff, assume default ","pot_"//a3_na1//"_"//a3_na2//".in"
+103       write(stderr,*) "No Biersack cutoff, assume default 50/75% ","pot_"//a3_na1//"_"//a3_na2//".in"
  104      continue         
           !! close file
           close(iunit)
        end do
     end do
+
+
+!___________________End of loop over potential read__________
+
+
 
     !! Evaluate Biersack and join function limits between 1 Angstroms and 
     !! 25% inside near neighbour (i.e. first spline) if not specified
@@ -653,23 +658,25 @@ function dexpjoin(a1,x1,v1,a2,x2,v2,r)
        bier_v2(i,j) =0d0
        bier_dv2(i,j) =0d0
 
-      do ii=1,ncoeffv(coeff_index(na1),coeff_index(na2))
-       bier_v2(i,j)=bier_v2(i,j)+a_v_(coeff_index(na1),coeff_index(na2),ii)* &
-            (r_v_(coeff_index(na1),coeff_index(na2),ii)-bier_cut2)**3*     &
-            xH0(r_v_(coeff_index(na1),coeff_index(na2),ii)-bier_cut2)
-       bier_dv2(i,j) = bier_dv2(i,j) -3.d0*a_v_(coeff_index(na1),coeff_index(na2),ii)* &
-            (r_v_(coeff_index(na1),coeff_index(na2),ii)-bier_cut2)**2*     &
-            xH0(r_v_(coeff_index(na1),coeff_index(na2),ii)- bier_cut2)
-      end do
-      write(*,1104)na1,na2, bier_cut1, bier_cut2
- 1104  format('Biersack core spline ',2I6, ' between '  , 2F10.6)
-     end do
+         do ii=1,ncoeffv(coeff_index(na1),coeff_index(na2))
+         bier_v2(i,j)=bier_v2(i,j)+a_v_(coeff_index(na1),coeff_index(na2),ii)* &
+         (r_v_(coeff_index(na1),coeff_index(na2),ii)-bier_cut2)**3*     &
+         xH0(r_v_(coeff_index(na1),coeff_index(na2),ii)-bier_cut2)
+         bier_dv2(i,j) = bier_dv2(i,j) -3.d0*a_v_(coeff_index(na1),coeff_index(na2),ii)* &
+         (r_v_(coeff_index(na1),coeff_index(na2),ii)-bier_cut2)**2*     &
+         xH0(r_v_(coeff_index(na1),coeff_index(na2),ii)- bier_cut2)
+         end do
+!! set maximum range of any potential
+         range=max(rmax(i,j),range)
+         write(*,1104)na1,na2, rmax(i,j), range, bier_cut1, bier_cut2
+ 1104  format(2I4, ' range (max) ', 2f10.4,  '; Biersack core spline between '  , 2F10.6)
+
+    end do
     end do
 
-!!      write(*,*)"Ncoeff ", ncoeffv, ncoeffp
-!!      write(*,*)"Bier", bier_v1,bier_dv1, bier_v2,bier_dv2
-!!      write(*,*)"rmax/rmin", rmax,rmin
+
          iunit=newunit()
+!! attempt to read sommerfeld correction, GOTO 105 if file absent
           open(unit=iunit,file="sommerfeld.in",status='old',action='read',err=105)
           read(iunit,*,err=105)som_rcut,som_width,ATT
           simparam%lsomer = .true.

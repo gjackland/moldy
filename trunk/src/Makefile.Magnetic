@@ -26,7 +26,7 @@
 # be stored
 #
 ######################################################
-BUILD_DIR=../build
+BUILD_DIR=.
 
 
 ######################################################
@@ -44,7 +44,7 @@ MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
- EXE=    ../build/moldy.mag
+ EXE=    ./moldy.mag
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -125,7 +125,7 @@ F90SRC= \
 	matrix_m.F90 \
 	moldin.F90\
 	params_m.F90 \
-	quench_m_magnet.F90 \
+	quench_m.F90 \
 	random_m.F90 \
 	analysis_m.F90 \
 	parrinellorahman_m.F90 \
@@ -186,7 +186,7 @@ clean:
 moldin.o: timers_m.o thermostat_m.o random_m.o potential_m.o params_m.o  system_m.o  \
 	 constants_m.o analysis_m.o parrinellorahman_m.o  dynamics_m_magnet.o \
 	neighbourlist_m.o  particles_m.o linkcell_m.o \
-	quench_m_magnet.o io_m.o
+	quench_m.o io_m.o
 
 thermostat_m.o: random_m.o potential_m.o params_m.o  system_m.o  constants_m.o \
 	 parrinellorahman_m.o  particles_m.o
@@ -195,13 +195,13 @@ analysis_m.o: thermostat_m.o
 
 random_m.o: debug_m.o particles_m.o
 
-dynamics_m_magnet.o: debug_m.o particles_m.o  system_m.o matrix_m.o parrinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
+dynamics_m_magnet.o: debug_m.o particles_m.o  system_m.o matrix_m.o parrinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o magen.inc
 
 io_m.o: params_m.o random_m.o particles_m.o parrinellorahman_m.o utilityfns_m.o analysis_m.o
 
 params_m.o: constants_m.o utilityfns_m.o
 
-quench_m_magnet.o: params_m.o  system_m.o  constants_m.o \
+quench_m.o: params_m.o  system_m.o  constants_m.o \
 	analysis_m.o parrinellorahman_m.o dynamics_m_magnet.o neighbourlist_m.o  \
 	linkcell_m.o particles_m.o potential_m.o
 

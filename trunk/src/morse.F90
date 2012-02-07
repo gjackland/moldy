@@ -59,7 +59,7 @@ module morse
   !! User Attention: Specify valid range parameters
    integer :: coeff_index(0:112)             !< atomic index for coeff arrays
    real(kind_wp), parameter :: pot_rmin=0.0_kind_wp  !< minimum valid separation
-   real(kind_wp) :: pot_rmax=0.0_kind_wp  !< maximum valid separation
+   real(kind_wp) :: range=0.0_kind_wp  !< maximum valid separation
    real(kind_wp), allocatable :: eps(:,:) !< energy coefficients
    real(kind_wp), allocatable :: alpha(:,:) !< width coefficients
    real(kind_wp), allocatable :: a_0(:,:) !< length coefficients
@@ -235,7 +235,7 @@ contains
   subroutine get_supported_potential_range(rmin,rmax)
     real(kind_wp), intent(OUT) :: rmin, rmax !< the minimum and maximum separations
     rmin=pot_rmin 
-    rmax=pot_rmax
+    rmax=range
   end subroutine get_supported_potential_range
 
 
@@ -246,11 +246,12 @@ contains
   !  checks the atomic numbers provided can be supported by this potential
   !
   !----------------------------------------------------------------------------
-  subroutine check_supported_atomic_numbers(species_number,spna,ierror)
+  subroutine check_supported_atomic_numbers(species_number,spna,range,ierror)
 
     !!argument declarations
     integer, intent(in) :: species_number       !< number of species (size of spna)
     integer, intent(in) :: spna(species_number) !< atomic numbers
+    real  (kind_wp), intent(out) :: range 
     integer, intent(out) :: ierror              !< return error code
     !!local declarations
     integer :: i, j, ni, nj                     !< loop indices
@@ -264,7 +265,7 @@ contains
     !! set default return value to success, find a spare io unit
     ierror=0    
     iunit=newunit()
-
+    range =0.0
     allocate(rmin(species_number,species_number))
 
 
@@ -343,7 +344,7 @@ contains
           read(iunit,*,err=102,iostat=ierror)rmaxtemp
 
         rmax(coeff_index(spna(i)),coeff_index(spna(j)))=rmaxtemp
-        if(pot_rmax.lt.rmaxtemp)pot_rmax=rmaxtemp 
+        range=max(range,rmaxtemp) 
           !! close file
           close(iunit)
        ni = coeff_index(spna(i))

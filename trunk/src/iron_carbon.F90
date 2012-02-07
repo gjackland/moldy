@@ -710,10 +710,11 @@ contains
   !  in the module local array, supported_atomic_numbers
   !
   !----------------------------------------------------------------------------
-  subroutine check_supported_atomic_numbers(species_number,spna,ierror)
+  subroutine check_supported_atomic_numbers(species_number,spna,range,ierror)
     !!argument declarations
     integer, intent(in) :: species_number       !< number of species (size of spna)
     integer, intent(in) :: spna(species_number) !< atomic numbers
+    real(kind_wp),  intent(OUT) :: range        !< potential range
     integer, intent(out) :: ierror              !< return error code
     !!local declarations
     integer :: i, j                             !< loop variable
@@ -721,6 +722,7 @@ contains
 
     !!initialisation
     ierror=0    
+    range = pot_rmax
 
 
     !! loop over spna (provided as argument)

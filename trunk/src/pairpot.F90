@@ -248,11 +248,12 @@ contains
   !  checks the atomic numbers provided can be supported by this potential
   !
   !----------------------------------------------------------------------------
-  subroutine check_supported_atomic_numbers(species_number,spna,ierror)
+  subroutine check_supported_atomic_numbers(species_number,spna,range,ierror)
 
     !!argument declarations
     integer, intent(in) :: species_number       !< number of species (size of spna)
     integer, intent(in) :: spna(species_number) !< atomic numbers
+    real(kind_wp),  intent(OUT) :: range        !< potential range    
     integer, intent(out) :: ierror              !< return error code
     !!local declarations
     integer :: i, j                             !< loop indices
@@ -345,7 +346,7 @@ contains
 
        x6 = (a_0(coeff_index(spna(i)),coeff_index(spna(j)))/rmax(coeff_index(spna(i)),coeff_index(spna(j))))**6
        vee_rmax(coeff_index(spna(i)),coeff_index(spna(j))) = eps(coeff_index(spna(i)),coeff_index(spna(j)))*(x6 - 1.d0)*x6  
-
+       range=max(range,rmax(coeff_index(spna(i)),coeff_index(spna(j))))
        end do
     end do
 

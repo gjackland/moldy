@@ -37,14 +37,14 @@ BUILD_DIR=../build
 #
 ######################################################
 # Material Choice and Location of Executable
-MATERIAL= -DIRON_CARBON
+#MATERIAL= -DIRON_CARBON
 #MATERIAL= -DZIRCONIUM
-#MATERIAL= -DGENERIC_ATVF
+MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
- EXE=    ../build/moldy.fec
+ EXE=    ../build/moldy.atvf
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -193,6 +193,7 @@ thermostat_m.o: random_m.o potential_m.o params_m.o  system_m.o  constants_m.o \
 
 analysis_m.o: thermostat_m.o
 
+
 random_m.o: debug_m.o particles_m.o
 
 dynamics_m.o: debug_m.o particles_m.o  system_m.o matrix_m.o parrinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
@@ -211,7 +212,7 @@ potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorah
 
 timers_m.o: debug_m.o constants_m.o
 
-lookup_m.o: constants_m.o generic_atvf.o iron_carbon.o zirconium.o
+lookup_m.o: constants_m.o 
 
 parrinellorahman_m.o analysis_m.o particles_m.o linkcell_m.o: constants_m.o params_m.o
 
