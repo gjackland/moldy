@@ -181,7 +181,6 @@ program moldyv2
   !! Initialise all necessary module arrays and parameters
   call init_particles_m
   call init_neighbourlist_m
-  call init_quench_m
   call init_thermostat_m
   call init_parrinellorahman_m
 
@@ -406,7 +405,7 @@ program moldyv2
   !!  This is now to apply constant strain rate
   !!  Or to apply temperature increase
       strainloops: do iter=1,simparam%strainloops
-      write(unit_stdout,*)"Strainloop - dT= ",simparam%tempsp," T-dependent Potential ", simparam%temprq
+      write(unit_stdout,*)"Strainloop: dT= ",simparam%tempsp," T-dependent Potential ", simparam%temprq, " dP=", simparam%pressstep
         if (simparam%restart .eq. 0) then  !! this statement seems problematic on restart, so i added an if to catch it
          simparam%laststep =  simparam%currentstep+simparam%NSTEPS
         end if
@@ -528,12 +527,15 @@ program moldyv2
         
 !! #if DEBUG_TIMING
 !! #  g_starttime = wtime()
-!! #endif
+!! #endif 
      
         !! either quench, or perform MD.
         if (simparam%iquen.eq.1) then
+           write(*,*)simparam%press*press_to_gpa
+	   call set_params(simparam)
+           call init_quench_m
            call quench
-
+           call cleanup_quench_m
         else
 
      mdloop: do istep=simparam%prevsteps+1,simparam%laststep
@@ -823,7 +825,7 @@ program moldyv2
        !!write last checkpoint file
      if(simparam%nchkpt.gt.0)then
          call write_checkpoint_file
-        call write_atomic_stress(-1)
+        if(simparam%atomstress) call write_atomic_stress(-1)
      write(*,*) "Checkpointing complete"
      end if
     ! call write_out_file(-1)
@@ -841,8 +843,8 @@ program moldyv2
        do  i=1,nmat
          WRITE(unit_posavs,*) (b0(j,i),j=1,nmat)              
        end do
-         WRITE(unit_posavs,321) (AX0(I),AY0(I),AZ0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM)
-321     FORMAT(3f11.5,3X,I3,2X,2f11.5)
+         WRITE(unit_posavs,321) (AX0(I),AY0(I),AZ0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),rho(I),I=1,simparam%NM)
+321     FORMAT(3f11.5,3X,I3,2X,3f11.5)
         close(unit_posavs)
       endif
 
@@ -1015,7 +1017,7 @@ contains
 		   WRITE(unit_output,*) (b0(j,i),j=1,nmat)              
 		end do
 		    WRITE(unit_output,321) (X0(I),Y0(I),Z0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM) !(gg) origonally en_atom just stored potential energy, add KE
-	321     FORMAT(3f11.5,3X,I3,2X,2f11.5)!(gg) 4d should be 3f, wneh above removed FORMAT(3f11.5,3X,I3,2X,2f11.5)
+	321     FORMAT(3f11.5,3X,I3,2X,2f11.5)!(gg) 4d should be 3f, when above removed FORMAT(3f11.5,3X,I3,2X,2f11.5)
 		close(unit_output)  
 	end subroutine write_out_file
 	

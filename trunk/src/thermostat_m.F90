@@ -235,7 +235,7 @@ contains
        do j=1,nmat
           if(simparam%ivol.eq.4.and.(i*j).ne.9)then
           else
-             b1(i,j)=rand1()
+             b1(i,j)=(rand1()-0.5d0)
           end if
           s=s+b1(i,j)
        end do

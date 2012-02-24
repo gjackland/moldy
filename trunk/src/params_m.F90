@@ -95,7 +95,8 @@ module params_m
                              !!  0 => new coordinates
                              !! -1 => old coordinates, new velocities 
                              !!  1 => old coordinates, old velocities
-     logical :: reset = .false. !only has effect when restart is non-zero, resets prevsteps throwing previous data
+     logical :: reset = .false. !only has effect when restart is non-zero, resets prevsteps throwing previous data     
+     logical :: atomstress = .false. !calculate and write atomic stress
      							! but keeping the position/velocity data.   
      real(kind_wp) :: nose=0.0 !< Softness of damping force in the Nose thermostat 
 	 real(kind_wp) :: therm_con=-1.0 !< thermal conductivity (in W k-1 m-1 )  used to rescale the nose thermostat
@@ -144,8 +145,6 @@ module params_m
      real :: pkavy=0 
      real :: pkavz=0
 	real :: EPKA =0 ! energy in eV of pka (gg)
-
-
 
   end type simparameters
 
@@ -209,7 +208,7 @@ contains
     integer, intent(in) :: iunit            !< unit input file is open on
     integer, intent(out) :: ierror          !< -2=unrecognised,-1=malformed,1=EOF,0=ok
     !!routine parameters (saved)
-    integer, parameter :: numkeys=52 !< increase numkeys when adding keywords
+    integer, parameter :: numkeys=53 !< increase numkeys when adding keywords
     character(len=50), save  :: key(numkeys)!< array of registered keys (hardcoded)
     integer, save :: keylength(numkeys)     !< array of registered key lengths
     logical, save :: initialised=.false.    !< flag to perform one-off initialisation
@@ -283,7 +282,8 @@ contains
 		key(50)='nose'
 	    key(51)='nposav'	
 	     key(52)='reset'	
-    
+	     key(53)='atomstress'	
+             
 
        !!adjust, set lowercase, and measure the length of registered keys
 
@@ -508,8 +508,8 @@ contains
 
     case(39) !'straintensor'
        read(inputstring(eqindex+1:),*) simparam%strx
-       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%strx
-
+       write(0,987) " straintensor =",simparam%strx
+ 987   format(A15,9f8.5)
     case(40) !'uselookup'
        read(inputstring(eqindex+1:),*) simparam%uselookup
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%uselookup
@@ -549,7 +549,9 @@ contains
    case(49) !'pressstep'
        read(inputstring(eqindex+1:),*) simparam%pressstep
        write(0,*) "pressstep = ", simparam%pressstep
-       
+       !! Rescale Pressure: Convert to Natural Pressure Units (from GPa)
+       simparam%pressstep=simparam%pressstep*gpa_to_press
+
         case(50) !'nose'
        read(inputstring(eqindex+1:),*) simparam%nose
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nose
@@ -560,6 +562,10 @@ contains
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%nposav
 	
 	 case(52) !'reset'
+       read(inputstring(eqindex+1:),*) simparam%reset
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%reset
+
+	 case(53) !'atomstress'
        read(inputstring(eqindex+1:),*) simparam%reset
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%reset
    

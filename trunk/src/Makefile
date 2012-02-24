@@ -37,14 +37,9 @@ BUILD_DIR=.
 #
 ######################################################
 # Material Choice and Location of Executable
-#MATERIAL= -DIRON_CARBON
-MATERIAL= -DZIRCONIUM
-#MATERIAL= -DGENERIC_ATVF
-#MATERIAL= -DLENNARDJONES
-#MATERIAL= -DMORSE 
+MATERIAL= -DIRON_CARBON
 
-
- EXE=    $(BUILD_DIR)/moldy.zr
+ EXE=    ../build/moldy.fec
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -71,7 +66,7 @@ MATERIAL= -DZIRCONIUM
 #FC=     ifort -O2
 #FC=     f95 -O2
 #FC=     gfortran -fbounds-check
-FC=     gfortran -O4  #-g -ffpe-trap=invalid,zero,overflow
+FC=     gfortran -O4 #
 
 # C Preprocessing Directives 
 CPPFLAGS= $(MATERIAL) $(DEBUG)
@@ -80,11 +75,11 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
 #OMPFLAGS= -mp
-OMPFLAGS = -fopenmp # For gfortran
-#OMPFLAGS -openmp # For ifort
+#OMPFLAGS = -fopenmp # For gfortran
+#OMPFLAGS -openmp [1]
 
 #Debugging
-#DEBUGGING= -g
+#DEBUGGING= -g -ffpe-trap=invalid,zero,overflow
 
 #	Any kind of profiling
 #PROFILING= -pg
@@ -193,10 +188,9 @@ thermostat_m.o: random_m.o potential_m.o params_m.o  system_m.o  constants_m.o \
 
 analysis_m.o: thermostat_m.o
 
-
 random_m.o: debug_m.o particles_m.o
 
-dynamics_m.o: debug_m.o particles_m.o  system_m.o matrix_m.o parrinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o
+dynamics_m.o: debug_m.o particles_m.o  system_m.o matrix_m.o parrinellorahman_m.o thermostat_m.o neighbourlist_m.o timers_m.o magen.inc
 
 io_m.o: params_m.o random_m.o particles_m.o parrinellorahman_m.o utilityfns_m.o analysis_m.o
 
@@ -208,11 +202,11 @@ quench_m.o: params_m.o  system_m.o  constants_m.o \
 
 neighbourlist_m.o:  linkcell_m.o parrinellorahman_m.o
 
-potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o generic_atvf.o  pairpot.o
+potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o generic_atvf.o  
 
 timers_m.o: debug_m.o constants_m.o
 
-lookup_m.o: constants_m.o 
+lookup_m.o: constants_m.o generic_atvf.o iron_carbon.o zirconium.o
 
 parrinellorahman_m.o analysis_m.o particles_m.o linkcell_m.o: constants_m.o params_m.o
 

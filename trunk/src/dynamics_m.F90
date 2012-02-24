@@ -86,7 +86,6 @@ module dynamics_m
   type(simparameters), save :: simparam  !< module local copy of simulation parameters
 !!  to Parinelloraman  real(kind_wp) :: tp(nmat,nmat)   !< module local copy of temporary stress/force
   integer :: istat                  !< allocation status
-  	logical :: stress_calc = .true.
 
 !$  !! OpenMP reqd (locks on the link cells)
 !$  integer(kind=omp_lock_kind), allocatable :: lc_lock(:)  !< locks
@@ -219,7 +218,7 @@ contains
 #endif
 !$OMP DEFAULT(NONE), &
 !$OMP SHARED( simparam, numn, nlist, x0, y0, z0, atomic_number, atomic_mass, dafrho, b0, ic, lc_lock,&
-!$OMP fx, fy, fz, tc, stressx, stressy, stressz, stress_calc ), &
+!$OMP fx, fy, fz, tc, stressx, stressy, stressz ), &
 #if DEBUG_OMP_LOCKS
 !$OMP REDUCTION(+:num_locks), &
 #endif
@@ -278,7 +277,7 @@ contains
           rzij=b0(3,1)*dx+b0(3,2)*dy+b0(3,3)*dz
 
           	
-		  if (stress_calc) then	
+		  if (simparam%atomstress) then	
 		  	stressx(i) = stressx(i) + rxij*fp	
 		  	stressy(i) = stressy(i) + ryij*fp	
 		 	stressz(i) = stressz(i) + rzij*fp	
