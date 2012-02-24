@@ -65,7 +65,7 @@ module quench_m
 
   !! module private variables
   integer :: nvari
-  real(kind_wp), allocatable :: x(:), g(:)
+  real(kind_wp), allocatable :: x(:), g(:) ! variables and derivatives
   integer :: istat                         !< memory allocation status
   type(simparameters), save :: simparam    !< module copy of simulation parameters
 
@@ -131,9 +131,10 @@ contains
 
     !! Harwell subroutine library's VA14CD
     dfn = 0.1d0
-    acc= 5.0e-9*simparam%NM !! accuracy depends on number of atoms 
+    acc= 5.0d-9*simparam%NM !! accuracy depends on number of atoms 
     call va14cd(derivs,nvari,f,dfn,acc)
-    pe = f
+ write(unit_stdout,1359)pe/simparam%nm,vol/simparam%nm,simparam%press*press_to_gpa,f/simparam%nm
+1359 format('FINAL U= ',d18.10, ' V= ',f10.6, ' P= ',d12.4, " H= ",d13.7)
 
     !! sync params after va14cd
     call set_params(simparam)
@@ -229,7 +230,11 @@ contains
     real(kind_wp) :: xi, yi, zi
     real(kind_wp) :: dfx, dfy, dfz
     real(kind_wp) :: xnbr,ynbr,znbr !< positions between neighbours
-!    simparam=get_params()
+
+
+
+
+!!  Map 3D positions and box to 1D vector
 
     nm3=3*simparam%nm
     do i=1,nmat
@@ -239,7 +244,6 @@ contains
        end do
     end do
 
-!!  Map 3D positions and box to 1D vector
 
     do i=1,simparam%nm
        en_atom(i)= 0.0d0
@@ -251,12 +255,35 @@ contains
        z0(i) = x(i33)
     end do
 
+   ! calculate the box volume and tensor
+    call pr_get_metric_tensor
+
+    !! compute h transposed * h  = g
+    do i=1,nmat
+       do j=1,nmat
+          tg(i,j)=0.0d0
+       end do
+       do k=1,nmat
+          do j=1,nmat
+             tg(i,j)=tg(i,j)+b0(k,i)*b0(k,j)
+          end do
+       end do
+    end do
+ 
+
     call force
     call energy_calc
-     pe =0.0
+     pe =0.0_kind_wp
+
+    do i=1,nvari
+     g(i)=0.0d0
+    enddo
     do i=1,simparam%nm
      pe = pe+en_atom(i)
     enddo
+
+
+
     !! evaluate d(pe)/d(s) from generalised force (fx,fy,fz)
     do i=1,simparam%nm
        i31=3*i-2
@@ -266,7 +293,8 @@ contains
        g(i32)= (- tg(2,1)*fx(i) - tg(2,2)*fy(i) - tg(2,3)*fz(i) )
        g(i33)= (- tg(3,1)*fx(i) - tg(3,2)*fy(i) - tg(3,3)*fz(i) )
     end do
-
+ 
+    f = pe + simparam%press*vol
 
     nm3 = 3*simparam%nm
     if(simparam%ivol.lt.1.or.simparam%ivol.eq.4) then
@@ -275,22 +303,21 @@ contains
              nm3=nm3+1
              !  this line applies the grain boundary boundary condition
              if(simparam%ivol.eq.4.and.(i*j).ne.9) cycle
-             g(nm3) = (-tp(i,j)+simparam%press*tc(i,j) )
-             !  orthogonal box
-             !        g(nm3)=0
-             !       if(i.eq.j) g(nm3) = (-tp(i,j)+press*tc(i,j) )
+      g(nm3) = -tp(i,j) + simparam%press*tc(i,j) 
+!! if(i.eq.j)   write(*,*)-tp(i,j),(-vol**(-0.333333333)*sum((/(b0(j,k)*(tp(i,k)),k=1,3)/))),simparam%press*tc(i,j),b0(i,j), vol, f,pe
           end do
        end do
     endif
-    write(unit_stdout,1359)pe/simparam%nm,vol/simparam%nm
-1359 format(' COHESIVE ENERGY ',d16.8, 'VOLUME',d16.8 )
+
+
+    write(unit_stdout,1359)pe/simparam%nm,vol/simparam%nm,simparam%press*press_to_gpa,f
+1359 format(' COHESIVE ENERGY ',d24.14, ' V= ',d14.6, ' P= ',d12.4, "H= ",d15.6)
     !! write stress
     do i=1,3
-        write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*(tk(i,k)+tp(i,k)),k=1,3)/))/vol*press_to_gpa,j=1,3)
- 99    format("STRESS I=",I2, 3e14.6," GPa")       
+        write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*(tp(i,k)),k=1,3)/))/vol*press_to_gpa,j=1,3)
+ 99    format("STRESS(no KE) I=",I2, 3e14.6," GPa")       
     end do
 
-    f = pe + simparam%press*vol
 
     return
   end subroutine derivs
@@ -338,13 +365,13 @@ SUBROUTINE VA14CD(FUNCT,N,F,DFN,ACC)
       MAXFNK=0
       FMIN=0.0D0
       DGINIT=0.0D0
-      XMIN=0.0
-      FINIT=0.0
-      GSINIT=0.0
-      GMIN=0.0
-      GM=0.0
-      XBOUND=0.0
-      CLT =0.0
+      XMIN=0.0d0
+      FINIT=0.0d0
+      GSINIT=0.0d0
+      GMIN=0.0d0
+      GM=0.0d0
+      XBOUND=0.d0
+      CLT =0.d0
       GNEW = 00.0D0
       GGSTAR = 0.0D0
       BETA = 0.0D0
@@ -463,9 +490,9 @@ SUBROUTINE VA14CD(FUNCT,N,F,DFN,ACC)
   320 IRETRY=-IRETRY
       IF (MIN0(IRETRY,MAXFNK).GE.2) GO TO 20
       WRITE (unit_stdout,330)GSUMSQ,ACC,F,FMIN
-  330 FORMAT (/5X,' ERROR RETURN FROM SUBROUTINE VA14AD '/5X, &
+  330 FORMAT (/5X,' POSSIBLE CONJUGATE GRADIENT ERROR SUBROUTINE VA14AD '/5X, &
            & ' IT MAY BE DUE TO A MISTAKE IN THE DEFINITION OF THE GRADIENT' &
-           & /5X,'OR DUE TO A SMALL VALUE OF THE PARAMETER ACC'/5X,E10.3, &
+           & /5X,'OR DUE TO A SMALL VALUE OF THE HARDCODED PARAMETER ACC'/5X,E10.3, &
            & '<',E10.3/5X,'Enthalpy is F=',E16.8, 'Lowest yet FMIN=',E16.8)
       noerr = noerr+1
       if (noerr.lt.5) GO TO 20

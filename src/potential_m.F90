@@ -402,16 +402,16 @@ contains
 
     integer :: i, j, ix
     integer :: nbccit
-    real(kind_wp) :: x1b, x2b, x3b, x4b, x5b, x6b
+    real(kind_wp) :: x1b, x2b, x3b, x4b, x5b, x6b, x7b, x8b, x2a
     real(kind_wp) :: cc
-    real(kind_wp) :: dembo, ecbccb, ecc, ecr
+    real(kind_wp) :: dembo, ecbccb, ecfcc, echcp, ecc, ecr
     real(kind_wp) :: presbc, presbr
-    real(kind_wp) :: sp1, sp2, sp3, sp4, sp5, sp6
-    real(kind_wp) :: vcc, vp1, vp2, vp3, vp4, vp5, vp6
+    real(kind_wp) :: sp1, sp2, sp3, sp4, sp5, sp6, sp7 
+    real(kind_wp) :: vcc, vp1, vp2, vp3, vp4, vp5, vp6, vp7
     real(kind_wp) :: ECFCCB
     !! some plotting parameters
     integer, parameter :: npoints=1000                  !< number of points to plot
-    real(kind_wp), parameter :: rminplot=0.5_kind_wp   !< minimum plotting radius (overrides rmin)
+    real(kind_wp), parameter :: rminplot=1.5_kind_wp   !< minimum plotting radius (overrides rmin)
     integer :: ounit
 
     !! dummy variables
@@ -485,9 +485,69 @@ contains
                   12*(x3b/x1b)*dphi(x3b,ni,nj) +       &
                   24*(x4b/x1b)*dphi(x4b,ni,nj) +       &
                   8*(x5b/x1b)*dphi(x5b,ni,nj))
+
+
+!  Fcc at the same volume
+
+             x2a=  x2b* 2d0**(0.3333333333)
+             x1b = x2a/sqrt(2.0d0)
+             x3b = x1b*sqrt(3.0d0)
+             x4b = x1b*2d0
+             x5b = x1b*sqrt(5d0)
+
+             vp1=vee(x1b,ni,nj)
+             vp2=vee(x2a,ni,nj)
+             vp3=vee(x3b,ni,nj)
+             vp4=vee(x4b,ni,nj)
+             vp5=vee(x5b,ni,nj)
+             
+             sp1=phi(x1b,ni,nj)
+             sp2=phi(x2a,ni,nj)
+             sp3=phi(x3b,ni,nj)
+             sp4=phi(x4b,ni,nj)
+             sp5=phi(x5b,ni,nj)
+
+             ecr = 6.0*vp1 + 3.0*vp2 +  12.0*vp3 + 6.0*vp4  + 12.0*sp5
+             cc  = 12.0*sp1 + 6.0*sp2 + 24.0*sp3 + 12.0*sp4 + 24.0*sp5
+             ecc=emb(cc,ni)
+             dembo=demb(cc,ni)
+             ecfcc=ecr+ecc
+
+! hcp ideal c/a - same x2a
+
+             x1b = x2a/sqrt(2.0d0)
+             x3b = x1b*sqrt(8.0d0/3.0d0)
+             x4b = x1b*sqrt(3.0d0)
+             x5b = x1b*sqrt(11.0d0/3.0d0)
+             x6b = x1b*2d0
+             x7b = x1b*sqrt(5d0)
+             x8b = x1b*sqrt(17.0d0/3.0d0)
+             
+             vp1=vee(x1b,ni,nj)
+             vp2=vee(x2a,ni,nj)
+             vp3=vee(x3b,ni,nj)
+             vp4=vee(x4b,ni,nj)
+             vp5=vee(x5b,ni,nj)
+             vp6=vee(x6b,ni,nj)
+             vp7=vee(x7b,ni,nj)
+             
+             sp1=phi(x1b,ni,nj)
+             sp2=phi(x2a,ni,nj)
+             sp3=phi(x3b,ni,nj)
+             sp4=phi(x4b,ni,nj)
+             sp5=phi(x5b,ni,nj)
+             sp6=phi(x6b,ni,nj)
+             sp7=phi(x7b,ni,nj)
+
+             ecr = 6.0*vp1 + 3.0*vp2 +  1.0*vp3 + 9.0*vp4  + 6.0*vp5 + 3.0*vp6+9.0*vp7
+             cc  = 12.0*sp1 + 6.0*sp2 + 2.0*sp3 + 18.0*sp4 + 12.0*sp5 +6.0*sp6+18.0*sp7
+             ecc=emb(cc,ni)
+             dembo=demb(cc,ni)
+             echcp=ecr+ecc
+            
+
              write(ounit,55) x2b,&
-       vee(x2b,ni,nj),dvee(x2b,ni,nj),phi(x2b,ni,nj),dphi(x2b,ni,nj)
-          !!, ecbccb,presbr,presbc,dembo
+       vee(x2b,ni,nj),dvee(x2b,ni,nj),phi(x2b,ni,nj),dphi(x2b,ni,nj),ecbccb,ecfcc,echcp !!presbr,presbc,dembo
 55           format(9e15.7)
           enddo
           
