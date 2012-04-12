@@ -650,7 +650,7 @@ program moldyv2
 
 
            !!begin MD
-           if(simparam%iverlet.eq.1)then
+           if(simparam%iverlet.ge.1)then
                call velocityverlet(simparam%deltat)
             else
               CALL PREDIC
