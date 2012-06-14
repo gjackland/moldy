@@ -541,7 +541,6 @@ program moldyv2
      mdloop: do istep=simparam%prevsteps+1,simparam%laststep
 
    
-  
    
 		if((simparam%iverlet .eq. 2) .and.( simparam%deltat .ge. equilibrium_dt*0.7) ) then
 	   		simparam%iverlet = 1

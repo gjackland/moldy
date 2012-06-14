@@ -461,7 +461,9 @@ contains
           !! pair potential pp  
           pp = vee_src(r,atomic_number(i),atomic_number(nlist_ji))
           !! accumulate the potential energy
-          en_atom(i)=en_atom(i)+PP/2.d0          
+          !$OMP atomic
+          en_atom(i)=en_atom(i)+PP/2.d0 
+          !$OMP atomic         
           en_atom(nlist_ji)=en_atom(nlist_ji)+PP/2.d0          
 
        end do neighbourloop
