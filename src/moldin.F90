@@ -232,6 +232,12 @@ program moldyv2
 !!  call get_available_potential_range(rmin,rcut)
 !!    call get_supported_potential_range(rmin,rcut)
 
+#ifdef FETRANSMETAL
+		!write(*,*) "calling set up for FETRANSMETAL"
+ 		call set_up
+#endif
+
+
 !!  simparam%rcut=rcut
     simparam%rnear=simparam%rcut+simparam%rpad
 
@@ -540,7 +546,7 @@ program moldyv2
 
      mdloop: do istep=simparam%prevsteps+1,simparam%laststep
 
-   
+   !write(*,*) istep !todo remove debug
    
 		if((simparam%iverlet .eq. 2) .and.( simparam%deltat .ge. equilibrium_dt*0.7) ) then
 	   		simparam%iverlet = 1
@@ -820,7 +826,7 @@ program moldyv2
     end if
 
       call energy_calc
-    
+    	
        !!write last checkpoint file
      if(simparam%nchkpt.gt.0)then
          call write_checkpoint_file
