@@ -74,7 +74,10 @@ module potential_m
   use cdau
 #endif
 !---------------------------------------------------------------------
-
+#ifdef FETRANSMETAL
+  use fetransmetal
+#endif
+!---------------------------------------------------------------------
 
   !! Modules this code depends upon
   use constants_m
@@ -92,6 +95,7 @@ module potential_m
   public :: phi, dphi    !< Cohesive potential
   public :: emb, demb    !< Embedding function
   public :: embed        !< Embedding function
+  public :: set_up  !<used by some modules to initialse potential
 
   !! Public interface to initialise the potentials
   public :: potin  !< Initialises the potentials
@@ -233,6 +237,22 @@ contains
     call free_lookup_table(demb_lookup_table)
 
   end subroutine cleanup_potential_lookups
+  
+  !----------------------------------------------------------------------------
+  !
+  !  set_up ( fetransmetal module)
+  !  MUST BE RUN BEFORE USING FETRANSMETAL MODULE
+  !  is conditionally implemented in moldin 
+  !  may be extended for other set_ups with relevant #ifdef tags
+  !
+  !----------------------------------------------------------------------------
+  subroutine set_up
+#ifdef FETRANSMETAL
+  call set_up_m
+#endif
+  	
+  end subroutine
+  
 
   !----------------------------------------------------------------------------
   !
@@ -636,8 +656,9 @@ contains
   subroutine get_potential(spnum,spna,range,ierror)
     integer, intent(IN) :: spnum       !< number or entries in spna
     integer, intent(IN) :: spna(spnum) !< cross reference to atomic numbers
-    integer, intent(OUT) :: ierror
+    integer, intent(OUT) :: ierror  
     real(kind_wp),  intent(OUT) :: range  ! potential range
+     
     call check_supported_atomic_numbers(spnum,spna,range,ierror)
   end subroutine get_potential
  

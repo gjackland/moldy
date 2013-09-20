@@ -72,7 +72,7 @@ contains
   !--------------------------------------------------------------
   subroutine read_system
 
-    integer :: i, j, k, l         !< dummy variables
+    integer :: i, j, k, l  ,l1,l2       !< dummy variables
     integer :: i0, j0, k0, ib
     integer :: istat              !< allocation status
     integer :: nbasis             !< Number of basis atoms to read from input file
@@ -115,15 +115,57 @@ contains
          open(unit_stdout,file=file_textout,status='unknown')
     write(unit_stdout,*)" STRUCTURE READ IN ", nbasis , " BASIS ATOMS;", &
          product(nt), " CELLS;",    nbasis*product(nt), "  ATOMS."
-
-    !< Read basis atom positions and species
-    i=0 !used as index to ispec (species index) array
-    do ib=1,nbasis
-       !Read in new basis atom line
+	write(*,*) "nbasis", nbasis
+	do ib=1,nbasis
+	   !Read in new basis atom line
        read(unit_system,*) x0b(ib),y0b(ib),z0b(ib),atomic_number(ib),atomic_mass(ib)
+	enddo
+	
+    !< Read basis atom positions and species
+    i=1 !used as index to ispec (species index) array
+      !set atomic number in the ispec array
+      ispec(1)=atomic_number(1)
+      !set the ispec index in atomic_index
+      atomic_index(1)=1
+      !announce the newly encountered species
+      write(stderr,*) i,": ISPEC=",i,"ATOMIC_NUMBER=",atomic_number(i)
+    
+#ifdef FETRANSMETAL
+ !if transmetals force all elements to be read
+	i=24
+	ispec(1:24) = (/ 22,23,24,25,26,27,28,29, &
+					 40,41,42,43,44,45,46,47, &
+					 72,73,74,75,76,77,78,79 /)
+			!safty check
+			do l1=1,nbasis
+				do l2=1,25
+					if(l2 .eq. 25) then
+						write(*,*) "Error: using an invalid element for this potential set." 
+						write(*,*) "May only use system of mainly Fe with trace of 22-29,40-47,72-79 atomic numbers"
+						write(*,*) "Invalid atomic number:",atomic_number(l1)
+						write(*,*) "SYSTEM STOP" 
+						call EXIT(-1)
+					end if
+		            if(ispec(l2).eq.atomic_number(l1)) then
+		          		 exit
+		            end if      
+		        enddo
+			enddo
+			!set correct index for element one
+			do l1=1,24
+                if(ispec(l1).eq.atomic_number(1)) then
+              		 atomic_index(1)=l1
+              		 exit
+                end if             
+             end do 
+            
+               
+#endif
+    do ib=2,nbasis
+     
 
        !increment ispec if detecting a previously unencountered species
-       if(ib.gt.1)then
+       
           if(atomic_number(ib).ne.atomic_number(ib-1))then
              !search through the ispec (species index) array for a match
              found_species_match=.false.
@@ -148,17 +190,12 @@ contains
           else !species is the same as that of the previous particle
              atomic_index(ib)=atomic_index(ib-1)
           end if
-       else
-          !increment ispec array index          
-          i=i+1
-          !set atomic number in the ispec array
-          ispec(i)=atomic_number(ib)
-          !set the ispec index in atomic_index
-          atomic_index(ib)=i
-          !announce the newly encountered species
-          write(stderr,*) ib,": ISPEC=",i,"ATOMIC_NUMBER=",atomic_number(ib)
-       end if
+       
+         
+   
     enddo
+    
+   
 
 
     !check nspec if it's already specified 

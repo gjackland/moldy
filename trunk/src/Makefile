@@ -44,6 +44,7 @@ MATERIAL= -DIRON_CARBON
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
+#MATERIAL= -DFETRANSMETAL
 
  EXE=    ../build/moldy.fec
 
@@ -81,7 +82,7 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
 #OMPFLAGS= -mp
-#OMPFLAGS = -fopenmp # For gfortran
+OMPFLAGS = -fopenmp # For gfortran
 #OMPFLAGS -openmp [1]
 
 #Debugging
@@ -139,6 +140,7 @@ F90SRC= \
         morse.F90 \
         CdAu.F90 \
         pairpot.F90 \
+    fetransmetal.F90\
 	potential_m.F90
 
 
@@ -208,11 +210,11 @@ quench_m.o: params_m.o  system_m.o  constants_m.o \
 
 neighbourlist_m.o:  linkcell_m.o parrinellorahman_m.o
 
-potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o generic_atvf.o  
+potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o generic_atvf.o  fetransmetal.o
 
 timers_m.o: debug_m.o constants_m.o
 
-lookup_m.o: constants_m.o generic_atvf.o iron_carbon.o zirconium.o
+lookup_m.o: constants_m.o generic_atvf.o iron_carbon.o zirconium.o fetransmetal.o
 
 parrinellorahman_m.o analysis_m.o particles_m.o linkcell_m.o: constants_m.o params_m.o
 
