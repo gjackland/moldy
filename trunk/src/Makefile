@@ -43,12 +43,6 @@ MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
-#MATERIAL= -DZIRCONIUM
-#MATERIAL= -DGENERIC_ATVF
-#MATERIAL= -DLENNARDJONES
-#MATERIAL= -DMORSE 
-#MATERIAL= -DCDAU  
-#MATERIAL= -DFETRANSMETAL
 
  EXE=    ../build/moldy.atvf
 
@@ -71,8 +65,8 @@ MATERIAL= -DGENERIC_ATVF
 #FC=     pgf90 -fast -Mipa=fast,inline -tp x64
 #FC=     pgf90 -O2 -Munroll=c:1 -Mnoframe -Mlre  -Mvect=sse -Mscalarsse -Mcache_align -Mflushz
 #FC=     pgf90 -O2 -Munroll=c:1 -Mnoframe -Mlre -Mscalarsse -Mcache_align -Mflushz -Mbounds
-# FC=     pgf90
-#FC=     mpif90 -O4 -finit-local-zero
+#FC=     pgf90
+#FC=     mpif90 -O4
 #FC=     xlf90 -O4 -qfree
 #FC=     ifort -O2
 #FC=     f95 -O2
@@ -144,7 +138,6 @@ F90SRC= \
         morse.F90 \
         CdAu.F90 \
         pairpot.F90 \
-    fetransmetal.F90\
 	potential_m.F90
 
 
@@ -215,7 +208,7 @@ quench_m.o: params_m.o  system_m.o  constants_m.o \
 
 neighbourlist_m.o:  linkcell_m.o parrinellorahman_m.o
 
-potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o generic_atvf.o  fetransmetal.o
+potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o generic_atvf.o  
 
 timers_m.o: debug_m.o constants_m.o
 
