@@ -64,11 +64,6 @@ nlcy      = 3        # Number of link cells to construct in y direction
 nlcz      = 3        # Number of link cells to construct in z direction
 
 
-### Current state counts - useful for continuing simulations ###
-prevsteps = 0        # Number of timesteps done already (previously)
-lastprint = 0        # Number of timesteps since last printing of run averages
-lastchkpt = 0        # Number of timesteps since last checkpoint
-
 # Logical variable determining whether output is written to
 # stream NTAPE: If T, the output file can get very big.
 dumpx1  = .False.

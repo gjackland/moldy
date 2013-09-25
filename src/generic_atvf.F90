@@ -83,10 +83,6 @@ module generic_atvf
   public :: get_supported_potential_range  !< returns the valid separation range
   public :: check_supported_atomic_numbers !< checks a given range of atomic numbers (and loads them (generics))
   
- !! Sommerfeld temperature dependent term
-  real(kind_wp)::ATT=-0.0,som_rcut,som_width
-  real(kind_wp)::ATTEMP=0.0
-
   !! User Attention: Specify the default number of points to use in lookup tables
   integer, parameter, public :: nlookup_default=5000
 
@@ -122,11 +118,6 @@ contains
     integer, intent(in) :: na2      !< atomic number atom 2
     integer :: i                    !< loop variable
 
-!!  Data for Sommerfeld correction
-   type(simparameters) :: simparam  !< simulation parameters
-   simparam=get_params()
-    ATTEMP = simparam%temprq !get_temp()   !
-
     !! compute the pairwise potential  
     vee_src=0.d0
     if(r.gt.bier_cut2) then
@@ -141,12 +132,6 @@ contains
     elseif(r.lt.bier_cut1)then
       vee_src= biersack(r, na1, na2)
     endif
-
-      if(som_width.gt.0.0d0) X=(r-som_rcut)/som_width
-      IF(X.gt.0.0.and.x.lt.1.0) THEN
-       VEE_SRC=ATT*ATTEMP*ATTEMP*(X*(1d0-X))**2+VEE_SRC 
-      ENDIF
-
    return
 
   end function vee_src
@@ -163,10 +148,6 @@ contains
     integer, intent(in) :: na1      !< atomic number atom 1
     integer, intent(in) :: na2      !< atomic number atom 2
     integer :: i                    !< loop variable
-!!  Data for Sommerfeld correction
-   type(simparameters) :: simparam  !< simulation parameters
-   simparam=get_params()
-     ATTEMP = simparam%temprq
 
     !! compute the pairwise potential derivative
     dvee_src=0.d0
@@ -182,18 +163,8 @@ contains
     elseif(r.lt.bier_cut1)then
       dvee_src= dvee_biersack(r, na1, na2)
     endif
-!  Sommerfeld term
-      if(som_width.gt.0.0d0)then 
-       X=(r-som_rcut)/som_width
-      IF(X.gt.0.0.and.x.lt.1.0) THEN
-       DVEE_SRC=ATT*ATTEMP*ATTEMP*X*(2d0-6d0*x+4d0*x*x)/som_width+DVEE_SRC 
-      ENDIF
-     endif
     return
-
-
   end function dvee_src
-  
 
   !----------------------------------------------------------------------------
   !
@@ -668,24 +639,11 @@ function dexpjoin(a1,x1,v1,a2,x2,v2,r)
          end do
 !! set maximum range of any potential
          range=max(rmax(i,j),range)
-         write(*,1104)na1,na2, rmax(i,j), range, bier_cut1, bier_cut2
- 1104  format(2I4, ' range (max) ', 2f10.4,  '; Biersack core spline between '  , 2F10.6)
+!!         write(*,1104)na1,na2, rmax(i,j), range, bier_cut1, bier_cut2
+!! 1104  format(2I4, ' range (max) ', 2f10.4,  '; Biersack core spline between '  , 2F10.6)
 
     end do
     end do
-
-
-         iunit=newunit()
-!! attempt to read sommerfeld correction, GOTO 105 if file absent
-          open(unit=iunit,file="sommerfeld.in",status='old',action='read',err=105)
-          read(iunit,*,err=105)som_rcut,som_width,ATT
-          simparam%lsomer = .true.
-          write(*,987)"Using Sommerfeld correction" ,som_rcut,som_width,ATT,simparam%temprq, simparam%lsomer 
- 987    format(A30,2f8.4,e14.6,f14.2,l2)
-          close(iunit)
-    !! successful return points
-    return
-105  write(stderr,*) "No Sommerfeld Correction: GJA 2011"
     return 
     !! i/o error conditions
 101 write(stderr,*) "File not found: ","pot_"//a3_na1//"_"//a3_na2//".in"

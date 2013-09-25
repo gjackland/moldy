@@ -17,7 +17,7 @@ file_dumpx1          = dumpx1.dat       # large dump datafile (each iteration fo
 ### Key physical parameters ###
 boxmass = 5.        # Mass of the box in units of A.M.U. per constituent particle
 deltat  = 1.0d0       # Timestep in fS
-rpad    = 1.0d0      # Padding thickness over potential cutoff (for link cell)
+rpad    = 0.0d0      # Padding thickness over potential cutoff (for link cell)
 temprq  = 10.d0     # Required temperature in the MD in Kelvin
                      #   (note that the program puts all the energy into
                      #   kinetic modes initially. Equipartition with potential
@@ -27,9 +27,9 @@ press   = 0.0        # Required external pressure in GPa
 ivol    = 0          # Switch between constant pressure(0), constant volume(1),
                      #   free-surface-on-z, constant-volume-on-x&y (2), cluster (3),
                      #   grain boundary (cp-on-z, cv-on-xy) (4)
-iquen   = 2          # Switch between Molecular Dynamics(0) and Molecular Statics(1)
+iquen   =  2          # Switch between Molecular Dynamics(0) and Molecular Statics(1)
 nose    = 0	      # Softness of damping force in the Nose thermostat
-dsp     = 0.0d0       # Random displacement from input particle positions (in Angstroms)
+dsp     = 0.20d0       # Random displacement from input particle positions (in Angstroms)
 
 ### Strain tensor in one unrolled 9 element value
 straintensor      = 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0
@@ -52,7 +52,7 @@ restart   = 0        # Switch defining type of run:
                      #      1 => old coordinates, old velocities
 nprint    = 100      # Frequency of printing of thermodynamic averages
 nchkpt    = 1000     # Frequency with which to checkpoint
-nnbrs     = 150      # Maximum number of neighbours a particle may have
+nnbrs     = 140      # Maximum number of neighbours a particle may have
 tjob      = 2000      # Amount of CPU time allowed for the job (in seconds)
 tfinalise = 5        # Amount of time needed to write results and run one more
                      #   timestep before the CPU time is up
@@ -62,16 +62,11 @@ nlcy      = 3        # Number of link cells to construct in y direction
 nlcz      = 3        # Number of link cells to construct in z direction
 
 
-### Current state counts - useful for continuing simulations ###
-prevsteps = 0        # Number of timesteps done already (previously)
-lastprint = 0        # Number of timesteps since last printing of run averages
-lastchkpt = 0        # Number of timesteps since last checkpoint
-
 # Logical variable determining whether output is written to
 # stream NTAPE: If T, the output file can get very big.
 dumpx1  = .False.
 uselookup = .False.
-
+write_rdf = .True.
 ###END OF INPUT###
 #
 #

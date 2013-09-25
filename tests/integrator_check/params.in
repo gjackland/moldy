@@ -16,7 +16,7 @@ file_checkpointwrite = chkp_out.dat     # Output checkpoint file
 file_dumpx1          = dumpx1.dat       # large dump datafile (each iteration for movies etc)
 ### Key physical parameters ###
 boxmass = 50.        # Mass of the box in units of A.M.U. per constituent particle
-deltat  = 1.0d0       # Timestep in fS
+deltat  = 2.0d0       # Timestep in fS
 rpad    = 1.0d0      # Padding thickness over potential cutoff (for link cell)
 temprq  = 1800.d0     # Required temperature in the MD in Kelvin
                      #   (note that the program puts all the energy into
@@ -31,7 +31,7 @@ iquen   = 0          # Switch between Molecular Dynamics(0) and Molecular Static
 nose    = 0			# Softness of damping force in the Nose thermostat
 dsp     = 0.0d0      # Random displacement from input particle positions (in Angstroms)
 
-### Strain tensor in one unrolled 9 element value
+### Strain tensor in one unrolled 9 element value 
 straintensor      = 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0
 ### - or alternatively - this can be 3 elements each in 3 of rows (as you would write it)
 straintensor_row1 = 1.000 0.0 0.0
@@ -43,7 +43,7 @@ nm      = 31250		# Confirm number of particles (needs to be NM * nx * ny * nz )
 nspec   = 1          # Confirm number of distinct species
 
 ### Key simulation parameters ###
-nsteps    = 10000      # Number of timesteps to be done in this run or
+nsteps    = 20000      # Number of timesteps to be done in this run or
                      #     number of calculations in quench (0 = keep trying)
 nbrupdate = 2000		# Frequency of updating list of neighbours
 strainloops    = 1      # Number of iterative loops around the whole program

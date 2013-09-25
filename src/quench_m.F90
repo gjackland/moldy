@@ -131,10 +131,10 @@ contains
 
     !! Harwell subroutine library's VA14CD
     dfn = 0.1d0
-    acc= 5.0d-9*simparam%NM !! accuracy depends on number of atoms 
+    acc= 5.0d-7*simparam%NM !! accuracy depends on number of atoms 
     call va14cd(derivs,nvari,f,dfn,acc)
  write(unit_stdout,1359)pe/simparam%nm,vol/simparam%nm,simparam%press*press_to_gpa,f/simparam%nm
-1359 format('FINAL U= ',d18.10, ' V= ',f10.6, ' P= ',d12.4, " H= ",d13.7)
+1359 format('FINAL U= ',d18.10, ' V=',f10.6, ' P=',d12.4, " H=",d13.7)
 
     !! sync params after va14cd
     call set_params(simparam)
@@ -163,9 +163,9 @@ contains
 
     do i=1,nmat
        do j=1,nmat
-          b1(i,j)=0.0
-          b2(i,j)=0.0
-          b3(i,j)=0.0
+          b1(i,j)=0.d0
+          b2(i,j)=0.d0
+          b3(i,j)=0.d0
        end do
     end do
 
@@ -174,26 +174,26 @@ contains
 
 
     do i=1,simparam%nm
-       x1(i)=0.0
-       y1(i)=0.0
-       z1(i)=0.0
-       x2(i)=0.0
-       y2(i)=0.0
-       z2(i)=0.0
-       x3(i)=0.0
-       y3(i)=0.0
-       z3(i)=0.0
-!!       if(simparam%ivol.lt.3) x0(i)=x0(i)-aint(2.0*x0(i))
-!!       if(simparam%ivol.lt.3) y0(i)=y0(i)-aint(2.0*y0(i))
-!!       if(simparam%ivol.lt.2.or.simparam%ivol.ge.4) z0(i)=z0(i)-aint(2.0*z0(i))
+       x1(i)=0.d0
+       y1(i)=0.d0
+       z1(i)=0.d0
+       x2(i)=0.d0
+       y2(i)=0.d0
+       z2(i)=0.d0
+       x3(i)=0.d0
+       y3(i)=0.d0
+       z3(i)=0.d0
+!!       if(simparam%ivol.lt.3) x0(i)=x0(i)-aint(2.d0*x0(i))
+!!       if(simparam%ivol.lt.3) y0(i)=y0(i)-aint(2.d0*y0(i))
+!!       if(simparam%ivol.lt.2.or.simparam%ivol.ge.4) z0(i)=z0(i)-aint(2.d0*z0(i))
 
     end do
     call set_temp(0.0_kind_wp)
-    ke=0.0
+    ke=0.d0
     te=ke+pe
-    boxke=0.0
+    boxke=0.d0
 
-    simparam%boxtem=0.0
+    simparam%boxtem=0.d0
 
     call set_params(simparam)
 
@@ -310,8 +310,8 @@ contains
     endif
 
 
-    write(unit_stdout,1359)pe/simparam%nm,vol/simparam%nm,simparam%press*press_to_gpa,f
-1359 format(' COHESIVE ENERGY ',d24.14, ' V= ',d14.6, ' P= ',d12.4, "H= ",d15.6)
+    write(unit_stdout,1359)pe/simparam%nm,vol/simparam%nm,simparam%press*press_to_gpa,f/simparam%nm
+1359 format(' COHESIVE ENERGY ',d21.14, ' V= ',d12.6, ' P= ',d10.4, " H= ",d12.6)
     !! write stress
     do i=1,3
         write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*(tp(i,k)),k=1,3)/))/vol*press_to_gpa,j=1,3)

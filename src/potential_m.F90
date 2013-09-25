@@ -1,7 +1,7 @@
 !!========================================================================
 !!
 !! MOLDY - Short Range Molecular Dynamics
-!! Copyright (C) 2009 G.Ackland, K.D'Mellow, University of Edinburgh.
+!! Copyright (C) 2009 G.J.Ackland, K.D'Mellow, University of Edinburgh.
 !! Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604 
 !!
 !! This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 !! Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 !!
 !! You can contact the authors by email on g.j.ackland@ed.ac.uk
-!! or by writing to Prof. G Ackland, School of Physics, JCMB,
+!! or by writing to Prof. G.J. Ackland, School of Physics, JCMB,
 !! University of Edinburgh, Edinburgh, EH9 3JZ, UK.
 !!
 !!========================================================================
@@ -60,6 +60,10 @@ module potential_m
 !-----------------------
 #ifdef GENERIC_ATVF
   use generic_atvf
+#endif
+!-----------------------
+#ifdef TDEP_ATVF
+  use tdep_atvf
 #endif
 !---------------------------------------------------------------------
 #ifdef LENNARDJONES
@@ -423,7 +427,7 @@ contains
     integer :: i, j, ix
     integer :: nbccit
     real(kind_wp) :: x1b, x2b, x3b, x4b, x5b, x6b, x7b, x8b, x2a
-    real(kind_wp) :: cc
+    real(kind_wp) :: cc, rhox
     real(kind_wp) :: dembo, ecbccb, ecfcc, echcp, ecc, ecr
     real(kind_wp) :: presbc, presbr
     real(kind_wp) :: sp1, sp2, sp3, sp4, sp5, sp6, sp7 
@@ -459,11 +463,10 @@ contains
 
           !! don't plot down to zero
           rmin=max(rmin,rminplot)
-          
           !! plot across the valid range of the potential
           do ix = 1,npoints
-             
-             x1b =  rmin+(ix*(rmax-rmin))/npoints
+                       
+             x1b =  2.0+(ix*(rmax-rmin))/npoints
              x2b =  x1b*(2.0/sqrt(3.0d0))
              x3b =  x2b*sqrt(2.0d0)
              x4b =  x1b*sqrt(11.0/3.0)
@@ -561,14 +564,14 @@ contains
 
              ecr = 6.0*vp1 + 3.0*vp2 +  1.0*vp3 + 9.0*vp4  + 6.0*vp5 + 3.0*vp6+9.0*vp7
              cc  = 12.0*sp1 + 6.0*sp2 + 2.0*sp3 + 18.0*sp4 + 12.0*sp5 +6.0*sp6+18.0*sp7
-             ecc=emb(cc,ni)
              dembo=demb(cc,ni)
              echcp=ecr+ecc
             
 
-             write(ounit,55) x2b,&
-       vee(x2b,ni,nj),dvee(x2b,ni,nj),phi(x2b,ni,nj),dphi(x2b,ni,nj),ecbccb,ecfcc,echcp !!presbr,presbc,dembo
+             write(ounit,55) x1b,&
+    vee(x1b,ni,nj),    phi(x1b,ni,nj),  vee(x1b,ni,nj) + phi(x1b,ni,nj)/ecc, dphi(x1b,ni,nj) , dvee(x1b,ni,nj),ecbccb,ecfcc,echcp !!presbr,presbc,dembo
 55           format(9e15.7)
+             write(56,*)x2b, cc, ecc, dembo
           enddo
           
 !!$          !<  Evaluate perfect b.c.c. energy 
