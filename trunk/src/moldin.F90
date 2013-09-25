@@ -152,7 +152,6 @@ program moldyv2
   !! Local copy of thermodynamic sums
   type(thermodynamic_sums) :: thmsums       !< thermodynamic sums
   real(kind_wp) :: s1,s2,s3                 !< local copies of correc arguments
-  real(kind_wp), allocatable :: ax0(:),ay0(:),az0(:)              !< local copies of mean positions
   real(kind_wp):: boxke
 
   !! Declarations that need moving (todo: revisit and factor into p-r)
@@ -341,10 +340,11 @@ program moldyv2
         call set_params(simparam)
 
         !!write out some header
-        write(unit_stdout,33) &
-             simparam%restart,simparam%title1,simparam%title2
-33      format(10X,'CONTINUE EQUILIBRATION'/' ',10X,'RUN NO.',T50, &
-             & I3//' ',10X,'TITLE OF PREVIOUS RUN'/' ',10X,A72/' ',10X,A72///)
+        write(unit_stdout,33)    simparam%restart,simparam%title1, &
+             &    simparam%title2,simparam%prevsteps,simparam%laststep
+33      format(10X,'CONTINUATION NEW VELOCITY'/' ',10X,'RUN NO.',T50, &
+             & I3//' ',10X,'TITLE OF PREVIOUS RUN'/' ',10X,A72/' ',10X,A72/ &
+             & "prevsteps=",I10,"laststep=",I10)
         
      case(1) ! use restart positions and velocities from checkpoint file
 
@@ -370,16 +370,17 @@ program moldyv2
         !! commit simulation parameters after read and changes
         call set_params(simparam)
         !!write out some header
-        write(unit_stdout,34) &
-             simparam%restart,simparam%title1,simparam%title2
+        write(unit_stdout,34) simparam%restart,simparam%title1,  &
+             &  simparam%title2,simparam%prevsteps,simparam%laststep
 34      format(10X,'CONTINUE PRODUCTION'/' ',10X,'RUN NO.',T20,I3/ &
-             & 10X,'TITLE OF PREVIOUS RUN'/' ',10X,A72/' ',10X,A72///)
+             & 10X,'TITLE OF PREVIOUS RUN'/' ',10X,A72/' ',10X,A72/ &
+             &  "prevsteps=",I10,"laststep=",I10)
         
      end select
      
 
      
-     !in case of restart ensure that no data carries over
+     !in case of reset option on restart ensure that no data carries over
      if(simparam%reset .and. (simparam%restart .ne. 0)) then
      
      	
@@ -537,7 +538,7 @@ program moldyv2
      
         !! either quench, or perform MD.
         if (simparam%iquen.eq.1) then
-           write(*,*)simparam%press*press_to_gpa
+           write(*,*)"Pressure: ", simparam%press*press_to_gpa, "GPa"
 	   call set_params(simparam)
            call init_quench_m
            call quench
@@ -704,7 +705,7 @@ program moldyv2
            close(simparam%ntape)
         end if
 
-        if(simparam%nprint.ge.10) then
+        if(simparam%nprint.ge.10.and.simparam%nprint.le.simparam%nsteps) then
         if(mod(simparam%lastprint,simparam%nprint/10).eq.0)then
         !! calculate sums of thermodynamic quantities ten times between printouts
               call update_thermodynamic_sums
@@ -717,8 +718,9 @@ program moldyv2
            if(mod(simparam%lastchkpt,simparam%nchkpt).eq.0)then
               simparam%lastchkpt=0
               call write_checkpoint_file
+         call write_energy_forces_stress()
               
-              !!turning the below  5 lines on will output information about the system to redable files
+              !!turning the below  5 lines on will output information about the system to readable files
               !every time a checkpoint is made, can generate a fair amount of data
              ! if(adjust_time_was_on) then 
              ! 	 file_counter = int(1000*modelruntime/fs)
@@ -759,13 +761,7 @@ program moldyv2
         ip = simparam%nposav+istep-simparam%laststep
         if(ip.le.0.or.simparam%iquen.eq.1)cycle mdloop
 !!  set up average counter
-        if(ip.eq.1)then
-        if(iter.eq.1)allocate(ax0(simparam%nm),ay0(simparam%nm),az0(simparam%nm))
-              ax0=0.0
-              ay0=0.0
-              az0=0.0
-        endif
-              call  posavs(ip,ax0,ay0,az0)
+              call  posavs(ip)
          !! quit MD-Loop
      end do mdloop
 
@@ -848,8 +844,8 @@ program moldyv2
        do  i=1,nmat
          WRITE(unit_posavs,*) (b0(j,i),j=1,nmat)              
        end do
-         WRITE(unit_posavs,321) (AX0(I),AY0(I),AZ0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),rho(I),I=1,simparam%NM)
-321     FORMAT(3f11.5,3X,I3,2X,3f11.5)
+         WRITE(unit_posavs,321) (AX0(I),AY0(I),AZ0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),I=1,simparam%NM)
+321     FORMAT(3f11.5,3X,I4,2X,2f11.5)
         close(unit_posavs)
       endif
 

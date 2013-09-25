@@ -59,6 +59,8 @@ module particles_m
   real(kind_wp), allocatable, public :: X1(:),Y1(:),Z1(:) !< Atomic velocity
   real(kind_wp), allocatable, public :: X2(:),Y2(:),Z2(:) !< Atomic acceleration
   real(kind_wp), allocatable, public :: X3(:),Y3(:),Z3(:) !< Atomic jolt
+  real(kind_wp), allocatable, public :: ax0(:),ay0(:),az0(:)      !<  mean positions
+
   real(kind_wp), allocatable, public :: AFRHO(:),DAFRHO(:),RHO(:)
   real(kind_wp), allocatable, public :: EN_ATOM(:)
   real(kind_wp), allocatable, public :: stressx(:), stressy(:), stressz(:) !< strees diagonal components
@@ -79,6 +81,7 @@ contains
     allocate(x1(simparam%nm),y1(simparam%nm),z1(simparam%nm),stat=istat)
     allocate(x2(simparam%nm),y2(simparam%nm),z2(simparam%nm),stat=istat)
     allocate(x3(simparam%nm),y3(simparam%nm),z3(simparam%nm),stat=istat)
+    allocate(ax0(simparam%nm),ay0(simparam%nm),az0(simparam%nm),stat=istat)
     allocate(atomic_number(simparam%nm),atomic_mass(simparam%nm),atomic_index(simparam%nm),stat=istat)
     allocate(afrho(simparam%nm),dafrho(simparam%nm),rho(simparam%nm),stat=istat)
     allocate(en_atom(simparam%nm),stat=istat)

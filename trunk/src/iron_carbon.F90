@@ -41,7 +41,8 @@ module iron_carbon
   use utilityfns_m
   implicit none
   private
- real(kind_wp), parameter :: acludge=0.0_kind_wp  !< maximum valid separation
+ real(kind_wp) :: acludge=0.0_kind_wp, rcludge=28.5d0  !< core softening
+ real(kind_wp) :: rx=257.0d0  ! cutoff in rho.  not very useful
 
 
   
@@ -70,7 +71,7 @@ real(kind_wp) :: join1=7.411957380630116d0 ,        &
        join4=  0.6263733940718166d0  
              
 real(kind_wp) :: pcut1=4.2d0,pcut2=3.2d0,pcut3=2.4d0
-real(kind_wp) :: ppar1=0.47193527075943d0,ppar2=0.01471074009883d0,ppar3=11.68685940797d0
+real(kind_wp) :: ppar1=0.47193527075943d0,ppar2=0.01471074009883d0,ppar3=  11.68685940797d0
 
   !! Public interface to this module (generally no need to change this)
   public :: vee_src  !< Fe-C pair potential
@@ -437,10 +438,13 @@ contains
     if (na1 == na_iron_ .and. na2 == na_iron_) then
        !!Iron-Iron
        !Cubic spline function with 3 terms:
-       phi_src = xH0(pcut1-r)*ppar1*(pcut1-r)**3    &
+!      if(r.lt.2.0d0) then
+!        phi_src =  5.7477056062657130  
+!      else
+        phi_src = xH0(pcut1-r)*ppar1*(pcut1-r)**3    &
             - xH0(pcut2-r)*ppar2*(pcut2-r)**3       &
-            + xH0(pcut3-r)*ppar3*(pcut3-r)**3
-
+            + xH0(pcut3-r)*ppar3*(pcut3-r)**3    
+!      endif 
     else if (na1 == na_carbon_ .and. na2 == na_carbon_) then
        !!Carbon-Carbon
        !Power spline function with 1 terms and maximum cutoff at x = 2.350400993501056:
@@ -517,11 +521,14 @@ contains
     if (na1 == na_iron_ .and. na2 == na_iron_) then
        !!Iron-Iron
        !Cubic spline function with 3 terms:
+!      if(r.lt.2.0d0) then
+!       dphi_src=0.d0
+!      else
        dphi_src = -(                                           &
               3*xH0(pcut1-r)*ppar1*(pcut1-r)**2   &
             - 3*xH0(pcut2-r)*ppar2*(pcut2-r)**2   &
             + 3*xH0(pcut3-r)*ppar3*(pcut3-r)**2)
-
+!      endif
     else if (na1 == na_carbon_ .and. na2 == na_carbon_) then
        !!Carbon-Carbon
        !Power spline function with 1 terms and maximum cutoff at x = 2.350400993501056:
@@ -591,10 +598,9 @@ contains
   !----------------------------------------------------------------------------
   pure function emb_src(r, na1)
     real (kind = kind_wp) :: emb_src ! result (eV)
-    real (kind = kind_wp), intent(in) :: r ! separation (angstrom)
+     real (kind = kind_wp), intent(in) :: r ! separation (angstrom)
     integer, intent(in) :: na1 ! atomic number atom 1
-
-    ! Compute the embedding function
+     ! Compute the embedding function
     if (na1 == na_iron_) then
        !!Iron
        !Tight binding function, f(x) = -x^(1/2) - 6.7314115586063E-4 x^2.0 + 7.6514905604792E-8 x^4.0
@@ -602,7 +608,11 @@ contains
             - (6.7314115586063d-4)*r**2           &
             + (7.6514905604792d-8)*r**4
 !!GJA_CLUDGE high pressure behaviour
-  if(r.gt.26.3d0)   emb_src = emb_src + acludge*(r-26.3d0)**3
+  if(r.gt.rcludge)   emb_src = emb_src + acludge*(r-rcludge)**3
+  if(r.gt.rx)   emb_src =  (-1.0d0)*rx**0.5d0               &
+            - (6.7314115586063d-4)*rx**2           &
+            + (7.6514905604792d-8)*rx**4 + acludge*(rx-rcludge)**3
+
     else if (na1 == na_carbon_) then
        !!Carbon
        !Cubic Stitched Composite Function
@@ -643,7 +653,7 @@ contains
     real (kind = kind_wp), intent(in) :: r ! separation (angstrom)
     integer, intent(in) :: na1 ! atomic number atom 1
     ! Compute the embedding function derivative
-    if(r.le.0.0d0) then
+    if(r.le.0.0d0.or.r.gt.rx) then
      demb_src=0.0
      return
     endif
@@ -654,7 +664,7 @@ contains
             - 2*(6.7314115586063d-4)*r           &
             + 4*(7.6514905604792d-8)*r**3
 !!GJA_CLUDGE high pressure behaviour
-        if(r.gt.26.3d0)   demb_src = demb_src + 3.0*acludge*(r-26.3d0)**2
+        if(r.gt.rcludge)   demb_src = demb_src + 3.0*acludge*(r-rcludge)**2
 
     else if (na1 == na_carbon_) then
        !!Carbon
@@ -794,6 +804,8 @@ contains
    read(iunit,*) join1,join2,join3,join4
    read(iunit,*) pcut1,pcut2,pcut3
    read(iunit,*) ppar1,ppar2,ppar3
+   read(iunit,*) acludge, rcludge
+
    write(*,*) "Potential read in: ",titlefe
            range = vcut1 ! hardcoded  
 

@@ -11,14 +11,15 @@ title2 = "Zr hcp"
 ### File names ###
 file_system          = system.in        # File describing atomic positions in system
 file_textout         = output66.txt     # Standard file for textual output
-file_checkpointread  = chkp_in.dat      # Input checkpoint file
+file_checkpointread  = chkp_out.dat      # Input checkpoint file
 file_checkpointwrite = chkp_out.dat     # Output checkpoint file
 file_dumpx1          = dumpx1.dat       # large dump datafile (each iteration for movies etc)
 ### Key physical parameters ###
+nchkpt = 100000      #  checkpointing frequency
 boxmass = 50         # Mass of the box in units of A.M.U. per constituent particle
 deltat  =0.5d0       # Timestep in fS
 rpad    = 1.0d0      # Padding thickness over potential cutoff (for link cell)
-temprq  = 2200.d0     # Required temperature in the MD in Kelvin
+temprq  = 2000.d0     # Required temperature in the MD in Kelvin
                      #   (note that the program puts all the energy into
                      #   kinetic modes initially. Equipartition with potential
                      #   modes then occurs, so for initialisation TEMPRQ should
@@ -27,7 +28,7 @@ press   = 0.0        # Required external pressure in GPa
 ivol    = 0          # Switch between constant pressure(0), constant volume(1),
                      #   free-surface-on-z, constant-volume-on-x&y (2), cluster (3),
                      #   grain boundary (cp-on-z, cv-on-xy)
-iquen   = 0          # Switch between Molecular Dynamics(0) and Molecular Statics(1)
+iquen   = 2          # Switch between Molecular Dynamics(0) and Molecular Statics(1)
 nose    = 0          # Softness of damping force in the Nose thermostat
 dsp     = 0.0d0       # Random displacement from input particle positions (in Angstroms)
 
@@ -43,29 +44,26 @@ nm      = 16000       # Confirm number of particles
 nspec   = 1          # Confirm number of distinct species
 
 ### Key simulation parameters ###
-nsteps    = 1000      # Number of timesteps to be done in this run or
+nsteps    = 1000000      # Number of timesteps to be done in this run or
                      #     number of calculations in quench (0 = keep trying)
 nbrupdate = 20     # Frequency of updating list of neighbours
 strainloops    = 1       # Number of iterative loops around the whole program
                      #     (useful for random alloys)
-restart   = 0        # Switch defining type of run:
+restart   = 1        # Switch defining type of run:
                      #      0 => new coordinates
                      #     -1 => old coordinates, new velocities
                      #      1 => old coordinates, old velocities
 nprint    = 500    # Frequency of printing of thermodynamic averages
 nnbrs     = 200      # Maximum number of neighbours a particle may have
-tjob      = 50000      # Amount of CPU time allowed for the job (in seconds)
+tjob      = 500000      # Amount of CPU time allowed for the job (in seconds)
 tfinalise = 50        # Amount of time needed to write results and run one more
                      #   timestep once the CPU time is up (KDM *before* CPU time is up?)
 iverlet   = 1        # Algorithm choice (0=predictor-corrector, 1=verlet)
 nlcx      = 3        # Number of link cells to construct in x direction
 nlcy      = 3        # Number of link cells to construct in y direction
 nlcz      = 3        # Number of link cells to construct in z direction
-uselookup = .false.
+uselookup = .true.
 
-### Current state counts - useful for continuing simulations ###
-prevsteps = 0        # Number of timesteps done already (previously)
-lastprint = 0        # Number of timesteps since last printing of run averages
 
 
 # Logical variable determining whether output is written to

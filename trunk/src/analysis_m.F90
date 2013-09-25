@@ -116,7 +116,7 @@ contains
  thermsums%SF2SQ=0._kind_wp
  thermsums%SVOLSQ=0._kind_wp
  thermsums%SVOLPE=0._kind_wp
- thermsums%SB0(nmat,nmat)=0._kind_wp
+ thermsums%SB0(:,:)=0._kind_wp
  thermsums%numsum=0
   end subroutine zero_thermodynamic_sums
 
@@ -238,8 +238,8 @@ contains
     ! 
     type(simparameters) :: simparam
     simparam=get_params()
-    rt = 1.d0/thermsums%numsum
     if(simparam%iquen.ne.1)then
+       rt = 1.d0/thermsums%numsum
        ate=rt*thermsums%ste
        ake=rt*thermsums%ske
        ape=rt*thermsums%spe
@@ -310,20 +310,28 @@ contains
 !!       write(unit_stdout,5)f2,df2
 !!5      format(' F2:',T10,E13.4,' +/-',E13.4,' (eV/Ang)**2')
 
-    end if
+     end if
 
     write(unit_stdout,6) vol
 6   format(' VOLUME: ',d14.7, ' MD-BOX VECTORS (Ang) :'/)
 
-
-    do i=1,nmat
+   
+    if(simparam%iquen.ne.1)then
+      do i=1,nmat
        do j=1,nmat
           tg(j,i)=thermsums%sb0(j,i)*rt
        end do
        write(unit_stdout,8)i,(tg(j,i),j=1,nmat),(b0(j,i),j=1,nmat)
-    end do
-8   format('I=',I3,T7,'MEAN VALUE:',T27,3E18.10,/ &
+      end do
+8     format('I=',I3,T7,'MEAN VALUE:',T27,3E18.10,/ &
          & ' ',T7,'INSTANTANEOUS VALUE:',T27,3E18.10)
+                          else
+      do i=1,nmat
+       write(unit_stdout,88)i,(b0(j,i),j=1,nmat)
+      end do
+88     format('I=',I3,T7,'FINAL VALUE:',T27,3E18.10,/)
+    end if
+
     if(simparam%pka.ne.0) then
     write(unit_stdout,9)x0(simparam%pka),y0(1),z0(1),x1(1),y1(1),z1(1)
 9   format('Atom 1 Trace: ',6E17.8)
@@ -343,13 +351,17 @@ contains
   !
   !
   !--------------------------------------------------------------
-  subroutine posavs(np,ax0,ay0,az0)
-    real(kind_wp) :: ax0(:),ay0(:),az0(:)
+  subroutine posavs(np)
     integer :: i, j, k
     integer :: np
-    ax0 = (ax0*(np-1.0)+x0)/np
-    ay0 = (ay0*(np-1.0)+y0)/np
-    az0 = (az0*(np-1.0)+z0)/np
+         if(np.eq.1)then
+              ax0=0.0
+              ay0=0.0
+              az0=0.0
+        endif
+    ax0 = (ax0*(np-1)+x0)/np
+    ay0 = (ay0*(np-1)+y0)/np
+    az0 = (az0*(np-1)+z0)/np
   end subroutine posavs
 
 
@@ -580,11 +592,11 @@ contains
     unit_prdf=newunit()
     open (unit=unit_prdf,file='prdf.dat',status='unknown',position='rewind')
     unit_aj=newunit()
-    open (unit=unit_aj,file='aj_atom.dat',status='unknown',position='rewind')
+    open (unit=unit_aj,file='aj_b1f2h3.dat',status='unknown',position='rewind')
        write(unit_aj,*)"atom ", "       atomic number", " crystal structure",  "coordination"
     do ibin=1,maxbin
        nbins = sum(nbin(ibin,:,:))
-       write(unit_rdf,'(F13.7,F13.7)') float(ibin)/binsperangstrom,nbins/(float(ibin)/binsperangstrom)**2
+       write(unit_rdf,'(F13.7,F18.7)') float(ibin)/binsperangstrom,nbins/(float(ibin)/binsperangstrom)**2
     end do
     
     do isp=1,simparam%nspec
@@ -597,7 +609,7 @@ contains
       irdf =  nbin(ibin,isp,jsp)
      endif
 !   Partial rdfs
-     write(unit_prdf,'(2F13.7,2I4)')float(ibin)/binsperangstrom, &
+     write(unit_prdf,'(F13.7,F18.7,2I4)')float(ibin)/binsperangstrom, &
      & float(irdf)/(float(ibin)/binsperangstrom)**2, atomic_index(isp),atomic_index(jsp)
 
 

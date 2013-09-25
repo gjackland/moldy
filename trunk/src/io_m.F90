@@ -296,8 +296,8 @@ contains
     WRITE(unit_stdout,51) simparam%prevsteps,simparam%lastprint
 51  FORMAT(' PREVSTEPS =',I5,'  LASTPRINT =',I5,/)
     
-    WRITE(unit_stdout,22)simparam%TEMPRQ,simparam%PRESS
-22  FORMAT(' ',20X,'REQUIRED TEMPERATURE',T50,F10.2,' K'/' ',20X,'PRESSURE',T50,F10.2,' eV/Ang^3')
+    WRITE(unit_stdout,22)simparam%TEMPRQ,simparam%PRESS*press_to_gpa
+22  FORMAT(' ',20X,'REQUIRED TEMPERATURE',T50,F10.2,' K'/' ',20X,'PRESSURE',T50,F10.2,' GPa')
 
   WRITE(unit_stdout,23)((B0(I,J),I=1,3),J=1,3),LOCAL_VOL
 23 FORMAT('0',2X,'INITIAL BOX-VECTORS (ANGSTROMS) :'/' ',2X,'A:',T20, &
@@ -379,8 +379,8 @@ end subroutine write_textout_header
     do  i=1,nmat
        WRITE(unit_output,*) (b0(j,i),j=1,nmat)              
     end do
-        WRITE(unit_output,321) (X0(I),Y0(I),Z0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I),rho(I), I=1,simparam%NM)
-321     FORMAT(3g14.6,1X,I3,g12.4,2f13.9)
+        WRITE(unit_output,321) (X0(I),Y0(I),Z0(I), atomic_number(I), ATOMIC_MASS(I),EN_ATOM(I), I=1,simparam%NM)
+321     FORMAT(3g14.6,1X,I3,g12.4,f13.9)
     close(unit_output)
   
   end subroutine write_system_out_file

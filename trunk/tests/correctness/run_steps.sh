@@ -9,7 +9,7 @@
 ## File/directory settings ##
 
 readonly tools_reldir="../../tools"			# Path to directory where all the tools binaries are stored
-readonly moldy_exe="../../build/moldy.iron"		# The moldy binary to use for running the sim, must be compiled for right potential
+readonly moldy_exe="../../build/moldy.fec"		# The moldy binary to use for running the sim, must be compiled for right potential
 readonly reference_dir="../reference"			# Directory containing directories of reference results
 readonly test_dirs=(`find $reference_dir/* -maxdepth 0 -type d | sed "s_${reference_dir}/__"`)	# Get all the test directories
 readonly system_in_token="file_system"
