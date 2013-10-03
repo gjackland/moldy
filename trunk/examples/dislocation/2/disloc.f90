@@ -64,12 +64,12 @@ program disloc
     nmnew = 0
 
     do i = 1, nm
-        read( unit = 10, fmt = line_fmt ) x, y, z, IZ, AM, energy
+        read( unit = 10, fmt = * ) x, y, z, IZ, AM, energy
         if( ( x .lt. x_from .or. x .ge. x_to ) .or. z .ge. z_to ) then
             if( x .lt. x_from .and. z .lt. z_to ) x = ( x - CMIN ) / squeeze_factor + CMIN
             if( x .ge. x_to .and. z .lt. z_to ) x =  ( x + CMIN ) / squeeze_factor - CMIN
 
-            write( unit = 11, fmt = line_fmt ) x, y, z, IZ, AM, energy
+            write( unit = 11, fmt = * ) x, y, z, IZ, AM, energy
             nmnew = nmnew + 1        ! Count up the number of atoms left after remove the dislocation atoms
         endif
      enddo
