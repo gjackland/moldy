@@ -49,6 +49,8 @@ module dynamics_m
   use parrinellorahman_m
   use neighbourlist_m
 
+!!  use magen  Should make it a module one day
+
 !$  !! extended functional dependencies for compilation with OpenMP
 !$  !!OpenMP reqd
 !$  use omp_lib
@@ -80,8 +82,7 @@ module dynamics_m
   real(kind_wp), allocatable, public  :: sump(:),sumx(:),sums(:),sumd(:),sumj(:)
 
 !! Potential related
-   real(kind_wp),  public ::    dNo,amuimax,snumber,dNo2,factor,amui2
-!!    real(kind_wp), public ::  eslaterS, eslaterD, epauli, excorr
+   real(kind_wp),  public ::    dNo,amuimax,snumber,Tpara,Ttrans
     real(kind_wp), public :: Etrans,zeffs,zeffd,adcoh,ascoh,adrep,asrep,ac,bc,afd,r1,r2,w,Efree,apk,bpk,ap,RHigh,Dcut
 
 
@@ -95,7 +96,7 @@ type(simparameters), save :: simparam  !< module local copy of simulation parame
 !! Potential parameters
   real(kind_wp) :: alatt, alatt3 
   real(kind_wp) :: Vrk(2,5)
-  real(kind_wp) :: Jrk(2,5)
+  real(kind_wp) :: Jrk(2,6)
   real(kind_wp) :: Prk(2,2)
  
 !$  !! OpenMP reqd (locks on the link cells)
@@ -146,9 +147,12 @@ contains
  read(iunit,*)bc
  read(iunit,*)snumber
     amu(:)= 2.21d0
-   write(*,*)" reading Magnetic Potential.  ATVF potential was read in for compatibility purposes, but will not be used. " 
+
 !  Hard code Janne's parameters
-   snumber =8.0d0-6.6275d0
+   dNo=6.6275d0
+   snumber =8.0d0-dNo
+   tpara=1300.0 !!! Curie temperature of iron is 1043 K.
+   Ttrans=400.0 !!! bcc-fcc transition is at 1183K
    adcoh = 1.0d0
    ascoh = 1.0d0
    alatt =  2.772d0
@@ -164,8 +168,12 @@ contains
    Vrk(2,3)=69.9915*alatt3
    Vrk(1,4)=0.90d0 * alatt
    Vrk(2,4)=176.222d0*alatt3
-   Vrk(1,5)=0.86d0 * alatt
-   Vrk(2,5)=-265.d0*alatt3
+! Refit Sept 2013
+   Vrk(1,5) = 0.66d0 * alatt
+   Vrk(2,5) =+0000.0 * alatt3
+
+!   Vrk(1,5)=0.86d0 * alatt
+!   Vrk(2,5)=-265.d0*alatt3
 
 
 
@@ -174,25 +182,53 @@ contains
    Prk(2,1)=  +185.40d0*alatt3
    prk(1,2)= 1.30d0 * alatt
    Prk(2,2)= -231.75d0 *alatt3
+!  Slater is longest ranged bit 
+ simparam%rcut =   Prk(1,1)
 
-
-
-! for XCORR
-   Jrk(1,1)=1.24d0 * alatt
-   jrk(2,1)=-40.845d0*alatt3
-   jrk(1,2)=1.19d0 * alatt
-   jrk(2,2)=109.551d0*alatt3
-   jrk(1,3)=1.14d0* alatt
-   jrk(2,3)=-78.7306d0*alatt3
-   jrk(1,4)=0.90d0 * alatt
-   jrk(2,4)=221.2d0*alatt3
-   jrk(1,5)=0.85d0 * alatt
-   jrk(2,5)=-390.000d0*alatt3
+! for XCORR  old
+!   Jrk(1,1)=1.24d0 * alatt
+!   jrk(2,1)=-40.845d0*alatt3
+!   jrk(1,2)=1.19d0 * alatt
+!   jrk(2,2)=109.551d0*alatt3
+!   jrk(1,3)=1.14d0* alatt
+!   jrk(2,3)=-78.7306d0*alatt3
+!   jrk(1,4)=0.90d0 * alatt
+!   jrk(2,4)=221.2d0*alatt3
+!   jrk(1,5)=0.85d0 * alatt
+!   jrk(2,5)=-390.000d0*alatt3
 ! shift and scale
 !    do ir=1,5
 !     Jrk(1,ir) =  Jrk(1,ir)*0.73 + 0.84
 !    Jrk(2,ir) =  Jrk(2,ir)*1.2
 !    enddo
+
+!============================================================================
+!  Parametrisation for XC-function. Fitted to C-prime = +0.31 GPa, JW, 2013-09-13
+!============================================================================
+   jrk(1,1) = 1.22d0 * alatt
+   jrk(1,2) = 1.19d0 * alatt
+   jrk(1,3) = 1.14d0 * alatt
+   jrk(1,4) = 0.90d0 * alatt
+   jrk(2,1) = -48.0033d0*alatt3
+   jrk(2,2) =  86.7802d0*alatt3
+   jrk(2,3) = -41.2928*alatt3
+   jrk(2,4) =  62.3d0*alatt3
+!============================================================================
+!  Parametrisation for short range XC-function. Fitted to Curie temperature, JW, 2013-09-18
+!============================================================================
+   jrk(1,5) = 0.830d0 * alatt
+   jrk(1,6) = 0.861d0 * alatt
+   jrk(2,5) = +0.0d0 * alatt3
+   jrk(2,6) = +11000.0d0 * alatt3
+!============================================================================
+!============================================================================
+!  SIA formation energy fit
+!============================================================================
+   jrk(1,6) = 0.850d0 * alatt
+   jrk(2,6) = +0.0d0 * alatt3
+   jrk(2,6) = -0.98d0 * alatt3
+
+
     do ir =1,1200
      ri=1+ir*0.005
      write(30,*)ri,xcorr(ri),slater(ri),pauli(ri),&
@@ -227,10 +263,8 @@ contains
   !---------------------------------------------------------------------
   subroutine force
     integer :: n, i, j, k
-    integer :: nlist_ji    
-    integer :: nlisti, nm3
-    integer :: ijs, jatom, iatom
-    real(kind_wp) :: bonde
+    integer :: nlist_ji, nm3
+    integer :: ijs
     real(kind_wp) :: cx, cy, cz
     real(kind_wp) :: dxminu, dyminu, dzminu
     real(kind_wp) :: dxplus, dyplus, dzplus
@@ -240,8 +274,6 @@ contains
     real(kind_wp) :: rxij, ryij, rzij !< spatial separation components
     real(kind_wp), parameter :: point5=0.5d0
     real(kind_wp) :: fxi, fyi, fzi !< ith particle force accumulator (in particleloop)
-    real(kind_wp) ::  eslaterS, eslaterD, epauli, excorr
-    dNo=6.6275d0
 !$  !!OpenMP reqd (local declarations)
 !$  integer :: neighlc             !< link cell index of the current neighbour
 #if DEBUG_OMP_LOCKS
@@ -262,6 +294,7 @@ contains
 
     !! initialise variables
     ke=0.0d0
+    pe=0.0d0
     tp(:,:)=0.0d0
     tg(:,:)=0.0d0
     
@@ -303,12 +336,12 @@ contains
     end do
 
 
-!$OMP PARALLEL PRIVATE(nlisti,neighlc,i,j,fxi,fyi,fzi,nlist_ji,dx,dy,dz,r,pp,fp,rxij,ryij,rzij,r_recip,dNo2), &
+!$OMP PARALLEL PRIVATE(nlist_ji,neighlc,i,j,fxi,fyi,fzi,dx,dy,dz,r,pp,fp,rxij,ryij,rzij,r_recip), &
 #if DEBUG_OMP_TIMING
 !$OMP PRIVATE( thread_num, start_time ), &
 #endif
 !$OMP DEFAULT(NONE), &
-!$OMP SHARED( simparam,numn,nlist,x0,y0,z0,atomic_number,atomic_mass,b0,ic,lc_lock,fx,fy,fz,tc,amu,wd,en_atom,adcoh,zeffd,dNo), &
+!$OMP SHARED(simparam,numn,nlist,x0,y0,z0,atomic_number,atomic_mass,b0,ic,lc_lock,fx,fy,fz,tc,amu,wd,en_atom,adcoh,zeffd,dNo),&
 #if DEBUG_OMP_LOCKS
 !$OMP REDUCTION(+:num_locks), &
 #endif
@@ -322,30 +355,29 @@ contains
 !$ neighlc=0 !!(null value = neighbour link-cell is not set)
 
 !$OMP DO
-     do iatom=1,simparam%nm
-       AMU(IATOM)=GETAMU(IATOM) 
+     do i=1,simparam%nm
+       AMU(I)=GETAMU(I) 
      enddo
+!$OMP ENDDO
 
-    particleloop: do iatom=1,simparam%nm
+!$OMP DO
+    particleloop: do i=1,simparam%nm
        !! loop through a particle's neighbour list
-       neighbourloop: do jatom=1,numn(iatom)
+       neighbourloop: do j=1,numn(i)
           
           !! index of i particle's j neighbour
-          nlisti = nlist(jatom,iatom)
+          nlist_ji = nlist(j,i)
           !! fractional separation of particle i and neighbour j 
-          dx=x0(iatom)-x0(nlisti)
-          dy=y0(iatom)-y0(nlisti)
-          dz=z0(iatom)-z0(nlisti)
+          dx=x0(i)-x0(nlist_ji)
+          dy=y0(i)-y0(nlist_ji)
+          dz=z0(i)-z0(nlist_ji)
           
           !! get real spatial separation from fractional components dx/y/z
           call pr_get_realsep_from_dx(r,dx,dy,dz)
           r_recip = 1.0d0 / r   !! Calculate the reciprocal
-          dNo2=dNo*dNo  
 
 !! calculate force between these atoms 
-
-        fp = ffij(iatom,nlisti)
-
+        fp = ffij(r,i,nlist_ji)
       !! evaluate (-1/r)*(derivative of  potential),
          fp=-fp*r_recip
 
@@ -358,7 +390,7 @@ contains
           !! apply fp componentwise to tp
           !! don't include stress due to forces between fixed atoms
           !! kinetic term doesn't matter because fixed atoms dont contribute
-         if((atomic_mass(iatom)+atomic_mass(nlisti)).gt.0.1) then
+         if((atomic_mass(i)+atomic_mass(nlist_ji)).gt.0.1) then
           tp(1,1)=tp(1,1)+dx*rxij*fp
           tp(2,1)=tp(2,1)+dx*ryij*fp
           tp(3,1)=tp(3,1)+dx*rzij*fp
@@ -371,14 +403,14 @@ contains
          endif
 
           !! update force of particle's neighbour
-          fx(nlisti)=fx(nlisti)-dx*fp
-          fy(nlisti)=fy(nlisti)-dy*fp
-          fz(nlisti)=fz(nlisti)-dz*fp
+          fx(nlist_ji)=fx(nlist_ji)-dx*fp
+          fy(nlist_ji)=fy(nlist_ji)-dy*fp
+          fz(nlist_ji)=fz(nlist_ji)-dz*fp
 
           !! update temp force accumulator for particle i
-          fx(iatom)=fx(iatom)+dx*fp
-          fy(iatom)=fy(iatom)+dy*fp
-          fz(iatom)=fz(iatom)+dz*fp
+          fx(i)=fx(i)+dx*fp
+          fy(i)=fy(i)+dy*fp
+          fz(i)=fz(i)+dz*fp
           
 !$ !! set/reset region locks when changing neighbour link cell
 !$ if (ic(nlist_ji).ne.neighlc)then
@@ -423,14 +455,12 @@ contains
     write(*,*)"Num locks: ", num_locks
 #endif
       PE = 0.0d0
-      do iatom=1,simparam%nm
-       AMU(IATOM)=GETAMU(IATOM) 
+      do i=1,simparam%nm
+       AMU(I)=GETAMU(I) 
       enddo
-      do iatom=1,simparam%nm
-       PE = PE + en_atom(IATOM)
+      do i=1,simparam%nm
+       PE = PE + en_atom(I)
       enddo
-
- 
     !! calculate tc
     tc(1,1)=b0(2,2)*b0(3,3)-b0(2,3)*b0(3,2)
     tc(2,1)=b0(3,2)*b0(1,3)-b0(1,2)*b0(3,3)
@@ -466,9 +496,10 @@ contains
 !!$  !! Write out energy, forces and stress to file (sanity check)
 
     return
-   CONTAINS
- include 'magen.inc'
-  end subroutine force 
+
+ end subroutine force 
+
+  include 'magen.inc'
  
 
   !---------------------------------------------------------------------
@@ -536,14 +567,12 @@ contains
       real(kind_wp) :: r
       integer ::  i,j
       PAULI = cubic_spline(R,5,VRK)
-      IF(R.GT.RHIGH)PAULI = 0.d0
       RETURN 
       END FUNCTION PAULI 
 
       real FUNCTION DPAULI (R)
       real(kind_wp) :: r,fcutr
       DPauli =  dcubic_spline(R,5,VRK)
-      IF(R.GT.RHIGH)DPAULI = 0.d0
       END   FUNCTION DPAULI
 
  
@@ -552,14 +581,12 @@ contains
       real(kind_wp) :: r
       integer :: i,j   !! Iron iron
       XCORR = cubic_spline(R,5,JRK)
-      IF(R.GT.RHIGH)XCORR = 0.d0
       RETURN
       END  FUNCTION XCORR
 
       real FUNCTION DXCORR(R)
       real(kind_wp) :: r,fcutr
             DXCORR =  dcubic_spline(R,5,JRK)
-      IF(R.GT.RHIGH)DXCORR = 0.d0
       RETURN
       END  FUNCTION DXCORR
 
@@ -568,14 +595,12 @@ contains
       real (kind_wp) :: slater
       real (kind_wp), intent(in) :: r      
       SLATER = CUBIC_SPLINE(R,2,PRK)
-       IF(R.GT.RHIGH)SLATER = 0.d0
       RETURN
       END FUNCTION SLATER
 
       real FUNCTION DPHISL(R)
       real(kind_wp) :: r
       DPHISL = DCUBIC_SPLINE(R,2,PRK)
-      IF(R.GT.RHIGH)DPHISL = 0.d0
       END   FUNCTION DPHISL
 
 

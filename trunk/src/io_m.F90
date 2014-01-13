@@ -113,7 +113,7 @@ contains
     inquire(unit=unit_stdout,exist=exists,opened=opened)
     if(exists.and..not.opened) &
          open(unit_stdout,file=file_textout,status='unknown')
-    write(unit_stdout,*)" STRUCTURE READ IN ", nbasis , " BASIS ATOMS;", &
+    write(*,*)" STRUCTURE READ IN ", nbasis , " BASIS ATOMS;", &
          product(nt), " CELLS;",    nbasis*product(nt), "  ATOMS."
 	write(*,*) "nbasis", nbasis
 	do ib=1,nbasis
@@ -270,13 +270,6 @@ contains
     inquire(unit=unit_stdout,exist=exists,opened=opened)
     if(exists.and..not.opened) &
          open(unit_stdout,file=file_textout,status='unknown')
-
-    !! write licence notice
-    write(unit_stdout,*)"MOLDY Version 2, Copyright (C) 2009 G.Ackland,K.D'Mellow, University"
-    write(unit_stdout,*)"of Edinburgh. MOLDY comes with ABSOLUTELY NO WARRANTY; for details"
-    write(unit_stdout,*)"see the LICENSE. This is free software, and you are welcome to"
-    write(unit_stdout,*)"redistribute it under certain conditions; see the LICENCE for details."
-   write(unit_stdout,*) "Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604" 
 
     !! write output
     WRITE(unit_stdout,21)simparam%TITLE1,simparam%TITLE2,simparam%NM

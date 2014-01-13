@@ -165,7 +165,6 @@ program moldyv2
   real(kind_wp) :: localTimeStep, thermotimer ! stores the time adjusted by the simulation, overrides deltat, thermotimer 
 	!times when the thermostat should fire (currently set to fire once per femtosecond
 
-
   !! start timing the code
   starttime=clock()
 
@@ -175,6 +174,17 @@ program moldyv2
 
   !! Input from main parameter file
   call read_params
+
+         open(unit_stdout,file=file_textout,status='unknown')
+
+    !! write licence notice
+    write(unit_stdout,*)"MOLDY Version 2, Copyright (C) 2009 G.J.Ackland,K.D'Mellow, University"
+    write(unit_stdout,*)"of Edinburgh. MOLDY comes with ABSOLUTELY NO WARRANTY; for details"
+    write(unit_stdout,*)"see the LICENSE. This is free software, and you are welcome to"
+    write(unit_stdout,*)"redistribute it under certain conditions; see the LICENCE for details."
+   write(unit_stdout,*) "Cite as: Computer Physics Communications Volume 182, Issue 12, December 2011, Pages 2587-2604" 
+
+
 
 
   !! Initialise all necessary module arrays and parameters
@@ -210,16 +220,8 @@ program moldyv2
   if(ierror.ne.0)then
      write(*,*)ierror, "MOLDIN: Error when checking available atomic numbers."
   end if
-  if(rmax.gt.simparam%rcut) simparam%rcut = rmax
-     write(*,*)  simparam%rcut, rmax, "MOLDIN: cutoff"
-  !store the user time incase it is overwritten by variable timestepping
-  equilibrium_dt = simparam%deltat
-  adjust_time_was_on =.false.
-  if (simparam%iverlet .eq. 2) then 
- 	 adjust_time_was_on =.true.
-  end if
-  
-  !! Set the potential to be calculated either exactly or via a lookup table
+  if(rmax.gt.simparam%rcut) simparam%rcut = rmax 
+!! Set the potential to be calculated either exactly or via a lookup table
   if(simparam%uselookup)then
      call potential_set_lookup
   else
@@ -227,18 +229,21 @@ program moldyv2
   end if
 
 
-  !! Calculate rnear from potential cutoff in potential and pad thickness
-!!  call get_available_potential_range(rmin,rcut)
-!!    call get_supported_potential_range(rmin,rcut)
-
 #ifdef FETRANSMETAL
 		!write(*,*) "calling set up for FETRANSMETAL"
  		call set_up
 #endif
 
+  !store the user time incase it is overwritten by variable timestepping
+  equilibrium_dt = simparam%deltat
+  adjust_time_was_on =.false.
+  if (simparam%iverlet .eq. 2) then 
+ 	 adjust_time_was_on =.true.
+  end if
+  
 
-!!  simparam%rcut=rcut
     simparam%rnear=simparam%rcut+simparam%rpad
+     write(*,*)"potential and neighbour cutoff",  simparam%rcut,  simparam%rnear
 
   !! Check for sensible link cell numbers
   simparam%nlcx=int(b0(1,1)/simparam%rnear)
@@ -349,23 +354,19 @@ program moldyv2
      case(1) ! use restart positions and velocities from checkpoint file
 
         !! read the checkpoint/restart file
+
         call read_checkpoint_file
-        
         !!update local copy of parameters
         simparam=get_params()
-
+	 write(*,*) "temprq, press  ",simparam%temprq,simparam%press
         !! overwrite checkpoint thermodynamic sums with zero
         thmsums=get_thermodynamic_sums()
         !! the thermodynamic sums
         call set_thermodynamic_sums(thmsums)
 
-
-		 simparam%prevsteps = simparam%currentstep
- 
             !! set counters to continue on according to previous runs
+	    simparam%prevsteps = simparam%currentstep
             simparam%laststep=simparam%nsteps
-   
-       
 	
         !! commit simulation parameters after read and changes
         call set_params(simparam)
@@ -375,20 +376,20 @@ program moldyv2
 34      format(10X,'CONTINUE PRODUCTION'/' ',10X,'RUN NO.',T20,I3/ &
              & 10X,'TITLE OF PREVIOUS RUN'/' ',10X,A72/' ',10X,A72/ &
              &  "prevsteps=",I10,"laststep=",I10)
-        
+         call write_params(unit_stdout)
      end select
      
 
      
      !in case of reset option on restart ensure that no data carries over
-     if(simparam%reset .and. (simparam%restart .ne. 0)) then
-     
+
+     if(simparam%reset .and. (simparam%restart .ne. 0)) then     
      	
            simparam%currentstep = 0
            simparam%prevsteps = 0
            simparam%laststep =simparam%nsteps
          
-             !! overwrite thermodynamic sums with zero
+             !! overwrite thermodynamic sums with zero on restart
       	  call zero_thermodynamic_sums()
       	  thmsums=get_thermodynamic_sums()
       	  call set_params(simparam)
@@ -409,16 +410,17 @@ program moldyv2
 !! #endif
 
   !! Loops through iterations of the whole simulation 
-  !!  This is now to apply constant strain rate
-  !!  Or to apply temperature increase
+  !!  This is now to apply constant strain rate or to apply temperature increase
       strainloops: do iter=1,simparam%strainloops
-      write(unit_stdout,*)"Strainloop: dT= ",simparam%tempsp," T-dependent Potential ", simparam%temprq, " dP=", simparam%pressstep
-        if (simparam%restart .eq. 0) then  !! this statement seems problematic on restart, so i added an if to catch it
-         simparam%laststep =  simparam%currentstep+simparam%NSTEPS
-        end if
+      write(unit_stdout,*)"Strainloop: T= ", simparam%temprq," dT= ",simparam%tempsp 
+      write(unit_stdout,*)"Strainloop: P= ", simparam%press, " dP= ", simparam%pressstep
+
         !! overwrite thermodynamic sums with zero
-        call zero_thermodynamic_sums() !should these be put in if loop for when reset is .false.?
+
+        call zero_thermodynamic_sums() 
         thmsums=get_thermodynamic_sums()
+
+
     !! apply strain to box;   Reuse b2 as unstrained box
     if(simparam%ivol.ne.0)then
        b2=b0
@@ -705,9 +707,10 @@ program moldyv2
            close(simparam%ntape)
         end if
 
+
         if(simparam%nprint.ge.10.and.simparam%nprint.le.simparam%nsteps) then
         if(mod(simparam%lastprint,simparam%nprint/10).eq.0)then
-        !! calculate sums of thermodynamic quantities ten times between printouts
+!! calculate sums of thermodynamic quantities ten times between printouts
               call update_thermodynamic_sums
           if(simparam%iquen.ne.1.and.mod(simparam%lastprint,simparam%nprint).eq.0) call runavs(istep-simparam%prevsteps)
         endif
@@ -798,7 +801,9 @@ program moldyv2
         time=clock()
        
         if(time-starttime.gt.simparam%tjob-simparam%tfinalise) exit strainloops
-        
+!!  Move laststep forward for another strain loop
+        simparam%laststep =  simparam%currentstep+simparam%NSTEPS
+
   end do strainloops
     
 
@@ -889,13 +894,13 @@ contains
     integer :: local_nlcx, local_nlcy, local_nlcz
     integer :: local_prevsteps, local_currentstep, local_laststep, local_lastprint, local_lastchkpt, local_ntc
     real(kind_wp) :: olddeltat
-
+    type(simparameters) :: ckp_simparam  !< simulation parameters
     write(unit_stdout,*)"Reading checkpoint file...  restart=",simparam%restart
 
     thmsums=get_thermodynamic_sums()
     unit_checkpoint=newunit()
     open(unit_checkpoint,file=file_checkpointread,form='unformatted')
-    read(unit_checkpoint) simparam
+    read(unit_checkpoint) ckp_simparam
     read(unit_checkpoint) x0, y0, z0, b0
     read(unit_checkpoint) x1, y1, z1, b1
     read(unit_checkpoint) x2, y2, z2, b2
@@ -906,35 +911,28 @@ contains
     read(unit_checkpoint) ispec
     read(unit_checkpoint) thmsums
     close(unit_checkpoint)
-
     !!re-read the parameter file, to cope with any intended changes to params oupone restart - but DO NOT overwrite the nlcx/y/z values - this MUST be as checkpointed.
-    write(0,*)"SIMPARAMS:",simparam%nlcx, simparam%nlcy, simparam%nlcz
-    local_nlcx=simparam%nlcx
-    local_nlcy=simparam%nlcy
-    local_nlcz=simparam%nlcz
-    local_prevsteps=simparam%prevsteps
-    local_currentstep=simparam%currentstep
-    local_laststep=simparam%laststep
-    local_lastprint=simparam%lastprint
-    local_lastchkpt=simparam%lastchkpt
-    local_ntc=simparam%ntc
-    olddeltat =simparam%deltat 
-    call set_params(simparam)
-    !KDM TEMP DEBUGGING
-    !    open(22,file="before.reread.txt",status='unknown')
-    !    call write_params(22)
-    !    close(22)
-    call read_params
-    simparam=get_params()
-    simparam%nlcx=local_nlcx
-    simparam%nlcy=local_nlcy
-    simparam%nlcz=local_nlcz
-    simparam%prevsteps=local_prevsteps
-    simparam%currentstep=local_currentstep
-    simparam%laststep=local_laststep
-    simparam%lastprint=local_lastprint
-    simparam%lastchkpt=local_lastchkpt
-    simparam%ntc=local_ntc
+     write(*,*)"0  ", simparam%temprq,ckp_simparam%temprq 
+    olddeltat =ckp_simparam%deltat 
+!  Now reread from original input file  (need this for reset)
+     simparam = get_params()
+    if(simparam%reset)  then
+     write(*,*)"Restart with new ensemble settings"
+     call set_params(simparam)
+    else
+     simparam=ckp_simparam
+     call set_params(ckp_simparam)    
+     write(*,*)"Restart without resetting"
+    endif 
+    simparam%nlcx=ckp_simparam%nlcx
+    simparam%nlcy=ckp_simparam%nlcy
+    simparam%nlcz=ckp_simparam%nlcz
+    simparam%prevsteps=ckp_simparam%prevsteps
+    simparam%currentstep=ckp_simparam%currentstep
+    simparam%laststep=ckp_simparam%laststep
+    simparam%lastprint=ckp_simparam%lastprint
+    simparam%lastchkpt=ckp_simparam%lastchkpt
+    simparam%ntc=ckp_simparam%ntc
     call set_params(simparam)
     if(simparam%deltat.ne.olddeltat) then
     write(unit_stdout,*)"Timestep changed on restart", simparam%deltat, " was ",olddeltat
@@ -951,10 +949,7 @@ contains
     z3=z3*(simparam%deltat/olddeltat)**2
     b3=b3*(simparam%deltat/olddeltat)**2
     endif
-    !KDM TEMP DEBUGGING
-    !    open(23,file="after.reread.txt",status='unknown')
-    !    call write_params(23)
-    !    close(23)
+
   end subroutine read_checkpoint_file
 
   !--------------------------------------------------------------

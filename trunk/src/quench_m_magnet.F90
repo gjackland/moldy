@@ -316,7 +316,6 @@ contains
 !! calculate force between these atoms
 !!  double counting for neighbour loop
           r_recip = 1.0d0 / r   !! Calculate the reciprocal
-          dNo2=dNo*dNo  
 
 !! calculate force between these atoms
     fp = ffij(Iatom,nlisti)
@@ -405,7 +404,7 @@ contains
     endif
     write(unit_stdout,1359)pe/simparam%nm,vol/simparam%nm,amu(1)
 1359 format(' COHESIVE ENERGY ',d16.8, 'VOLUME',d16.8, 'AMU(1)', d12.4 )
-!!    write(*,*)ws(1),wd(1),sumj(1)/2,dNo2*sump(1)/4, "WS, WD, Sj, Sp "
+!!    write(*,*)ws(1),wd(1),sumj(1)/2, "WS, WD, Sj, Sp "
     !! write stress
     do i=1,3
         write(unit_stdout,99) i,(-1.d0*sum((/(b0(j,k)*(tk(i,k)+tp(i,k)),k=1,3)/))/vol*press_to_gpa,j=1,3)
@@ -414,12 +413,12 @@ contains
     f = pe + simparam%press*vol
     return
 
-    CONTAINS
- 
-  include 'magen.inc'
 
   end subroutine derivs
 
+    CONTAINS
+ 
+  include 'magen.inc'
 
 !--------------------------------------------------------------------------------
 !

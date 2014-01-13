@@ -199,6 +199,13 @@ contains
 
   subroutine write_params(unit)
     integer :: unit
+	 write(unit,*) "nose  ",simparam%nose
+	 write(unit,*) "temprq  ",simparam%temprq
+	 write(unit,*) "tempsp  ",simparam%tempsp
+	 write(unit,*) "press  ",simparam%press
+	 write(unit,*) "pressstep  ",simparam%pressstep
+	 write(unit,*) "strainloops  ",simparam%strainloops
+	 write(unit,*) "nsteps  ",simparam%nsteps
   end subroutine write_params
 
 

@@ -39,6 +39,7 @@
 module analysis_m
 
   use constants_m
+  use dynamics_m
   use params_m
   use utilityfns_m
   use particles_m
@@ -82,7 +83,8 @@ module analysis_m
      integer :: numsum
   end type thermodynamic_sums
 
-  !! private data
+  !! private data - the thermodynamic sums 
+
   type(thermodynamic_sums), save :: thermsums !< module private (repository) copy of thermodynamic sums
 
 contains
@@ -118,6 +120,7 @@ contains
  thermsums%SVOLPE=0._kind_wp
  thermsums%SB0(:,:)=0._kind_wp
  thermsums%numsum=0
+   write(unit_stdout,*)"Restarting thermodynamic averages"
   end subroutine zero_thermodynamic_sums
 
   function get_thermodynamic_sums()
@@ -234,6 +237,7 @@ contains
     real(kind_wp) :: ah,ake,alpha,ape,ate,atemp,ath,avol
     real(kind_wp) :: c,cp,df2,dh,dke,dpe,dte,dtemp,dth,dvol,f2,rt
     real(kind_wp) :: kappa
+    real(kind_wp) :: amusum
     real(kind_wp) :: sigma(3,3)
     ! 
     type(simparameters) :: simparam
@@ -254,7 +258,6 @@ contains
        dvol=sqrt(abs(rt*thermsums%svolsq-avol*avol))
        dh=sqrt(abs(rt*thermsums%shsq-ah*ah))
        dth=sqrt(abs(rt*thermsums%sthsq-ath*ath))
-
        !! write header
        write(unit_stdout,1)n1,thermsums%numsum
 1      format(' RUNNING AVERAGES AT STEP NO.',I6/ &
@@ -279,7 +282,13 @@ contains
 3      format( '  H:',E15.6,T25, ' AH:',E15.6,' +/-',E13.4,' eV'/ &
             &  ' TH:',E15.6,T25, 'ATH:',E15.6,' +/-',E13.4,' eV'/ &
             & ' VOL:',E15.6,T24,'AVOL:',E15.6,' +/-',E13.4,' Ang**3'/)
-
+#ifdef MAGNETIC
+  amusum = 0.0d0
+  do i=1,simparam%nm
+  amusum = amusum+amu(I)
+  enddo
+  write(unit_stdout,*) "Average moment",  amusum/simparam%nm
+#endif
  
     !! write_stress
     do i=1,3
@@ -648,14 +657,27 @@ contains
          if(jneigh.eq.numfull(i))         cycle neighloopj 
        neighloopk: do kneigh=jneigh+1,numfull(i)
             k  = nfull(kneigh,i)
+
+!         if(simparam%iquen.eq.1) then
           DX=(X0(I)-X0(k))
           DY=(Y0(I)-Y0(k))
           DZ=(Z0(I)-Z0(k))
+!         else
+!          DX=(AX0(I)-AX0(k))
+!          DY=(AY0(I)-AY0(k))
+!          DZ=(AZ0(I)-AZ0(k))
+!         endif
          call pr_get_realsep2_from_dx(rsqk,dx,dy,dz)
         if(rsqk.gt.1.45*rnatoms(atomic_index(i),atomic_index(k))**2) cycle neighloopk 
+!         if(simparam%iquen.eq.1) then
           DX=(X0(k)-X0(J))
           DY=(Y0(k)-Y0(J))
           DZ=(Z0(k)-Z0(J))
+!         else
+!          DX=(AX0(I)-AX0(k))
+!          DY=(AY0(I)-AY0(k))
+!          DZ=(AZ0(I)-AZ0(k))
+!         endif
          call pr_get_realsep2_from_dx(rsq,dx,dy,dz)
           ctheta = (rsqj + rsqk - rsq)/2.0/sqrt(rsqj*rsqk)
           if(ctheta.lt.-0.945) then 

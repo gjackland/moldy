@@ -39,12 +39,12 @@ BUILD_DIR=../build
 # Material Choice and Location of Executable
 #MATERIAL= -DIRON_CARBON
 #MATERIAL= -DZIRCONIUM
-MATERIAL= -DGENERIC_ATVF
+MATERIAL= -DTDEP_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
 
- EXE=    ../build/moldy.atvf
+ EXE=    ../build/moldy.tdep
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -134,7 +134,7 @@ F90SRC= \
 	utilityfns_m.F90 \
 	iron_carbon.F90 \
 	zirconium.F90 \
-	generic_atvf.F90 \
+	tdep_atvf.F90 \
         morse.F90 \
         CdAu.F90 \
         pairpot.F90 \
@@ -208,7 +208,7 @@ quench_m.o: params_m.o  system_m.o  constants_m.o \
 
 neighbourlist_m.o:  linkcell_m.o parrinellorahman_m.o
 
-potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o generic_atvf.o  
+potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o tdep_atvf.o  
 
 timers_m.o: debug_m.o constants_m.o
 

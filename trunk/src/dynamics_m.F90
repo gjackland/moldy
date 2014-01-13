@@ -135,7 +135,6 @@ contains
     
     integer :: i, j, k
     integer :: nlist_ji
-    real(kind_wp) :: bonde
     real(kind_wp) :: cx, cy, cz
     real(kind_wp) :: dxminu, dyminu, dzminu
     real(kind_wp) :: dxplus, dyplus, dzplus
@@ -166,7 +165,6 @@ contains
 
     !! initialise variables
     ke=0.0d0
-    bonde=0.0d0
     tp(:,:)=0.0d0
     tg(:,:)=0.0d0
     

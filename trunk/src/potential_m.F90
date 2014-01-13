@@ -61,6 +61,10 @@ module potential_m
 #ifdef GENERIC_ATVF
   use generic_atvf
 #endif
+!------  Unnecessary call but v.difficult to disentangle
+#ifdef MAGNETIC
+  use generic_atvf
+#endif
 !-----------------------
 #ifdef TDEP_ATVF
   use tdep_atvf
@@ -141,23 +145,23 @@ contains
   ! returns the potential energy, and sets frho and dfrho
   !
   !----------------------------------------------------------------------------
-  subroutine embed(pe)
+  subroutine embed(pexx)
     integer :: i
-    real(kind_wp) :: pe
+    real(kind_wp) :: pexx
 
     simparam=get_params()
 
     !Embedding function
-    pe=0.0d0
+    pexx=0.0d0
 !$OMP PARALLEL DO &
 !$OMP DEFAULT( NONE ), &
 !$OMP SHARED( simparam, rho, afrho, atomic_number, dafrho ), &
 !$OMP PRIVATE( i ), &
-!$OMP REDUCTION( +:pe )
+!$OMP REDUCTION( +:pexx )
     do i=1,simparam%nm
        if(rho(i).le.1d-40) cycle 
        afrho(i) = emb(rho(i),atomic_number(i))
-       pe = pe+afrho(i)
+       pexx = pexx+afrho(i)
        dafrho(i)= demb(rho(i),atomic_number(i))
     end do
 !$OMP END PARALLEL DO
@@ -432,7 +436,7 @@ contains
     real(kind_wp) :: presbc, presbr
     real(kind_wp) :: sp1, sp2, sp3, sp4, sp5, sp6, sp7 
     real(kind_wp) :: vcc, vp1, vp2, vp3, vp4, vp5, vp6, vp7
-    real(kind_wp) :: ECFCCB
+    real(kind_wp) :: ECFCCB, veff
     !! some plotting parameters
     integer, parameter :: npoints=1000                  !< number of points to plot
     real(kind_wp), parameter :: rminplot=1.5_kind_wp   !< minimum plotting radius (overrides rmin)
@@ -530,7 +534,7 @@ contains
              sp4=phi(x4b,ni,nj)
              sp5=phi(x5b,ni,nj)
 
-             ecr = 6.0*vp1 + 3.0*vp2 +  12.0*vp3 + 6.0*vp4  + 12.0*sp5
+             ecr = 6.0*vp1 + 3.0*vp2 +  12.0*vp3 + 6.0*vp4  + 12.0*vp5
              cc  = 12.0*sp1 + 6.0*sp2 + 24.0*sp3 + 12.0*sp4 + 24.0*sp5
              ecc=emb(cc,ni)
              dembo=demb(cc,ni)
@@ -567,11 +571,14 @@ contains
              dembo=demb(cc,ni)
              echcp=ecr+ecc
             
+             if(sp1.gt.1d-10) then
+                   veff =     vee(x1b,ni,nj)+ phi(x1b,ni,nj)/ecc
+                   write(ounit,55) x1b,&
+    vp1,  sp1, veff, dphi(x1b,ni,nj) , dvee(x1b,ni,nj),ecbccb,ecfcc,echcp !!presbr,presbc,dembo
+55                 format(9e15.7)
+!!                    write(56,*)x2b, cc, ecc, dembo
+             endif 
 
-             write(ounit,55) x1b,&
-    vee(x1b,ni,nj),    phi(x1b,ni,nj),  vee(x1b,ni,nj) + phi(x1b,ni,nj)/ecc, dphi(x1b,ni,nj) , dvee(x1b,ni,nj),ecbccb,ecfcc,echcp !!presbr,presbc,dembo
-55           format(9e15.7)
-             write(56,*)x2b, cc, ecc, dembo
           enddo
           
 !!$          !<  Evaluate perfect b.c.c. energy 
