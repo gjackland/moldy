@@ -39,12 +39,13 @@ BUILD_DIR=.
 # Material Choice and Location of Executable
 #MATERIAL= -DIRON_CARBON
 #MATERIAL= -DZIRCONIUM
-MATERIAL= -DGENERIC_ATVF
+#MATERIAL= -DGENERIC_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
-
- EXE=    ./moldy.mag
+MATERIAL= -DMAGNETIC
+# MATERIAL= -DFETRANSMETAL
+EXE=    ../build/moldy.mag
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -80,7 +81,7 @@ CPPFLAGS= $(MATERIAL) $(DEBUG)
 #OMPFLAGS= -fopenmpcd 
 #OMPFLAGS= -mp -Minfo=mp
 #OMPFLAGS= -mp
-#OMPFLAGS = -fopenmp # For gfortran
+OMPFLAGS = -fopenmp # For gfortran
 #OMPFLAGS -openmp [1]
 
 #Debugging

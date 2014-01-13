@@ -1,5 +1,6 @@
     subroutine setsum
-
+   integer :: i,j,k,nlist_ji
+   real(kind_wp) :: r,dx, dy, dz, excorr
 ! Zero sums
     tp(:,:)=0.0d0
     sump(:)=0.d0
@@ -15,21 +16,21 @@
 
 
     ! use the neighbour list
-    getsums:do iatom=1,simparam%nm
-       k=numn(iatom)
+    getsums:do i=1,simparam%nm
+       k=numn(i)
        if(k.eq.0) cycle getsums
-      jloop:do jatom=1,k
-          nlisti  = nlist(jatom,iatom)
-         !! fractional position of the jatom'th neighbour of atom iatom
-     dx=x0(iatom)-x0(nlisti)
-     dy=y0(iatom)-y0(nlisti)
-     dz=z0(iatom)-z0(nlisti)
+      jloop:do j=1,k
+          nlist_ji  = nlist(j,i)
+         !! fractional position of the j'th neighbour of atom i
+     dx=x0(i)-x0(nlist_ji)
+     dy=y0(i)-y0(nlist_ji)
+     dz=z0(i)-z0(nlist_ji)
           !! evaluate r, the physical separation between atoms i and j
          call pr_get_realsep_from_dx(r,dx,dy,dz)
-        if(r.gt.rhigh) cycle jloop
-         excorr=xcorr(r)
-        sumj(IATOM) = sumj(IATOM)+  excorr*amu(iatom)*amu(nlisti)
-        sumj(nlisti) = sumj(nlisti)+ excorr*amu(iatom)*amu(nlisti)
+
+         excorr=xcorr(r)*dotmu(i,nlist_ji)
+        sumj(i) = sumj(i) +  excorr
+        sumj(nlist_ji) = sumj(nlist_ji)+ excorr
         end do jloop
     end do getsums
         call rhoset(pauli,sump)
@@ -38,40 +39,59 @@
    end subroutine setsum
 
    subroutine geten
-   do iatom=1,simparam%nm
-!      WS(IATOM) =  sqrt(max(sumS(IATOM),0.d0))
-      WD(IATOM) =  sqrt(max(sumD(IATOM),0.d0))
-!      WS(IATOM)=4.3d0
+   integer :: i
+   real(kind_wp) ::  amui2
+   do i=1,simparam%nm
+!      WS(i) =  sqrt(max(sumS(i),0.d0))
+      WD(i) =  sqrt(max(sumD(i),0.d0))
+!      WS(i)=4.3d0
        snumber=1.3725d0
        dNo=8.d0-snumber
        amuimax =  (5.d0 - abs(dNo-5.d0))
-       dNo2=  dNo*  dNo
-      amui2= AMU(IATOM)**2
-     EN_ATOM(IATOM) = WD(IATOM)*( (dNo2+amui2)/20d0 - dNo/2d0) &
-     &     + 0.5d0*sump(IATOM)  + 0.5d0*sumj(IATOM) &
+      amui2= AMU(i)**2
+     EN_ATOM(i) = WD(i)*( (dNo*dNo+amui2)/20d0 - dNo/2d0) &
+     &     + 0.5d0*sump(i)  + 0.5d0*sumj(i) &
      &     - Efree/8d0 * (amui2 - amui2*amui2/2.d0/amuimax**2)
-!      if(IATOM.LT.2) write(*,*)      EN_ATOM(IATOM),  &
-!     & WD(IATOM), 0.5d0*sump(IATOM) &
-!     & ,0.5d0*sumx(IATOM), 0.5d0*sumj(IATOM) ,amu(IATOM)
+!     if(i.LT.2) write(*,*)      EN_ATOM(i),  &
+!     & WD(i), 0.5d0*sump(i) &
+!     & ,0.5d0*sumx(i), 0.5d0*sumj(i) ,amu(i)
      enddo
-
  end subroutine geten
 
-   real function ffij(Iatom,nlisti)
-    integer :: iatom,nlisti
+    real function dotmu(i,j)
+    integer :: i,j  
+    real(kind_wp) :: T,Tlow,Tcut
+    T = simparam%temprq
+      Tlow = Tpara - Ttrans
+      IF(T.lt.TLow) then
+        TCUT=1d0   !  Ferromagnet
+       ELSEIF(T.gt.Tpara) then
+        TCUT=0.d0  !  Paramagnet
+      ElSE
+        TCUT = ( Tpara - T)/ Ttrans
+        Tcut = (0.5-cos(3.141592654*tcut)/2.0)
+      ENDIF
+    dotmu = amu(i)*amu(j)*Tcut
+    end function dotmu
+
+
+   real function ffij(r,i,nlist_ji)
+    integer :: i,nlist_ji
+    real(kind_wp) :: r
+ 
      ffij = dphisl(r)/2d0 *(  &
-    &  ( (dNo2+amu(iatom)**2)/20d0  - dNo/2d0) /WD(IATOM) &
-    & +( (dNo2+amu(nlisti)**2)/20d0 - dNo/2d0) /WD(nlisti) ) &
+    &  ( (dNo*dNo+amu(i)**2)/20d0  - dNo/2d0) /WD(i) &
+    & +( (dNo*dNo+amu(nlist_ji)**2)/20d0 - dNo/2d0) /WD(nlist_ji) ) &
     & +  DPAULI(R)  & 
-    & +  amu(iatom)*amu(nlisti) * DXCORR(R)
-!   write(*,*) iatom,nlisti, R,WD(IATOM),WD(nlisti),sumd(nlisti),SLATER(R),dphisl(R)
+    & +  dotmu(i,nlist_ji) * DXCORR(R)
+
     return 
     end function ffij
 
-   REAL FUNCTION GETAMU(IATOM)
-    INTEGER :: IATOM
+   REAL FUNCTION GETAMU(i)
+    INTEGER :: i
     real(kind_wp) ::  factor
-       factor = 1.d0 - (2.d0/efree)*(WD(IATOM)/5.d0 + 2d0*sumx(IATOM))
+       factor = 1.d0 - (2.d0/efree)*(WD(i)/5.d0 + 2d0*sumx(i))
        if(factor.gt.1.d0)  then 
           getamu = amuimax
        elseif(factor.lt.0.d0)  then
@@ -79,7 +99,6 @@
        else
         getamu = amuimax*sqrt(factor)   
        end if
-!       if(Iatom.lt.2)write(*,*) "Atom2",  getamu,factor,(2.d0/efree),WD(IATOM)/5.d0 ,sumx(IATOM)
 !     getamu = 0.0
    RETURN
    END  FUNCTION GETAMU
