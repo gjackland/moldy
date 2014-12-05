@@ -50,11 +50,41 @@ module thermostat_m
   implicit none
   
   public :: init_thermostat_m, cleanup_thermostat_m
+  public :: set_snhv
+  real(kind_wp), public :: get_snhv
+  public :: set_temp
+  real(kind_wp), public :: get_temp
 
   real(kind_wp), private :: SNHV=0.0d0  !< scaling for Nose-Hoover velocities
   real(kind_wp), private :: temp        !< simulation temperature
 
 contains
+ 
+
+  !---------------------------------------------------------------------
+  !
+  !  get snhv
+  !
+  !---------------------------------------------------------------------
+ function get_snhv()
+  	real(kind_wp) get_snhv
+  	get_snhv = snhv
+  	
+  
+  end function get_snhv
+   !---------------------------------------------------------------------
+  !
+  !  set snhv
+  !
+  !---------------------------------------------------------------------
+  subroutine set_snhv(x)
+  	real(kind_wp),intent(in) :: x
+  	snhv = x
+  	
+  
+  end subroutine set_snhv
+
+
 
   !---------------------------------------------------------------------
   !

@@ -57,6 +57,19 @@ module params_m
      integer :: iprint=-1
      integer :: nnbrs=150    !< Size of neighbour list for each atom (default=150).
      integer :: iverlet=0    !< 1=Verlet,0=Predictor-Corrector (default)
+     
+    integer :: metropolis = -1 ! when equal to 1 or 2 activates a metropolis algorithm for re-arranging the atoms to minimise the gibbs energy 
+    !(is unlikly to find new crystal structure, but will rearrange a mixed alloy to its ground state at a given temperature and crystal structure).
+    !mode 1 switches  atomic positions
+    ! mode 2 allows the species of atoms to be changed as well as switching locations(set up for transition metals at the moment)
+    !will only switch between species of atom present at the start of the simulation.
+     							
+     real(kind_wp) :: chem_pot = 0.0 ! chemical potential used to drive atomic species change when metropolis is active ( metropolis = 2)
+     
+     integer :: metropolis_finetune_on = 0 ! -1 is off, 0 is do basic and fine, 1 is do only fine.  
+ 										!	finetune is a mode of metropolis that takes into account equilibriation 
+ 	logical :: dialloy_analysis = .false. ! varible that turns on a mode that is used to analyse a dialloy instead of processing file with MD
+ 	!gives the self-correlation of the alloying element
 
      !< Remember - The bigger NCLX/Y/Z is, the faster the code runs,
      !! but the link cell must be larger than the potential cutoff
@@ -215,7 +228,7 @@ contains
     integer, intent(in) :: iunit            !< unit input file is open on
     integer, intent(out) :: ierror          !< -2=unrecognised,-1=malformed,1=EOF,0=ok
     !!routine parameters (saved)
-    integer, parameter :: numkeys=53 !< increase numkeys when adding keywords
+    integer, parameter :: numkeys=57 !< increase numkeys when adding keywords
     character(len=50), save  :: key(numkeys)!< array of registered keys (hardcoded)
     integer, save :: keylength(numkeys)     !< array of registered key lengths
     logical, save :: initialised=.false.    !< flag to perform one-off initialisation
@@ -289,7 +302,14 @@ contains
 		key(50)='nose'
 	    key(51)='nposav'	
 	     key(52)='reset'	
+	     
+	     
 	     key(53)='atomstress'	
+	     
+	    key(54) = 'metropolis'
+	    key(55) = 'chem_pot'
+	    key(56) = 'metropolis_finetune_on'
+    	key(57) = 'dialloy_analysis'
              
 
        !!adjust, set lowercase, and measure the length of registered keys
@@ -576,6 +596,22 @@ contains
        read(inputstring(eqindex+1:),*) simparam%reset
        write(0,*) key(inum)(:keylength(inum))//" = ",simparam%reset
    
+   
+     case(54) !'metropolis'
+       read(inputstring(eqindex+1:),*) simparam%metropolis
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%metropolis
+       
+     case(55) !'chem_pot'
+       read(inputstring(eqindex+1:),*) simparam%chem_pot
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%chem_pot
+       
+     case(56) !'metropolis_finetune_on'
+       read(inputstring(eqindex+1:),*) simparam%metropolis_finetune_on
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%metropolis_finetune_on
+       
+     case(57) !'dialloy_analysis'
+       read(inputstring(eqindex+1:),*) simparam%dialloy_analysis
+       write(0,*) key(inum)(:keylength(inum))//" = ",simparam%dialloy_analysis
 
 
     case default

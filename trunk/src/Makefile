@@ -39,12 +39,13 @@ BUILD_DIR=../build
 # Material Choice and Location of Executable
 #MATERIAL= -DIRON_CARBON
 #MATERIAL= -DZIRCONIUM
-MATERIAL= -DTDEP_ATVF
+#MATERIAL= -DTDEP_ATVF
 #MATERIAL= -DLENNARDJONES
 #MATERIAL= -DMORSE 
 #MATERIAL= -DCDAU  
+MATERIAL= -DFETRANSMETAL
 
- EXE=    ../build/moldy.tdep
+ EXE=    ../build/moldy.atvf
 
 #Preprocessor prefix: uncomment if using xlf
 #MATERIAL= -WF,$(MATERIAL)
@@ -123,6 +124,7 @@ F90SRC= \
 	linkcell_m.F90 \
 	lookup_m.F90 \
 	matrix_m.F90 \
+	metropolis_m.F90 \
 	moldin.F90\
 	params_m.F90 \
 	quench_m.F90 \
@@ -138,7 +140,9 @@ F90SRC= \
         morse.F90 \
         CdAu.F90 \
         pairpot.F90 \
-	potential_m.F90
+	potential_m.F90 \
+	fetransmetal.F90 
+	
 
 
 #######################################################
@@ -208,7 +212,7 @@ quench_m.o: params_m.o  system_m.o  constants_m.o \
 
 neighbourlist_m.o:  linkcell_m.o parrinellorahman_m.o
 
-potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o tdep_atvf.o  
+potential_m.o: params_m.o  constants_m.o particles_m.o  lookup_m.o parrinellorahman_m.o morse.o iron_carbon.o  zirconium.o  CdAu.o   fetransmetal.o  tdep_atvf.o  
 
 timers_m.o: debug_m.o constants_m.o
 

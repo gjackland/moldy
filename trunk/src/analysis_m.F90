@@ -62,6 +62,8 @@ module analysis_m
   public :: runavs, rdf, auto, posavs
   public :: thermodynamic_sums
   public :: crysdiff
+  public :: get_closest_neighbour_index
+    
   !! derived type used to hold all running sums of thermodynamic quantities
   type thermodynamic_sums
      real(kind_wp) :: SPE=0._kind_wp
@@ -86,7 +88,8 @@ module analysis_m
   !! private data - the thermodynamic sums 
 
   type(thermodynamic_sums), save :: thermsums !< module private (repository) copy of thermodynamic sums
-
+ type(simparameters), save :: simparam  !< module local copy of simulation parameters
+ 
 contains
 
 
@@ -767,5 +770,101 @@ contains
     enddo
     return
     end function crysdiff
+    
+     !--------------------------------------------------------------
+  !
+  !  subroutine get_closest_neighbour_index
+  !
+  !  finds the n n.n's of atom i and return indices of those atoms 
+  ! ! PASSED TESTING
+  
+  !--------------------------------------------------------------
+    
+    subroutine get_closest_neighbour_index(atom,n,closest_index)
+    	integer, intent(IN) :: atom ,n ! atom is the atom to check around, n is how many neighbours you want
+   		integer :: i,j
+   		real(kind_wp), allocatable  :: dist (:)
+   		real(kind_wp) :: dx, dy, dz,min_dist,avg_dist
+   		integer :: min_index
+   		integer closest_index(*)
+   		
+   		
+   		simparam=get_params()
+   		
+   		allocate(dist(1:simparam%nm))
+   		
+
+   		
+   		do i = 1, simparam%nm
+   		
+   			 dx=x0(i)-x0(atom)
+         	 dy=y0(i)-y0(atom)
+          	 dz=z0(i)-z0(atom)
+          		 
+   			call pr_get_realsep_from_dx(dist(i),dx,dy,dz)
+   			
+   		enddo
+   		
+   		avg_dist = 0.0
+   		do i = 1, n
+   			min_dist = 100000.0
+   			do j = 1, simparam%nm
+   				if (j .eq. atom) cycle
+   				if(dist(j) .lt. min_dist) then
+   					min_dist = dist(j)
+   					min_index = j
+   				endif
+   			enddo
+   			closest_index(i) = min_index
+   			
+   			
+   			dist(min_index) = 100000.0
+   		enddo
+    
+    	
+    end subroutine get_closest_neighbour_index 
+    
+  !--------------------------------------------------------------
+  !
+  !  subroutine find_nearest_neighbour
+  !
+  !  finds the n n.n's of atom i
+  ! PASSED TESTING
+  !--------------------------------------------------------------
+ 
+   subroutine find_nearest_neighbour(atom,n)
+   
+   		integer, intent(IN) :: atom ,n ! atom is the atom to check around, n is how many neighbours you want
+   		integer :: i
+   		integer, allocatable :: closest_index(:)
+   		real(kind_wp) :: dx, dy, dz,dist_temp,avg_dist
+   		
+   		avg_dist = 0.0
+   		
+   		allocate(closest_index(1:n)) !stores index of closest atoms
+    	
+   		
+   		
+   		call get_closest_neighbour_index(atom,n,closest_index)
+   		do i = 1,n
+   			dx=x0(closest_index(i))-x0(atom)
+         	dy=y0(closest_index(i))-y0(atom)
+          	dz=z0(closest_index(i))-z0(atom)
+          		 
+   			call pr_get_realsep_from_dx(dist_temp,dx,dy,dz)
+   			avg_dist = avg_dist + dist_temp
+   			write(*,*) "min dist",dist_temp
+   		enddo
+   		avg_dist = avg_dist/n
+   		write(*,*) "avg dist",avg_dist
+   	  OPEN (1643, FILE = 'nnDist.txt' )!removable
+       write(1643,*) avg_dist
+       close(1643)
+   		if(n .eq. 8) write(*,*) "BCC volume est",avg_dist*avg_dist*avg_dist,"angstroms cubed"
+   		write(*,*) "DONE RUNNING NN CODE"
+   		
+   		
+   		
+   end subroutine find_nearest_neighbour
 
 end module analysis_m
