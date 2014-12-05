@@ -97,6 +97,7 @@ program moldyv2
   use quench_m
   use utilityfns_m
   use omp_lib
+  use metropolis_m
 
   IMPLICIT NONE
 
@@ -163,6 +164,8 @@ program moldyv2
 
   real(kind_wp) ::modelruntime =0 ! the time that the code has simulated the system for in simulation units
   real(kind_wp) :: localTimeStep, thermotimer ! stores the time adjusted by the simulation, overrides deltat, thermotimer 
+  
+   logical :: metropolis_finetune
 	!times when the thermostat should fire (currently set to fire once per femtosecond
 
   !! start timing the code
@@ -521,6 +524,28 @@ program moldyv2
 
 
 		call set_params(simparam) 
+		
+		metropolis_finetune = .false.
+		if(simparam%metropolis_finetune_on .eq. 1) then
+			metropolis_finetune = .true.
+		endif
+		call init_metropolis
+		
+		
+		
+ 	if (simparam%dialloy_analysis) then
+ 		call metro_bi_alloy_analysis(1,"")
+ 		call metro_bi_alloy_analysis(2,"")
+ 		call metro_bi_alloy_analysis(3,"")
+ 		
+ 		call metro_bi_alloy_analysisN(1,"n")
+ 		call metro_bi_alloy_analysisN(2,"n")
+ 		call metro_bi_alloy_analysisN(3,"n")
+ 		write(*,*) "Ran analysis for correlation of atoms"
+ 		call exit(0)!test todo
+ 	endif
+ 	
+ 	!call metro_bi_alloy_analysisN( 1,"")
 
 	end if
 
@@ -654,6 +679,72 @@ program moldyv2
            write(stderr,'(8X,"ENTERED MOLECULAR DYNAMICS LOOP - ",I5," STEPS",/,8X,72("="))') &
                 simparam%currentstep
         end if
+
+
+
+
+
+
+
+
+
+
+
+
+if(.not. metropolis_finetune) then
+		     if((simparam%metropolis .gt. 0 ) .and. mod(istep,100) .eq. 0) then  
+		      
+				  !call metropolis
+				  if (simparam%metropolis .eq. 3 ) then					 					 
+					  	if ( mod(istep,200) .eq. 0 ) then
+					  		!method to allow change of species
+					  	 	   call metropolis_alchemy
+					  	else
+					  		!method that allows swaps only
+					  		simparam%metropolis = 1
+					  		call set_params(simparam) 
+					  		call metropolis
+					  		simparam%metropolis = 3
+					  		call set_params(simparam)  
+					  	endif
+				  else
+				  	 call metropolis
+				  end if
+			  
+				  if ( get_num_alloy() .le. 1 .or. get_num_alloy() .gt. (simparam%nm/2.0)) then
+				  	  open(34,file="metropolisSteps.out", ACCESS = 'APPEND')
+		   			  write(34,*) "alloy too high or too low, istep:",istep,"alloy num:",get_num_alloy()
+					  close(34)      	
+					  exit		
+				  end if
+				  call update_energy_log
+				  if( energy_converged() == 1 ) then
+				 	 !	have finished, exit
+				 	 open(34,file="metropolisSteps.out", ACCESS = 'APPEND')
+		   				write(34,*) "energy converged.",istep,simparam%temprq
+						close(34)      	
+						exit			
+				  	 
+				  endif			
+		    endif
+		    
+		else	    !finetune run
+		
+		    if((simparam%metropolis .eq. 1 .or. simparam%metropolis .eq. 2) .and. mod(istep,100) .eq. 0) then  
+		   	 	call   metropolis_with_reset		   	 
+		    endif
+		    
+		endif
+	
+
+
+
+
+
+
+
+
+
 
 
 

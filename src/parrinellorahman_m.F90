@@ -92,6 +92,7 @@ module parrinellorahman_m
   public :: cleanup_parrinellorahman_m
   public :: pr_get_metric_tensor
   public :: get_tgid
+  public :: set_tgid
   public :: pr_get_tgid
   public :: pr_get_sigma
   public :: pr_get_realsep_from_dx
@@ -242,6 +243,12 @@ contains
     real(kind_wp) :: get_tgid(nmat,nmat)
     get_tgid=tgid
   end function get_tgid
+  
+  !set_tgid
+  subroutine set_tgid(t)
+    real(kind_wp),intent(in),dimension(:,:) :: t
+    tgid(:,:) = t(:,:)
+  end subroutine set_tgid
   
   
   subroutine pr_get_tgid

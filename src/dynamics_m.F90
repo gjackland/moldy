@@ -75,6 +75,7 @@ module dynamics_m
   public :: write_stress
   public :: update_therm_avs
   public :: write_atomic_stress
+   public :: energy_pair_emb
   
 
   !! public module data
@@ -789,6 +790,21 @@ end if
     end do
     close(5473)
   end subroutine write_atomic_stress
+  
+  
+		!returns energy for each atom due to pair term and embedding term (i.e. full potenial energy)
+	function energy_pair_emb()
+
+		real(kind_wp) :: energy_pair_emb
+		real(kind_wp) :: te,tpp,tpe
+		
+		!call rhoset
+		call energy_calc
+		energy_pair_emb = sum(en_atom)
+
+		return
+	end function energy_pair_emb
+	
 
 
 end module dynamics_m
